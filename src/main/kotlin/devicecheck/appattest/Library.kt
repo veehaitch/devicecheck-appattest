@@ -4,6 +4,7 @@
 package devicecheck.appattest
 
 class Library {
+    @Suppress("FunctionOnlyReturningConstant")
     fun someLibraryMethod(): Boolean {
         return true
     }
