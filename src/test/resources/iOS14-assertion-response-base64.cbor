@@ -1,0 +1,11 @@
+# Base64 encoded assertion created on iOS 14 (Beta 4) by calling `generateAssertion(_:clientDataHash:completionHandler:)` with
+# `clientDataHash` = `b'\x8b\xe6\\\xcaQZ\xd0\x97\xc9S\x96}\x18\xd65\xd8m\xd7\x8a\x14.\xd3\xd0wRk\xed\x11\xc6\xbe\xc6{'`
+# (SHA-256 digest of "wurzelpfropf")
+# Key ID: `XGr5wqmUab/9M4b5vxa6KkPOigfeEWDaw7tuK02aJ6c=`
+#
+# Decoded CBOR:
+# {
+#     'signature': b'0E\x02 \x04\xb2\x8f\xfe\xe2B\xb43\x95\xcb@SSO\x0cV\x94v\xccE\x08\xe3\xedF\x99\xd1Myvin\xd6\x02!\x00\xe2\xc8\xbe\xfb\xa1\xcc\xda\x03^\xb4~o\xfc\xdd\xa0\xd8|r\xc3\xd1*\xb4~\x8b\xf2F\xe9\x832\x0fB^',
+#     'authenticatorData': b'9\xe4o\xd7pW\xac\xf6\xf0\xbcNs\x0c\xb4\xb9\xfet\xed\xa4\xf5\xa4\x9d!\xbd\xaf\x10\x98\xfb\x8dw\xac\xcc@\x00\x00\x00\x01'
+# }
+omlzaWduYXR1cmVYRzBFAiAEso/+4kK0M5XLQFNTTwxWlHbMRQjj7UaZ0U15dmlu1gIhAOLIvvuhzNoDXrR+b/zdoNh8csPRKrR+i/JG6YMyD0JecWF1dGhlbnRpY2F0b3JEYXRhWCU55G/XcFes9vC8TnMMtLn+dO2k9aSdIb2vEJj7jXeszEAAAAAB
