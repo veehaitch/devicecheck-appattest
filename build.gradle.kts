@@ -38,6 +38,12 @@ dependencies {
     testImplementation("io.kotest:kotest-property-jvm:4.1.2") // for kotest property test
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
 detekt {
     autoCorrect = true
     buildUponDefaultConfig = true
