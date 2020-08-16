@@ -34,7 +34,7 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.11.+")
 
     // Bouncy Castle
-    implementation("org.bouncycastle:bcprov-jdk16:1.46")
+    implementation("org.bouncycastle:bcprov-jdk15on:1.66")
 
     // WebAuthN parsing
     implementation("com.webauthn4j:webauthn4j-core:0.12.0.RELEASE")

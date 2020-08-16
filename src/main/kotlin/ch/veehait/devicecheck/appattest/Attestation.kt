@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.DEROctetString
-import org.bouncycastle.asn1.DERSequence
-import org.bouncycastle.asn1.DERTaggedObject
+import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.DLTaggedObject
 import org.bouncycastle.util.Arrays.constantTimeAreEqual
 import java.security.SignatureException
 import java.security.interfaces.ECPublicKey
@@ -151,8 +151,8 @@ class Attestation(
         val credCert = readDerX509Certificate(credCertDer)
         val value = credCert.getExtensionValue(APPLE_CRED_CERT_EXTENSION_OID)
         val envelope = ASN1InputStream(value).readObject() as DEROctetString
-        val sequence = ASN1InputStream(envelope.octetStream).readObject() as DERSequence
-        val sequenceFirstObject = sequence.objects.toList().first() as DERTaggedObject
+        val sequence = ASN1InputStream(envelope.octetStream).readObject() as DLSequence
+        val sequenceFirstObject = sequence.objects.toList().first() as DLTaggedObject
         val leafOctetString = sequenceFirstObject.`object` as DEROctetString
         return leafOctetString.octets
     }
@@ -171,7 +171,7 @@ class Attestation(
         val actualNonce = kotlin.runCatching {
             extractNonce(appleAppAttestStatement.attStmt.x5c.first())
         }.getOrElse {
-            throw AttestationException.InvalidNonce()
+            throw AttestationException.InvalidNonce(it)
         }
 
         //   ... Verify that the string equals nonce.
@@ -230,7 +230,7 @@ class Attestation(
 sealed class AttestationException(message: String, cause: Throwable?) : RuntimeException(message, cause) {
     class InvalidFormatException(message: String, cause: Throwable? = null) : AttestationException(message, cause)
     class InvalidCertificateChain(message: String, cause: Throwable? = null) : AttestationException(message, cause)
-    class InvalidNonce : AttestationException("The attestation's nonce is invalid", null)
+    class InvalidNonce(cause: Throwable? = null) : AttestationException("The attestation's nonce is invalid", cause)
     class InvalidPublicKey(keyId: ByteArray)
         : AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
 
