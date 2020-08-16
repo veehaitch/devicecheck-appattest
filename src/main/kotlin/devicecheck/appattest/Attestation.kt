@@ -99,6 +99,9 @@ class Attestation(
     }
 
     private fun verifyCertificateChain(appleAppAttestStatement: AppleAppAttestStatement) {
+        // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest,
+        //    starting from the credential certificate stored in the first data buffer in the array (credcert).
+        //    Verify the validity of the certificates using Apple’s App Attest root certificate.
         try {
             val certs = appleAppAttestStatement.attStmt.x5c.map {
                 readDerX509Certificate(it)
@@ -136,14 +139,23 @@ class Attestation(
     }
 
     private fun verifyNonce(appleAppAttestStatement: AppleAppAttestStatement, serverChallenge: ByteArray) {
+        // 2. Create clientDataHash as the SHA256 hash of the one-time challenge sent to your app before performing
+        //    the attestation, ...
         val clientDataHash = serverChallenge.sha256()
+
+        //    ... and append that hash to the end of the authenticator data (authData from the decoded object).
+        // 3. Generate a new SHA256 hash of the composite item to create nonce.
         val expectedNonce = (appleAppAttestStatement.authData + clientDataHash).sha256()
+
+        // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER-encoded
+        //    ASN.1 sequence. Decode the sequence and extract the single octet string that it contains ...
         val actualNonce = kotlin.runCatching {
             extractNonce(appleAppAttestStatement.attStmt.x5c.first())
         }.getOrElse {
             throw AttestationException.InvalidNonce()
         }
 
+        //   ... Verify that the string equals nonce.
         if (!constantTimeAreEqual(expectedNonce, actualNonce)) {
             throw AttestationException.InvalidNonce()
         }
@@ -153,9 +165,12 @@ class Attestation(
         appleAppAttestStatement: AppleAppAttestStatement,
         keyId: ByteArray
     ) {
+        // 5. Create the SHA256 hash of the public key in credCert, ...
         val credCert = readDerX509Certificate(appleAppAttestStatement.attStmt.x5c.first())
         val uncompressedPublicKey = ECUtil.createUncompressedPublicKey(credCert.publicKey as ECPublicKey)
         val actualKeyId = uncompressedPublicKey.sha256()
+
+        //    ... and verify that it matches the key identifier from your app.
         if (!actualKeyId.contentEquals(keyId)) {
             throw AttestationException.InvalidPublicKey(keyId)
         }
@@ -164,15 +179,21 @@ class Attestation(
     @Suppress("ThrowsCount")
     private fun verifyAuthenticatorData(appleAppAttestStatement: AppleAppAttestStatement, keyId: ByteArray) {
         val authenticatorData = parseAuthenticatorData(appleAppAttestStatement)
-        
+
+        // 6. Compute the SHA256 hash of your app’s App ID, and verify that this is the same as the authenticator
+        //    data’s RP ID hash.
         if (!authenticatorData.rpIdHash!!.contentEquals(appId.toByteArray().sha256())) {
             throw AttestationException.InvalidAuthenticatorData("App ID does not match RP ID hash")
         }
 
+        // 7. Verify that the authenticator data’s counter field equals 0.
         if (authenticatorData.signCount != 0L) {
             throw AttestationException.InvalidAuthenticatorData("Counter is not zero")
         }
 
+        // 8. Verify that the authenticator data’s aaguid field is either appattestdevelop if operating in the
+        //    development environment, or appattest followed by seven 0x00 bytes if operating in the production
+        //    environment.
         if (authenticatorData.attestedCredentialData.aaguid != appleAppAttestEnvironment.asAaguid()) {
             throw AttestationException.InvalidAuthenticatorData(
                 "AAGUID does match neither ${AppleAppAttestEnvironment.DEVELOPMENT.identifier} " +
@@ -180,6 +201,7 @@ class Attestation(
             )
         }
 
+        // 9. Verify that the authenticator data’s credentialId field is the same as the key identifier.
         if (!authenticatorData.attestedCredentialData.credentialId!!.contentEquals(keyId)) {
             throw AttestationException.InvalidAuthenticatorData("Credentials ID is not equal to Key ID")
         }
