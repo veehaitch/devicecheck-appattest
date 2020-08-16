@@ -30,6 +30,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.11.+")
 
+    // Bouncy Castle
+    implementation("org.bouncycastle:bcprov-jdk16:1.46")
+
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
