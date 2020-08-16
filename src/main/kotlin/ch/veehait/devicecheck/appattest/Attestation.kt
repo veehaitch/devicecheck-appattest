@@ -16,8 +16,14 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.DLTaggedObject
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.Arrays.constantTimeAreEqual
-import java.security.SignatureException
+import java.security.GeneralSecurityException
+import java.security.Security
+import java.security.cert.CertPathValidator
+import java.security.cert.CertificateFactory
+import java.security.cert.PKIXParameters
+import java.security.cert.TrustAnchor
 import java.security.interfaces.ECPublicKey
 
 /**
@@ -31,6 +37,7 @@ import java.security.interfaces.ECPublicKey
  * @param appleAppAttestRootCaPem Apple’s App Attest root certificate: https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem.
  * @param appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
  */
+@Suppress("TooManyFunctions")
 class Attestation(
     appleTeamIdentifier: String,
     appCfBundleIdentifier: String,
@@ -46,10 +53,12 @@ class Attestation(
         if (appleTeamIdentifier.length != APPLE_TEAM_IDENTIFIER_LENGTH) {
             throw IllegalArgumentException("The Apple team identifier must consist of exactly 10 digits")
         }
+
+        Security.addProvider(BouncyCastleProvider())
     }
 
     private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
-    private val appleAppAttestRootCa = readPemX590Certificate(appleAppAttestRootCaPem)
+    private val appleAppAttestRootCa = TrustAnchor(readPemX590Certificate(appleAppAttestRootCaPem), null)
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
 
     /**
@@ -57,6 +66,7 @@ class Attestation(
      *
      * @see validate
      */
+    @Suppress("MemberVisibilityCanBePrivate")
     suspend fun validateAsync(
         attestationObjectBase64: String,
         keyIdBase64: String,
@@ -121,15 +131,21 @@ class Attestation(
         // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest,
         //    starting from the credential certificate stored in the first data buffer in the array (credcert).
         //    Verify the validity of the certificates using Apple’s App Attest root certificate.
-        try {
+        val certPath = CertificateFactory.getInstance("X509").run {
             val certs = appleAppAttestStatement.attStmt.x5c.map {
-                readDerX509Certificate(it)
-            } + listOf(appleAppAttestRootCa)
-
-            (certs + certs.last()).windowed(2, 1).forEach { (child, parent) ->
-                child.verify(parent.publicKey)
+                generateCertificate(it.inputStream())
             }
-        } catch (ex: SignatureException) {
+            generateCertPath(certs)
+        }
+
+        val certPathValidator = CertPathValidator.getInstance("PKIX")
+        val pkixParameters = PKIXParameters(setOf(appleAppAttestRootCa)).apply {
+            isRevocationEnabled = false
+        }
+
+        try {
+            certPathValidator.validate(certPath, pkixParameters)
+        } catch (ex: GeneralSecurityException) {
             throw AttestationException.InvalidCertificateChain(
                 "The attestation object does not contain a valid certificate chain",
                 ex
