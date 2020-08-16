@@ -1,4 +1,4 @@
-package devicecheck.appattest
+package ch.veehait.devicecheck.appattest
 
 import org.bouncycastle.util.io.pem.PemReader
 import java.security.MessageDigest

@@ -1,4 +1,4 @@
-package devicecheck.appattest
+package ch.veehait.devicecheck.appattest
 
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import java.security.interfaces.ECPublicKey

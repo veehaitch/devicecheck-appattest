@@ -1,4 +1,4 @@
-package devicecheck.appattest
+package ch.veehait.devicecheck.appattest
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
