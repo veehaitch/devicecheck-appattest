@@ -43,9 +43,13 @@ dependencies {
 
     // Bouncy Castle
     implementation("org.bouncycastle:bcprov-jdk15on:1.66")
+    implementation("org.bouncycastle:bcpkix-jdk15on:1.66")
 
     // WebAuthN parsing
     implementation("com.webauthn4j:webauthn4j-core:0.12.0.RELEASE")
+
+    // Logging
+    implementation("org.slf4j:slf4j-nop:1.7.30")
 
     // Kotest
     val kotestVersion = "4.2.0"

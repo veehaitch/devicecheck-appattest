@@ -20,13 +20,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.Arrays.constantTimeAreEqual
 import java.security.GeneralSecurityException
 import java.security.Security
-import java.security.cert.CertPathValidator
-import java.security.cert.CertificateFactory
-import java.security.cert.PKIXParameters
-import java.security.cert.TrustAnchor
 import java.security.interfaces.ECPublicKey
 import java.time.Clock
 import java.util.Date
+import java.util.logging.Logger
 
 /**
  * Class to validate the authenticity of an Apple App Attest attestation.
@@ -49,6 +46,8 @@ class AttestationValidator(
     private val clock: Clock = Clock.systemUTC()
 ) {
     companion object {
+        private val logger = Logger.getLogger(this::class.java.simpleName)
+
         const val APPLE_TEAM_IDENTIFIER_LENGTH = 10
         const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
 
@@ -80,7 +79,8 @@ class AttestationValidator(
     }
 
     private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
-    private val appleAppAttestRootCa = TrustAnchor(readPemX590Certificate(appleAppAttestRootCaPem), null)
+    private val appleAppAttestRootCa = readPemX590Certificate(appleAppAttestRootCaPem)
+    private val receiptValidator = ReceiptValidator(appleTeamIdentifier, appCfBundleIdentifier, clock = clock)
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
 
     /**
@@ -102,6 +102,14 @@ class AttestationValidator(
         launch { verifyNonce(attestationStatement, serverChallenge) }
         val publicKey = async { verifyPublicKey(attestationStatement, keyId) }
         launch { verifyAuthenticatorData(attestationStatement, keyId) }
+
+        launch {
+            try {
+                receiptValidator.validateAsync(attestationStatement.attStmt.receipt, publicKey.await())
+            } catch (ex: ReceiptValidator.ReceiptException.InvalidSignature) {
+                logger.warning("Receipt signature is invalid but proceeding anyway due to an Apple bug")
+            }
+        }
 
         AppleAppAttestValidationResponse(publicKey.await(), attestationStatement.attStmt.receipt)
     }
@@ -153,21 +161,9 @@ class AttestationValidator(
         // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest,
         //    starting from the credential certificate stored in the first data buffer in the array (credcert).
         //    Verify the validity of the certificates using Apple’s App Attest root certificate.
-        val certPath = CertificateFactory.getInstance("X509").run {
-            val certs = appleAppAttestStatement.attStmt.x5c.map {
-                generateCertificate(it.inputStream())
-            }
-            generateCertPath(certs)
-        }
-
-        val certPathValidator = CertPathValidator.getInstance("PKIX")
-        val pkixParameters = PKIXParameters(setOf(appleAppAttestRootCa)).apply {
-            isRevocationEnabled = false
-            date = Date.from(clock.instant())
-        }
-
+        val certs = appleAppAttestStatement.attStmt.x5c.map { readDerX509Certificate(it) }
         try {
-            certPathValidator.validate(certPath, pkixParameters)
+            verifyCertificateChain(certs, appleAppAttestRootCa, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
             throw AttestationException.InvalidCertificateChain(
                 "The attestation object does not contain a valid certificate chain",

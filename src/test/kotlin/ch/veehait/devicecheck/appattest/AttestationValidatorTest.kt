@@ -8,7 +8,7 @@ import java.time.ZoneOffset
 
 class AttestationValidatorTest : StringSpec() {
     init {
-        val fixedClock = Clock.fixed(Instant.parse("2020-08-23T13:37:00.00Z"), ZoneOffset.UTC)
+        val fixedClock = Clock.fixed(Instant.parse("2020-08-23T11:03:36.059Z"), ZoneOffset.UTC)
 
         "team identifier must consist of 10 characters" {
             shouldThrow<IllegalArgumentException> {
