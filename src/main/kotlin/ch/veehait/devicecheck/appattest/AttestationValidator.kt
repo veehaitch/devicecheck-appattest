@@ -38,7 +38,7 @@ import java.security.interfaces.ECPublicKey
  * @param appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
  */
 @Suppress("TooManyFunctions")
-class Attestation(
+class AttestationValidator(
     appleTeamIdentifier: String,
     appCfBundleIdentifier: String,
     appleAppAttestRootCaPem: String,

@@ -14,7 +14,7 @@ It relies on:
 
 ```kotlin
 // Create an Attestation instance specific to a given iOS app and development team
-val attestation = Attestation(
+val attestationValidator = AttestationValidator(
     appleTeamIdentifier = "6MURL8TA57",
     appCfBundleIdentifier = "de.vincent-haupert.AppleAppAttestPoc",
     appleAppAttestRootCaPem = """
@@ -37,7 +37,7 @@ val attestation = Attestation(
 )
 
 // Validate a single attestation object. Throws an AttestationException if a validation error occurs.
-val (publicKey, receipt) = attestation.validate(
+val (publicKey, receipt) = attestationValidator.validate(
     // See `iOS14-attestation-response-base64.cbor` for full attestation response
     attestationObjectBase64 = "o2NmbXRvYXBwbGUtYXBwYXR0ZXN0Z2F0dFN0bXSiY3g1Y4JZAvYwggLyM ...",
     keyIdBase64 = "XGr5wqmUab/9M4b5vxa6KkPOigfeEWDaw7tuK02aJ6c=",

@@ -2,11 +2,10 @@ package ch.veehait.devicecheck.appattest
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
-import java.io.BufferedInputStream
 import java.lang.IllegalArgumentException
 import java.net.URL
 
-class AttestationTest : StringSpec() {
+class AttestationValidatorTest : StringSpec() {
 
     private val appleAppAttestRootCA = downloadAppAttestCA()
 
@@ -18,16 +17,16 @@ class AttestationTest : StringSpec() {
     init {
         "team identifier must consist of 10 characters" {
             shouldThrow<IllegalArgumentException> {
-                Attestation("a".repeat(9), "", appleAppAttestRootCA, AppleAppAttestEnvironment.DEVELOPMENT)
+                AttestationValidator("a".repeat(9), "", appleAppAttestRootCA, AppleAppAttestEnvironment.DEVELOPMENT)
             }
             shouldThrow<IllegalArgumentException> {
-                Attestation("a".repeat(11), "", appleAppAttestRootCA, AppleAppAttestEnvironment.DEVELOPMENT)
+                AttestationValidator("a".repeat(11), "", appleAppAttestRootCA, AppleAppAttestEnvironment.DEVELOPMENT)
             }
-            Attestation("a".repeat(10), "", appleAppAttestRootCA, AppleAppAttestEnvironment.DEVELOPMENT)
+            AttestationValidator("a".repeat(10), "", appleAppAttestRootCA, AppleAppAttestEnvironment.DEVELOPMENT)
         }
 
         "validation works for valid attestation object" {
-            Attestation(
+            AttestationValidator(
                 "6MURL8TA57",
                 "de.vincent-haupert.AppleAppAttestPoc",
                 appleAppAttestRootCA,
