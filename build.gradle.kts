@@ -26,6 +26,9 @@ dependencies {
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
+    // Kotlin coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.8")
+
     // CBOR
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.11.+")
