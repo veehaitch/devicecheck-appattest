@@ -33,6 +33,9 @@ dependencies {
     // Bouncy Castle
     implementation("org.bouncycastle:bcprov-jdk16:1.46")
 
+    // WebAuthN parsing
+    implementation("com.webauthn4j:webauthn4j-core:0.12.0.RELEASE")
+
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
