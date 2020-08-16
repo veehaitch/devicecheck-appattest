@@ -8,6 +8,10 @@ import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.data.attestation.authenticator.AuthenticatorData
 import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionAuthenticatorOutput
 import com.webauthn4j.util.ECUtil
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSequence
@@ -49,6 +53,28 @@ class Attestation(
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
 
     /**
+     * Validate an attestation object. Suspending version of [validate].
+     *
+     * @see validate
+     */
+    suspend fun validateAsync(
+        attestationObjectBase64: String,
+        keyIdBase64: String,
+        serverChallenge: ByteArray
+    ): AppleAppAttestValidationResponse = coroutineScope {
+        val attestationStatement = parseAttestationObject(attestationObjectBase64)
+        val keyId = keyIdBase64.fromBase64()
+
+        launch { verifyAttestationFormat(attestationStatement) }
+        launch { verifyCertificateChain(attestationStatement) }
+        launch { verifyNonce(attestationStatement, serverChallenge) }
+        val publicKey = async { verifyPublicKey(attestationStatement, keyId) }
+        launch { verifyAuthenticatorData(attestationStatement, keyId) }
+
+        AppleAppAttestValidationResponse(publicKey.await(), attestationStatement.attStmt.receipt)
+    }
+
+    /**
      * Validate an attestation object.
      *
      * @param attestationObjectBase64 Base64-encoded attestation object created by calling
@@ -66,14 +92,8 @@ class Attestation(
         attestationObjectBase64: String,
         keyIdBase64: String,
         serverChallenge: ByteArray
-    ): AppleAppAttestValidationResponse = parseAttestationObject(attestationObjectBase64).run {
-        verifyAttestationFormat(this)
-        verifyCertificateChain(this)
-        verifyNonce(this, serverChallenge)
-        val keyId = keyIdBase64.fromBase64()
-        val publicKey = verifyPublicKey(this, keyId)
-        verifyAuthenticatorData(this, keyId)
-        AppleAppAttestValidationResponse(publicKey, this.attStmt.receipt)
+    ): AppleAppAttestValidationResponse = runBlocking {
+        validateAsync(attestationObjectBase64, keyIdBase64, serverChallenge)
     }
 
     private fun parseAttestationObject(attestationObjectBase64: String): AppleAppAttestStatement {
