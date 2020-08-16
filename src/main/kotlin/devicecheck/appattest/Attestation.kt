@@ -66,15 +66,14 @@ class Attestation(
         attestationObjectBase64: String,
         keyIdBase64: String,
         serverChallenge: ByteArray
-    ): AppleAppAttestStatement {
-        return parseAttestationObject(attestationObjectBase64).apply {
-            verifyAttestationFormat(this)
-            verifyCertificateChain(this)
-            verifyNonce(this, serverChallenge)
-            val keyId = keyIdBase64.fromBase64()
-            verifyPublicKey(this, keyId)
-            verifyAuthenticatorData(this, keyId)
-        }
+    ): AppleAppAttestValidationResponse = parseAttestationObject(attestationObjectBase64).run {
+        verifyAttestationFormat(this)
+        verifyCertificateChain(this)
+        verifyNonce(this, serverChallenge)
+        val keyId = keyIdBase64.fromBase64()
+        val publicKey = verifyPublicKey(this, keyId)
+        verifyAuthenticatorData(this, keyId)
+        AppleAppAttestValidationResponse(publicKey, this.attStmt.receipt)
     }
 
     private fun parseAttestationObject(attestationObjectBase64: String): AppleAppAttestStatement {
@@ -161,19 +160,19 @@ class Attestation(
         }
     }
 
-    private fun verifyPublicKey(
-        appleAppAttestStatement: AppleAppAttestStatement,
-        keyId: ByteArray
-    ) {
+    private fun verifyPublicKey(appleAppAttestStatement: AppleAppAttestStatement, keyId: ByteArray): ECPublicKey {
         // 5. Create the SHA256 hash of the public key in credCert, ...
         val credCert = readDerX509Certificate(appleAppAttestStatement.attStmt.x5c.first())
-        val uncompressedPublicKey = ECUtil.createUncompressedPublicKey(credCert.publicKey as ECPublicKey)
+        val publicKey = credCert.publicKey as ECPublicKey
+        val uncompressedPublicKey = ECUtil.createUncompressedPublicKey(publicKey)
         val actualKeyId = uncompressedPublicKey.sha256()
 
         //    ... and verify that it matches the key identifier from your app.
         if (!actualKeyId.contentEquals(keyId)) {
             throw AttestationException.InvalidPublicKey(keyId)
         }
+
+        return publicKey
     }
 
     @Suppress("ThrowsCount")
@@ -214,5 +213,6 @@ sealed class AttestationException(message: String, cause: Throwable?) : RuntimeE
     class InvalidNonce : AttestationException("The attestation's nonce is invalid", null)
     class InvalidPublicKey(keyId: ByteArray)
         : AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
+
     class InvalidAuthenticatorData(message: String) : AttestationException(message, null)
 }

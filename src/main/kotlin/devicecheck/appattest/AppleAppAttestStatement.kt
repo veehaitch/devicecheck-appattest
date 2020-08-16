@@ -1,6 +1,7 @@
 package devicecheck.appattest
 
 import com.webauthn4j.data.attestation.authenticator.AAGUID
+import java.security.interfaces.ECPublicKey
 
 data class AttestationStatement(
     val x5c: List<ByteArray>,
@@ -68,4 +69,27 @@ enum class AppleAppAttestEnvironment(val identifier: String) {
             identifier.toByteArray().copyInto(this, 0)
         }
     )
+}
+
+data class AppleAppAttestValidationResponse(
+    val publicKey: ECPublicKey,
+    val receipt: ByteArray
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AppleAppAttestValidationResponse
+
+        if (publicKey != other.publicKey) return false
+        if (!receipt.contentEquals(other.receipt)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = publicKey.hashCode()
+        result = 31 * result + receipt.contentHashCode()
+        return result
+    }
 }
