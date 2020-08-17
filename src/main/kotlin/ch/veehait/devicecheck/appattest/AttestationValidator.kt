@@ -25,6 +25,8 @@ import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
 import java.security.cert.TrustAnchor
 import java.security.interfaces.ECPublicKey
+import java.time.Clock
+import java.util.*
 
 /**
  * Class to validate the authenticity of an Apple App Attest attestation.
@@ -36,13 +38,15 @@ import java.security.interfaces.ECPublicKey
  * @param appCfBundleIdentifier Your app’s CFBundleIdentifier value.
  * @param appleAppAttestRootCaPem Apple’s App Attest root certificate: https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem.
  * @param appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
+ * @param clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
  */
 @Suppress("TooManyFunctions")
 class AttestationValidator(
     appleTeamIdentifier: String,
     appCfBundleIdentifier: String,
     private val appleAppAttestEnvironment: AppleAppAttestEnvironment,
-    appleAppAttestRootCaPem: String = APPLE_APP_ATTEST_ROOT_CA_BUILTIN
+    appleAppAttestRootCaPem: String = APPLE_APP_ATTEST_ROOT_CA_BUILTIN,
+    private val clock: Clock = Clock.systemUTC()
 ) {
     companion object {
         const val APPLE_TEAM_IDENTIFIER_LENGTH = 10
@@ -158,6 +162,7 @@ class AttestationValidator(
         val certPathValidator = CertPathValidator.getInstance("PKIX")
         val pkixParameters = PKIXParameters(setOf(appleAppAttestRootCa)).apply {
             isRevocationEnabled = false
+            date = Date.from(clock.instant())
         }
 
         try {
