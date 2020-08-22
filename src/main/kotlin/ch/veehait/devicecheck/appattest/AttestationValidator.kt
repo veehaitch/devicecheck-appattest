@@ -26,7 +26,7 @@ import java.security.cert.PKIXParameters
 import java.security.cert.TrustAnchor
 import java.security.interfaces.ECPublicKey
 import java.time.Clock
-import java.util.*
+import java.util.Date
 
 /**
  * Class to validate the authenticity of an Apple App Attest attestation.
@@ -52,7 +52,8 @@ class AttestationValidator(
         const val APPLE_TEAM_IDENTIFIER_LENGTH = 10
         const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
 
-        val APPLE_APP_ATTEST_ROOT_CA_BUILTIN = """
+        val APPLE_APP_ATTEST_ROOT_CA_BUILTIN =
+            """
             -----BEGIN CERTIFICATE-----
             MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw
             JAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwK
@@ -67,7 +68,7 @@ class AttestationValidator(
             53O5+FRXgeLhpJ06ysC5PrOyAjEAp5U4xDgEgllF7En3VcE3iexZZtKeYnpqtijV
             oyFraWVIyd/dganmrduC1bmTBGwD
             -----END CERTIFICATE-----
-        """.trimIndent()
+            """.trimIndent()
     }
 
     init {
@@ -269,8 +270,8 @@ sealed class AttestationException(message: String, cause: Throwable?) : RuntimeE
     class InvalidFormatException(message: String, cause: Throwable? = null) : AttestationException(message, cause)
     class InvalidCertificateChain(message: String, cause: Throwable? = null) : AttestationException(message, cause)
     class InvalidNonce(cause: Throwable? = null) : AttestationException("The attestation's nonce is invalid", cause)
-    class InvalidPublicKey(keyId: ByteArray)
-        : AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
+    class InvalidPublicKey(keyId: ByteArray) :
+        AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
 
     class InvalidAuthenticatorData(message: String) : AttestationException(message, null)
 }

@@ -4,8 +4,7 @@ import org.bouncycastle.util.io.pem.PemReader
 import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.*
-
+import java.util.Base64
 
 internal fun readPemX590Certificate(pem: String) =
     readDerX509Certificate(PemReader(pem.byteInputStream().reader()).readPemObject().content)

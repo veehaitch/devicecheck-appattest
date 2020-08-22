@@ -38,8 +38,8 @@ dependencies {
 
     // CBOR
     val jacksonVersion = "2.11.2"
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${jacksonVersion}")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion")
 
     // Bouncy Castle
     implementation("org.bouncycastle:bcprov-jdk15on:1.66")
@@ -49,9 +49,9 @@ dependencies {
 
     // Kotest
     val kotestVersion = "4.2.0"
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:${kotestVersion}") // for kotest framework
-    testImplementation("io.kotest:kotest-assertions-core-jvm:${kotestVersion}") // for kotest core jvm assertions
-    testImplementation("io.kotest:kotest-property-jvm:${kotestVersion}") // for kotest property test
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
+    testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -66,5 +66,5 @@ detekt {
 }
 
 tasks.withType<Test> {
-  useJUnitPlatform()
+    useJUnitPlatform()
 }

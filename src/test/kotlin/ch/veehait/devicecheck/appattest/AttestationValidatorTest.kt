@@ -12,15 +12,21 @@ class AttestationValidatorTest : StringSpec() {
 
         "team identifier must consist of 10 characters" {
             shouldThrow<IllegalArgumentException> {
-                AttestationValidator("a".repeat(9), "",
-                    AppleAppAttestEnvironment.DEVELOPMENT, clock = fixedClock)
+                AttestationValidator(
+                    "a".repeat(9), "",
+                    AppleAppAttestEnvironment.DEVELOPMENT, clock = fixedClock
+                )
             }
             shouldThrow<IllegalArgumentException> {
-                AttestationValidator("a".repeat(11), "",
-                    AppleAppAttestEnvironment.DEVELOPMENT, clock = fixedClock)
+                AttestationValidator(
+                    "a".repeat(11), "",
+                    AppleAppAttestEnvironment.DEVELOPMENT, clock = fixedClock
+                )
             }
-            AttestationValidator("a".repeat(10), "",
-                AppleAppAttestEnvironment.DEVELOPMENT, clock = fixedClock)
+            AttestationValidator(
+                "a".repeat(10), "",
+                AppleAppAttestEnvironment.DEVELOPMENT, clock = fixedClock
+            )
         }
 
         "validation works for valid attestation object" {

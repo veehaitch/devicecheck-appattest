@@ -6,7 +6,7 @@ package ch.veehait.devicecheck.appattest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
-class ResourceUtilsTest: StringSpec({
+class ResourceUtilsTest : StringSpec({
     "readTextResource works and omits comments" {
         javaClass.readTextResource("/iOS14-assertion-response-base64.cbor") shouldBe
             "omlzaWduYXR1cmVYRzBFAiAEso/+4kK0M5XLQFNTTwxWlHbMRQjj7UaZ0U15dmlu1gIhAOLIvvuhzNoDXrR+b/zdoNh8cs" +
