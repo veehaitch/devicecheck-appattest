@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldBe
 class ResourceUtilsTest : StringSpec({
     "readTextResource works and omits comments" {
         javaClass.readTextResource("/iOS14-assertion-response-base64.cbor") shouldBe
-            "omlzaWduYXR1cmVYRzBFAiAEso/+4kK0M5XLQFNTTwxWlHbMRQjj7UaZ0U15dmlu1gIhAOLIvvuhzNoDXrR+b/zdoNh8cs" +
-            "PRKrR+i/JG6YMyD0JecWF1dGhlbnRpY2F0b3JEYXRhWCU55G/XcFes9vC8TnMMtLn+dO2k9aSdIb2vEJj7jXeszEAAAAAB"
+            "omlzaWduYXR1cmVYRzBFAiEA+LKWlfu0VR2yfqa8DFs+IaWvovmpCni3YgkI2RhtbLECICeLPi5bJCnmp5PVMBnR9fsrJJ" +
+            "nlLLWUf2BTjQe4xcm7cWF1dGhlbnRpY2F0b3JEYXRhWCVFZRLqfiaUdquT4beXFoVZL/c/iUrA7C/VSAigi/tsj0AAAAAB"
     }
 })
