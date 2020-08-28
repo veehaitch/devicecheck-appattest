@@ -51,6 +51,9 @@ dependencies {
     // Logging
     implementation("org.slf4j:slf4j-nop:1.7.30")
 
+    // Apache Commons Codecs: Base64 URL-safe
+    implementation("commons-codec:commons-codec:1.14")
+
     // Kotest
     val kotestVersion = "4.2.0"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
