@@ -1,5 +1,9 @@
-package ch.veehait.devicecheck.appattest
+package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.AppleAppAttestStatement
+import ch.veehait.devicecheck.appattest.fromBase64
+import ch.veehait.devicecheck.appattest.readTextResource
+import ch.veehait.devicecheck.appattest.readX509PublicKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -24,7 +28,7 @@ class ReceiptValidatorTest : StringSpec() {
                 "de.vincent-haupert.apple-appattest-poc",
                 clock = fixedClock
             )
-            receiptValidator.validate(
+            receiptValidator.validateReceipt(
                 receipt,
                 readX509PublicKey(
                     (

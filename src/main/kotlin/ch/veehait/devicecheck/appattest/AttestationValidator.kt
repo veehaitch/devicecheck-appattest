@@ -1,5 +1,6 @@
 package ch.veehait.devicecheck.appattest
 
+import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -102,16 +103,9 @@ class AttestationValidator(
         launch { verifyNonce(attestationStatement, serverChallenge) }
         val publicKey = async { verifyPublicKey(attestationStatement, keyId) }
         launch { verifyAuthenticatorData(attestationStatement, keyId) }
+        val receipt = async { receiptValidator.validateAttestationReceiptAsync(attestationStatement) }
 
-        launch {
-            try {
-                receiptValidator.validateAsync(attestationStatement.attStmt.receipt, publicKey.await())
-            } catch (ex: ReceiptValidator.ReceiptException.InvalidSignature) {
-                logger.warning("Receipt signature is invalid but proceeding anyway due to an Apple bug")
-            }
-        }
-
-        AppleAppAttestValidationResponse(publicKey.await(), attestationStatement.attStmt.receipt)
+        AppleAppAttestValidationResponse(publicKey.await(), receipt.await())
     }
 
     /**
@@ -185,9 +179,9 @@ class AttestationValidator(
     private fun extractNonce(credCertDer: ByteArray): ByteArray {
         val credCert = readDerX509Certificate(credCertDer)
         val value = credCert.getExtensionValue(APPLE_CRED_CERT_EXTENSION_OID)
-        val envelope = ASN1InputStream(value).readObject() as DEROctetString
-        val sequence = ASN1InputStream(envelope.octetStream).readObject() as DLSequence
-        val sequenceFirstObject = sequence.objects.toList().first() as DLTaggedObject
+        val envelope = ASN1InputStream(value).readObjectAs<DEROctetString>()
+        val sequence = ASN1InputStream(envelope.octetStream).readObjectAs<DLSequence>()
+        val sequenceFirstObject = sequence.get<DLTaggedObject>(0)
         val leafOctetString = sequenceFirstObject.`object` as DEROctetString
         return leafOctetString.octets
     }

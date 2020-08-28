@@ -1,6 +1,8 @@
 package ch.veehait.devicecheck.appattest
 
 import org.apache.commons.codec.binary.Base64
+import org.bouncycastle.asn1.ASN1InputStream
+import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.io.pem.PemReader
 import java.security.KeyFactory
@@ -43,6 +45,9 @@ fun readX509PublicKey(encoded: ByteArray): PublicKey {
     val factory = KeyFactory.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
     return factory.generatePublic(X509EncodedKeySpec(encoded))
 }
+
+inline operator fun <reified T : Any> ASN1Sequence.get(index: Int): T = this.getObjectAt(index) as T
+inline fun <reified T : Any> ASN1InputStream.readObjectAs(): T = this.readObject() as T
 
 fun ByteArray.sha256(): ByteArray = MessageDigest.getInstance("SHA-256").digest(this)
 fun ByteArray.toBase64(): String = Base64.encodeBase64String(this)

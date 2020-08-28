@@ -14,6 +14,10 @@ plugins {
     `java-library`
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+}
+
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.

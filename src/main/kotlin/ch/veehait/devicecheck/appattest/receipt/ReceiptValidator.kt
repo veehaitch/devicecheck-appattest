@@ -1,12 +1,13 @@
-package ch.veehait.devicecheck.appattest
+package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.AppleAppAttestStatement
+import ch.veehait.devicecheck.appattest.readDerX509Certificate
+import ch.veehait.devicecheck.appattest.readPemX590Certificate
+import ch.veehait.devicecheck.appattest.verifyCertificateChain
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.bouncycastle.asn1.ASN1InputStream
-import org.bouncycastle.asn1.ASN1Sequence
-import org.bouncycastle.asn1.DEROctetString
-import org.bouncycastle.asn1.DLSet
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cms.CMSSignedData
@@ -20,15 +21,17 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.Date
+import java.util.logging.Logger
 
 class ReceiptValidator(
     appleTeamIdentifier: String,
     appCfBundleIdentifier: String,
     applePublicRootCaPem: String = APPLE_PUBLIC_ROOT_CA_G3_BUILTIN,
-    private val maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
     private val clock: Clock = Clock.systemUTC()
 ) {
     companion object {
+        private val logger = Logger.getLogger(this::class.java.simpleName)
+
         val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN =
             """
             -----BEGIN CERTIFICATE-----
@@ -46,6 +49,7 @@ class ReceiptValidator(
             -----END CERTIFICATE-----
             """.trimIndent()
 
+        val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofMinutes(10)
         val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
     }
 
@@ -56,23 +60,62 @@ class ReceiptValidator(
     private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
     private val applePublicRootCa = readPemX590Certificate(applePublicRootCaPem)
 
-    fun validate(receipt: ByteArray, publicKey: PublicKey): ReceiptPayload = runBlocking {
-        validateAsync(receipt, publicKey)
+    suspend fun validateAttestationReceiptAsync(
+        attestStatement: AppleAppAttestStatement,
+        notBeforeDilation: Duration = APPLE_ATTESTATION_NOT_BEFORE_DILATION,
+        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
+    ): Receipt = coroutineScope {
+        val receiptP7 = attestStatement.attStmt.receipt
+        val attestationCertificate = attestStatement.attStmt.x5c.first().let(::readDerX509Certificate)
+        val publicKey = attestationCertificate.publicKey
+        val notAfter = attestationCertificate.notBefore.toInstant()
+            .plus(notBeforeDilation)
+            .plus(maxAge)
+
+        validateReceiptAsync(receiptP7, publicKey, notAfter)
     }
 
-    suspend fun validateAsync(receipt: ByteArray, publicKey: PublicKey): ReceiptPayload = coroutineScope {
-        val signedData = readSignedData(receipt)
+    fun validateAttestationReceipt(
+        attestStatement: AppleAppAttestStatement,
+        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE
+    ): Receipt = runBlocking {
+        validateAttestationReceiptAsync(attestStatement, maxAge = maxAge)
+    }
+
+    fun validateReceipt(
+        receiptP7: ByteArray,
+        publicKey: PublicKey,
+        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE)
+    ): Receipt = runBlocking {
+        validateReceiptAsync(receiptP7, publicKey, notAfter)
+    }
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    suspend fun validateReceiptAsync(
+        receiptP7: ByteArray,
+        publicKey: PublicKey,
+        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE)
+    ): Receipt = coroutineScope {
+        val signedData = readSignedData(receiptP7)
         val certs = readCertificateChain(signedData)
 
-        // XXX: Omitting signature check due to an Apple bug
         // 1. Verify the signature.
-        // launch { verifySignature(signedData, certs.first()) }
+        launch {
+            try {
+                verifySignature(signedData, certs.first())
+            } catch (ex: ReceiptException.InvalidSignature) {
+                logger.warning("Receipt signature is invalid but proceeding anyway due to an Apple bug")
+            }
+        }
 
         // 2. Evaluate the trustworthiness of the signing certificate up to the
         //    Apple public root certificate for App Attest.
         launch { verifyCertificateChain(certs) }
 
-        verifyPayload(signedData, publicKey)
+        Receipt(
+            payload = verifyPayload(signedData, publicKey, notAfter),
+            p7 = receiptP7,
+        )
     }
 
     private fun readSignedData(data: ByteArray): CMSSignedData = ASN1InputStream(data).use {
@@ -108,40 +151,10 @@ class ReceiptValidator(
         }
     }
 
-    private fun parseProperties(signedData: CMSSignedData): ReceiptPayload {
-        val set = ASN1InputStream(signedData.signedContent.content as ByteArray).readObject() as DLSet
-        val objs = set.objects.toList().map { it as ASN1Sequence }.associate {
-            Pair(
-                Integer.parseInt(it.getObjectAt(0).toString()),
-                (it.getObjectAt(2) as DEROctetString).octets ?: ByteArray(0)
-            )
-        }
-
-        val objAt: (Int) -> ByteArray = { objs[it] ?: ByteArray(0) }
-        val stringAt: (Int) -> String = { String(objAt(it)) }
-        val instantAt: (Int) -> Instant = {
-            stringAt(it).takeIf { it.isNotBlank() }?.let { Instant.parse(it) } ?: Instant.MIN
-        }
-
-        @Suppress("MagicNumber")
-        return ReceiptPayload(
-            appId = stringAt(2),
-            attestationCertificate = readDerX509Certificate(objAt(3)),
-            clientHash = objAt(4),
-            token = stringAt(5),
-            receiptType = ReceiptType.valueOf(stringAt(6)),
-            environment = stringAt(7),
-            creationTime = instantAt(12),
-            riskMetric = stringAt(17).takeIf { it.isNotBlank() }?.let { Integer.parseInt(it) },
-            notBefore = instantAt(19),
-            expirationTime = instantAt(21),
-        )
-    }
-
     @Suppress("ThrowsCount")
-    private fun verifyPayload(signedData: CMSSignedData, publicKey: PublicKey): ReceiptPayload {
+    private fun verifyPayload(signedData: CMSSignedData, publicKey: PublicKey, notAfter: Instant): ReceiptPayload {
         // 3. Parse the ASN.1 structure that makes up the payload.
-        val receiptPayload = parseProperties(signedData)
+        val receiptPayload = ReceiptPayload.parse(signedData)
 
         // 4. Verify that the receipt contains the App ID of your app in field 2.
         //    Your app’s App ID is the concatenation of your 10-digit Team ID, a period, and the app’s bundle ID.
@@ -151,8 +164,8 @@ class ReceiptValidator(
 
         // 5. Verify that the receipt’s creation time, given in field 12, is no more than five minutes old.
         //    This helps to thwart replay attacks.
-        if (receiptPayload.creationTime.isBefore(clock.instant().minus(maxAge))) {
-            throw ReceiptException.InvalidPayload("Receipt's creation time is more than five minutes old")
+        if (receiptPayload.creationTime.isAfter(notAfter)) {
+            throw ReceiptException.InvalidPayload("Receipt's creation time is after $notAfter")
         }
 
         // 6. Verify that the attested public key in field 3, encoded as a DER ASN.1 object,
@@ -162,64 +175,5 @@ class ReceiptValidator(
         }
 
         return receiptPayload
-    }
-
-    enum class ReceiptType {
-        ATTEST, RECEIPT
-    }
-
-    data class ReceiptPayload(
-        val appId: String,
-        // Apple: "attestedPublicKey"
-        val attestationCertificate: X509Certificate,
-        val clientHash: ByteArray,
-        val token: String,
-        val receiptType: ReceiptType,
-        // Not mentioned in Apple's docs
-        val environment: String,
-        val creationTime: Instant,
-        val riskMetric: Int?,
-        val notBefore: Instant,
-        val expirationTime: Instant,
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as ReceiptPayload
-
-            if (appId != other.appId) return false
-            if (attestationCertificate != other.attestationCertificate) return false
-            if (!clientHash.contentEquals(other.clientHash)) return false
-            if (token != other.token) return false
-            if (receiptType != other.receiptType) return false
-            if (environment != other.environment) return false
-            if (creationTime != other.creationTime) return false
-            if (riskMetric != other.riskMetric) return false
-            if (notBefore != other.notBefore) return false
-            if (expirationTime != other.expirationTime) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = appId.hashCode()
-            result = 31 * result + attestationCertificate.hashCode()
-            result = 31 * result + clientHash.contentHashCode()
-            result = 31 * result + token.hashCode()
-            result = 31 * result + receiptType.hashCode()
-            result = 31 * result + environment.hashCode()
-            result = 31 * result + creationTime.hashCode()
-            result = 31 * result + (riskMetric ?: 0)
-            result = 31 * result + notBefore.hashCode()
-            result = 31 * result + expirationTime.hashCode()
-            return result
-        }
-    }
-
-    sealed class ReceiptException(message: String, cause: Throwable? = null) : RuntimeException(message, cause) {
-        class InvalidCertificateChain(msg: String, cause: Throwable? = null) : ReceiptException(msg, cause)
-        class InvalidSignature(msg: String) : ReceiptException(msg)
-        class InvalidPayload(msg: String) : ReceiptException(msg)
     }
 }

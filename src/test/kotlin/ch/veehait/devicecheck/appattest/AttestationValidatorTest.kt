@@ -35,12 +35,11 @@ class AttestationValidatorTest : StringSpec() {
                 "de.vincent-haupert.apple-appattest-poc",
                 AppleAppAttestEnvironment.DEVELOPMENT,
                 clock = fixedClock
+            ).validate(
+                javaClass.readTextResource("/iOS14-attestation-response-base64.cbor"),
+                "/jINCLby0Zi1H/oA+IHr+GMMVMxfva0MWaDEcqWQGwc=",
+                "wurzelpfropf".toByteArray()
             )
-                .validate(
-                    javaClass.readTextResource("/iOS14-attestation-response-base64.cbor"),
-                    "/jINCLby0Zi1H/oA+IHr+GMMVMxfva0MWaDEcqWQGwc=",
-                    "wurzelpfropf".toByteArray()
-                )
         }
     }
 }
