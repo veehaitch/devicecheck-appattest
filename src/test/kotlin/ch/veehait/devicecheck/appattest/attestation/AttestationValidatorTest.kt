@@ -1,5 +1,6 @@
-package ch.veehait.devicecheck.appattest
+package ch.veehait.devicecheck.appattest.attestation
 
+import ch.veehait.devicecheck.appattest.readTextResource
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import java.time.Clock

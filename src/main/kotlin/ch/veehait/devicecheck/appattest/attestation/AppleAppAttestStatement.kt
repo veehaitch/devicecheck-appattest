@@ -1,4 +1,4 @@
-package ch.veehait.devicecheck.appattest
+package ch.veehait.devicecheck.appattest.attestation
 
 import ch.veehait.devicecheck.appattest.receipt.Receipt
 import com.webauthn4j.data.attestation.authenticator.AAGUID

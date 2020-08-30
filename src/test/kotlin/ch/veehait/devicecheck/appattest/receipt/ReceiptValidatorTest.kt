@@ -1,6 +1,6 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.AppleAppAttestStatement
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
 import ch.veehait.devicecheck.appattest.fromBase64
 import ch.veehait.devicecheck.appattest.readTextResource
 import ch.veehait.devicecheck.appattest.readX509PublicKey

@@ -1,6 +1,6 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.AppleAppAttestStatement
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
 import ch.veehait.devicecheck.appattest.readDerX509Certificate
 import ch.veehait.devicecheck.appattest.readPemX590Certificate
 import ch.veehait.devicecheck.appattest.verifyChain
