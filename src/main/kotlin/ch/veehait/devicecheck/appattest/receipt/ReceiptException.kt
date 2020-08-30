@@ -6,6 +6,6 @@ sealed class ReceiptException(message: String, cause: Throwable? = null) : Runti
     class InvalidPayload(msg: String) : ReceiptException(msg)
 }
 
-sealed class ReceiptExchangeExceptions(message: String, cause: Throwable? = null) : RuntimeException(message, cause) {
-    class HttpError(message: String, cause: Throwable? = null) : ReceiptExchangeExceptions(message, cause)
+sealed class ReceiptExchangeException(message: String, cause: Throwable? = null) : RuntimeException(message, cause) {
+    class HttpError(message: String, cause: Throwable? = null) : ReceiptExchangeException(message, cause)
 }

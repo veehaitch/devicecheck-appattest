@@ -53,7 +53,7 @@ interface ReceiptExchange {
      * @param response The response from the request to Apple's servers
      */
     fun handleErrorResponse(response: AppleReceiptHttpClientAdapter.Response) {
-        throw ReceiptExchangeExceptions.HttpError("Caught an error in Apple's response: $response")
+        throw ReceiptExchangeException.HttpError("Caught an error in Apple's response: $response")
     }
 }
 
