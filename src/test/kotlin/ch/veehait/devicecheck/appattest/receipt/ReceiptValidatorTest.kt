@@ -1,9 +1,9 @@
 package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.Extensions.readX509PublicKey
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
-import ch.veehait.devicecheck.appattest.fromBase64
 import ch.veehait.devicecheck.appattest.readTextResource
-import ch.veehait.devicecheck.appattest.readX509PublicKey
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.readValue

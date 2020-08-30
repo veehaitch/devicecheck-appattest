@@ -1,9 +1,8 @@
 package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.Extensions.verifyChain
+import ch.veehait.devicecheck.appattest.Utils
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
-import ch.veehait.devicecheck.appattest.readDerX509Certificate
-import ch.veehait.devicecheck.appattest.readPemX590Certificate
-import ch.veehait.devicecheck.appattest.verifyChain
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -58,7 +57,7 @@ class ReceiptValidator(
     }
 
     private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
-    private val applePublicRootCa = readPemX590Certificate(applePublicRootCaPem)
+    private val applePublicRootCa = Utils.readPemX590Certificate(applePublicRootCaPem)
 
     suspend fun validateAttestationReceiptAsync(
         attestStatement: AppleAppAttestStatement,
@@ -66,7 +65,7 @@ class ReceiptValidator(
         maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
     ): Receipt = coroutineScope {
         val receiptP7 = attestStatement.attStmt.receipt
-        val attestationCertificate = attestStatement.attStmt.x5c.first().let(::readDerX509Certificate)
+        val attestationCertificate = attestStatement.attStmt.x5c.first().let(Utils::readDerX509Certificate)
         val publicKey = attestationCertificate.publicKey
         val notAfter = attestationCertificate.notBefore.toInstant()
             .plus(notBeforeDilation)

@@ -1,7 +1,7 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.fromBase64
-import ch.veehait.devicecheck.appattest.toBase64
+import ch.veehait.devicecheck.appattest.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import java.net.URI
 import java.security.PublicKey
 

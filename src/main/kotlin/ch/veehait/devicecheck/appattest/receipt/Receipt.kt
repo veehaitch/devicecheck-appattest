@@ -1,7 +1,7 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.get
-import ch.veehait.devicecheck.appattest.readDerX509Certificate
+import ch.veehait.devicecheck.appattest.Extensions.get
+import ch.veehait.devicecheck.appattest.Utils
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Sequence
@@ -81,7 +81,7 @@ data class ReceiptPayload(
                 // 2: App ID
                 appId = stringAt(2)!!,
                 // 3: Attested Public Key
-                attestationCertificate = readDerX509Certificate(objAt(3)!!),
+                attestationCertificate = Utils.readDerX509Certificate(objAt(3)!!),
                 // 4: Client Hash
                 clientHash = objAt(4)!!,
                 // 5: Token

@@ -1,14 +1,13 @@
 package ch.veehait.devicecheck.appattest.attestation
 
-import ch.veehait.devicecheck.appattest.fromBase64
-import ch.veehait.devicecheck.appattest.get
-import ch.veehait.devicecheck.appattest.readDerX509Certificate
-import ch.veehait.devicecheck.appattest.readObjectAs
-import ch.veehait.devicecheck.appattest.readPemX590Certificate
+import ch.veehait.devicecheck.appattest.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.Extensions.get
+import ch.veehait.devicecheck.appattest.Extensions.readObjectAs
+import ch.veehait.devicecheck.appattest.Extensions.sha256
+import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.Extensions.verifyChain
+import ch.veehait.devicecheck.appattest.Utils
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
-import ch.veehait.devicecheck.appattest.sha256
-import ch.veehait.devicecheck.appattest.toBase64
-import ch.veehait.devicecheck.appattest.verifyChain
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -88,7 +87,7 @@ class AttestationValidator(
     }
 
     private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
-    private val appleAppAttestRootCa = readPemX590Certificate(appleAppAttestRootCaPem)
+    private val appleAppAttestRootCa = Utils.readPemX590Certificate(appleAppAttestRootCaPem)
     private val receiptValidator = ReceiptValidator(appleTeamIdentifier, appCfBundleIdentifier, clock = clock)
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
 
@@ -166,7 +165,7 @@ class AttestationValidator(
         // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest,
         //    starting from the credential certificate stored in the first data buffer in the array (credcert).
         //    Verify the validity of the certificates using Apple’s App Attest root certificate.
-        val certs = appleAppAttestStatement.attStmt.x5c.map { readDerX509Certificate(it) }
+        val certs = appleAppAttestStatement.attStmt.x5c.map { Utils.readDerX509Certificate(it) }
         try {
             certs.verifyChain(appleAppAttestRootCa, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
@@ -188,7 +187,7 @@ class AttestationValidator(
      *                  OCTET STRING (32 byte)
      */
     private fun extractNonce(credCertDer: ByteArray): ByteArray {
-        val credCert = readDerX509Certificate(credCertDer)
+        val credCert = Utils.readDerX509Certificate(credCertDer)
         val value = credCert.getExtensionValue(APPLE_CRED_CERT_EXTENSION_OID)
         val envelope = ASN1InputStream(value).readObjectAs<DEROctetString>()
         val sequence = ASN1InputStream(envelope.octetStream).readObjectAs<DLSequence>()
@@ -222,7 +221,7 @@ class AttestationValidator(
 
     private fun verifyPublicKey(appleAppAttestStatement: AppleAppAttestStatement, keyId: ByteArray): ECPublicKey {
         // 5. Create the SHA256 hash of the public key in credCert, ...
-        val credCert = readDerX509Certificate(appleAppAttestStatement.attStmt.x5c.first())
+        val credCert = Utils.readDerX509Certificate(appleAppAttestStatement.attStmt.x5c.first())
         val publicKey = credCert.publicKey as ECPublicKey
         val uncompressedPublicKey = ECUtil.createUncompressedPublicKey(publicKey)
         val actualKeyId = uncompressedPublicKey.sha256()
