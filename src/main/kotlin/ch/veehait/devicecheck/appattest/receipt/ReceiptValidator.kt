@@ -3,7 +3,7 @@ package ch.veehait.devicecheck.appattest.receipt
 import ch.veehait.devicecheck.appattest.AppleAppAttestStatement
 import ch.veehait.devicecheck.appattest.readDerX509Certificate
 import ch.veehait.devicecheck.appattest.readPemX590Certificate
-import ch.veehait.devicecheck.appattest.verifyCertificateChain
+import ch.veehait.devicecheck.appattest.verifyChain
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -129,7 +129,7 @@ class ReceiptValidator(
 
     private fun verifyCertificateChain(certs: List<X509Certificate>) {
         try {
-            verifyCertificateChain(certs, applePublicRootCa, date = Date.from(clock.instant()))
+            certs.verifyChain(applePublicRootCa, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
             throw ReceiptException.InvalidCertificateChain(
                 "The assertion object does not contain a valid certificate chain",

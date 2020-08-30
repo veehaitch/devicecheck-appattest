@@ -23,13 +23,12 @@ internal fun readPemX590Certificate(pem: String) =
 internal fun readDerX509Certificate(der: ByteArray) =
     CertificateFactory.getInstance("X509").generateCertificate(der.inputStream()) as X509Certificate
 
-internal fun verifyCertificateChain(
-    certs: List<X509Certificate>,
+fun List<X509Certificate>.verifyChain(
     rootCaCertificate: X509Certificate,
     date: Date = Date.from(Instant.now())
 ) {
     val certFactory = CertificateFactory.getInstance("X509")
-    val certPath = certFactory.generateCertPath(certs)
+    val certPath = certFactory.generateCertPath(this)
 
     val certPathValidator = CertPathValidator.getInstance("PKIX")
     val trustAnchor = TrustAnchor(rootCaCertificate, null)

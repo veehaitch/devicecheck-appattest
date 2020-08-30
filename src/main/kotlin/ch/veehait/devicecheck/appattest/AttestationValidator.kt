@@ -160,7 +160,7 @@ class AttestationValidator(
         //    Verify the validity of the certificates using Apple’s App Attest root certificate.
         val certs = appleAppAttestStatement.attStmt.x5c.map { readDerX509Certificate(it) }
         try {
-            verifyCertificateChain(certs, appleAppAttestRootCa, date = Date.from(clock.instant()))
+            certs.verifyChain(appleAppAttestRootCa, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
             throw AttestationException.InvalidCertificateChain(
                 "The attestation object does not contain a valid certificate chain",
