@@ -1,5 +1,11 @@
 package ch.veehait.devicecheck.appattest
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.webauthn4j.converter.AuthenticatorDataConverter
+import com.webauthn4j.converter.util.ObjectConverter
+import com.webauthn4j.data.attestation.authenticator.AuthenticatorData
+import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionAuthenticatorOutput
 import org.apache.commons.codec.binary.Base64
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Sequence
@@ -23,6 +29,16 @@ object Utils {
 
     internal fun readDerX509Certificate(der: ByteArray) =
         CertificateFactory.getInstance("X509").generateCertificate(der.inputStream()) as X509Certificate
+
+    internal fun parseAuthenticatorData(
+        authenticatorData: ByteArray,
+        cborObjectMapper: ObjectMapper
+    ): AuthenticatorData<*> {
+        val converter = AuthenticatorDataConverter(
+            ObjectConverter(ObjectMapper().registerKotlinModule(), cborObjectMapper)
+        )
+        return converter.convert<AuthenticationExtensionAuthenticatorOutput<*>>(authenticatorData)
+    }
 }
 
 object Extensions {

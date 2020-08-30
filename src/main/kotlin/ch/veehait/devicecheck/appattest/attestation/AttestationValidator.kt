@@ -7,14 +7,11 @@ import ch.veehait.devicecheck.appattest.Extensions.sha256
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.Extensions.verifyChain
 import ch.veehait.devicecheck.appattest.Utils
+import ch.veehait.devicecheck.appattest.Utils.parseAuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.webauthn4j.converter.AuthenticatorDataConverter
-import com.webauthn4j.converter.util.ObjectConverter
-import com.webauthn4j.data.attestation.authenticator.AuthenticatorData
-import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionAuthenticatorOutput
 import com.webauthn4j.util.ECUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -145,13 +142,6 @@ class AttestationValidator(
         return cborObjectMapper.readValue(attestationObjectCbor, AppleAppAttestStatement::class.java)
     }
 
-    private fun parseAuthenticatorData(appleAppAttestStatement: AppleAppAttestStatement): AuthenticatorData<*> {
-        val converter = AuthenticatorDataConverter(
-            ObjectConverter(ObjectMapper().registerKotlinModule(), cborObjectMapper)
-        )
-        return converter.convert<AuthenticationExtensionAuthenticatorOutput<*>>(appleAppAttestStatement.authData)
-    }
-
     private fun verifyAttestationFormat(appleAppAttestStatement: AppleAppAttestStatement) {
         if (appleAppAttestStatement.fmt != AppleAppAttestStatement.APPLE_ATTESTATION_FORMAT_NAME) {
             throw AttestationException.InvalidFormatException(
@@ -236,7 +226,7 @@ class AttestationValidator(
 
     @Suppress("ThrowsCount")
     private fun verifyAuthenticatorData(appleAppAttestStatement: AppleAppAttestStatement, keyId: ByteArray) {
-        val authenticatorData = parseAuthenticatorData(appleAppAttestStatement)
+        val authenticatorData = parseAuthenticatorData(appleAppAttestStatement.authData, cborObjectMapper)
 
         // 6. Compute the SHA256 hash of your app’s App ID, and verify that this is the same as the authenticator
         //    data’s RP ID hash.
