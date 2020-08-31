@@ -1,14 +1,15 @@
 package ch.veehait.devicecheck.appattest.attestation
 
+import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.get
 import ch.veehait.devicecheck.appattest.Extensions.readObjectAs
 import ch.veehait.devicecheck.appattest.Extensions.sha256
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.Extensions.verifyChain
 import ch.veehait.devicecheck.appattest.Utils
 import ch.veehait.devicecheck.appattest.Utils.parseAuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
+import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -25,78 +26,110 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.Arrays.constantTimeAreEqual
 import java.security.GeneralSecurityException
 import java.security.Security
+import java.security.cert.TrustAnchor
 import java.security.interfaces.ECPublicKey
 import java.time.Clock
 import java.util.Date
-import java.util.logging.Logger
 
 /**
- * Class to validate the authenticity of an Apple App Attest attestation.
+ * Interface to validate the authenticity of an Apple App Attest attestation.
  *
- * The implementation closely follows the official article from Apple which outlines the necessary steps to validate
- * an attestation: https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
- *
- * @param appTeamIdentifier The 10-digit identifier of the team who signs your app, as denoted on
- *                          https://developer.apple.com/account. Also known as app identifier prefix (without the
- *                          trailing dot).
- * @param appBundleIdentifier Your app’s CFBundleIdentifier value. Also known as app identifier suffix.
- * @param appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
- * @param appleAppAttestRootCaPem Apple’s App Attest root certificate: https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem.
- * @param clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
+ * @property appId The connecting app.
+ * @property appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
+ * @property trustAnchor The root of the App Attest certificate chain.
+ * @property receiptValidator A [ReceiptValidator] to validate the receipt contained in the attestation statement.
+ * @property clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
  */
-@Suppress("TooManyFunctions")
-class AttestationValidator(
-    appTeamIdentifier: String,
-    appBundleIdentifier: String,
-    private val appleAppAttestEnvironment: AppleAppAttestEnvironment,
-    appleAppAttestRootCaPem: String = APPLE_APP_ATTEST_ROOT_CA_BUILTIN,
-    private val clock: Clock = Clock.systemUTC(),
-) {
-    companion object {
-        private val logger = Logger.getLogger(this::class.java.simpleName)
+interface AttestationValidator {
+    val appId: String
+    val appleAppAttestEnvironment: AppleAppAttestEnvironment
+    val trustAnchor: TrustAnchor
+    val receiptValidator: ReceiptValidator
+    val clock: Clock
 
-        const val APPLE_TEAM_IDENTIFIER_LENGTH = 10
-        const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
-
-        val APPLE_APP_ATTEST_ROOT_CA_BUILTIN =
-            """
-            -----BEGIN CERTIFICATE-----
-            MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw
-            JAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwK
-            QXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDAzMTgxODMyNTNa
-            Fw00NTAzMTUwMDAwMDBaMFIxJjAkBgNVBAMMHUFwcGxlIEFwcCBBdHRlc3RhdGlv
-            biBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9y
-            bmlhMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERTHhmLW07ATaFQIEVwTtT4dyctdh
-            NbJhFs/Ii2FdCgAHGbpphY3+d8qjuDngIN3WVhQUBHAoMeQ/cLiP1sOUtgjqK9au
-            Yen1mMEvRq9Sk3Jm5X8U62H+xTD3FE9TgS41o0IwQDAPBgNVHRMBAf8EBTADAQH/
-            MB0GA1UdDgQWBBSskRBTM72+aEH/pwyp5frq5eWKoTAOBgNVHQ8BAf8EBAMCAQYw
-            CgYIKoZIzj0EAwMDaAAwZQIwQgFGnByvsiVbpTKwSga0kP0e8EeDS4+sQmTvb7vn
-            53O5+FRXgeLhpJ06ysC5PrOyAjEAp5U4xDgEgllF7En3VcE3iexZZtKeYnpqtijV
-            oyFraWVIyd/dganmrduC1bmTBGwD
-            -----END CERTIFICATE-----
-            """.trimIndent()
-    }
-
-    init {
-        if (appTeamIdentifier.length != APPLE_TEAM_IDENTIFIER_LENGTH) {
-            throw IllegalArgumentException("The Apple team identifier must consist of exactly 10 digits")
-        }
-
-        Security.addProvider(BouncyCastleProvider())
-    }
-
-    private val appId = "$appTeamIdentifier.$appBundleIdentifier"
-    private val appleAppAttestRootCa = Utils.readPemX590Certificate(appleAppAttestRootCaPem)
-    private val receiptValidator = ReceiptValidator(appTeamIdentifier, appBundleIdentifier, clock = clock)
-    private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
+    /**
+     * Validate an attestation object.
+     *
+     * @param attestationObject attestation object created by calling
+     *   `DCAppAttestService#attestKey(_:clientDataHash:completionHandler:)`
+     * @param keyIdBase64 Base64-encoded key identifier which was created when calling
+     *   `DCAppAttestService#generateKey(completionHandler:)`
+     * @param serverChallenge The one-time challenge the server created. The iOS app incorporates a hash of this
+     *   challenge in the call to `DCAppAttestService#attestKey(_:clientDataHash:completionHandler:)`
+     *
+     * @throws AttestationException If any attestation validation error occurs, an [AttestationException] is thrown.
+     *
+     * @return An [AppleAppAttestValidationResponse] object for the given [attestationObject].
+     */
+    fun validate(
+        attestationObject: ByteArray,
+        keyIdBase64: String,
+        serverChallenge: ByteArray,
+    ): AppleAppAttestValidationResponse
 
     /**
      * Validate an attestation object. Suspending version of [validate].
      *
      * @see validate
      */
-    @Suppress("MemberVisibilityCanBePrivate")
     suspend fun validateAsync(
+        attestationObject: ByteArray,
+        keyIdBase64: String,
+        serverChallenge: ByteArray,
+    ): AppleAppAttestValidationResponse
+}
+
+/**
+ * Implementation of the [AttestationValidator] interface.
+ *
+ * The implementation closely follows the official article from Apple which outlines the necessary steps to validate
+ * an attestation: https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
+ *
+ * @param app The connecting app.
+ */
+@Suppress("TooManyFunctions")
+class AttestationValidatorImpl(
+    app: App,
+    override val appleAppAttestEnvironment: AppleAppAttestEnvironment,
+    override val clock: Clock = Clock.systemUTC(),
+    override val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(app, clock = clock),
+    override val trustAnchor: TrustAnchor = APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
+) : AttestationValidator {
+    companion object {
+        const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
+
+        val APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR = TrustAnchor(
+            Utils.readPemX590Certificate(
+                """
+                -----BEGIN CERTIFICATE-----
+                MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw
+                JAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwK
+                QXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDAzMTgxODMyNTNa
+                Fw00NTAzMTUwMDAwMDBaMFIxJjAkBgNVBAMMHUFwcGxlIEFwcCBBdHRlc3RhdGlv
+                biBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9y
+                bmlhMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERTHhmLW07ATaFQIEVwTtT4dyctdh
+                NbJhFs/Ii2FdCgAHGbpphY3+d8qjuDngIN3WVhQUBHAoMeQ/cLiP1sOUtgjqK9au
+                Yen1mMEvRq9Sk3Jm5X8U62H+xTD3FE9TgS41o0IwQDAPBgNVHRMBAf8EBTADAQH/
+                MB0GA1UdDgQWBBSskRBTM72+aEH/pwyp5frq5eWKoTAOBgNVHQ8BAf8EBAMCAQYw
+                CgYIKoZIzj0EAwMDaAAwZQIwQgFGnByvsiVbpTKwSga0kP0e8EeDS4+sQmTvb7vn
+                53O5+FRXgeLhpJ06ysC5PrOyAjEAp5U4xDgEgllF7En3VcE3iexZZtKeYnpqtijV
+                oyFraWVIyd/dganmrduC1bmTBGwD
+                -----END CERTIFICATE-----
+                """.trimIndent()
+            ),
+            null
+        )
+    }
+
+    init {
+        Security.addProvider(BouncyCastleProvider())
+    }
+
+    private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
+
+    override val appId = app.appIdentifier
+
+    override suspend fun validateAsync(
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
@@ -117,21 +150,7 @@ class AttestationValidator(
         AppleAppAttestValidationResponse(publicKey.await(), receipt.await())
     }
 
-    /**
-     * Validate an attestation object.
-     *
-     * @param attestationObject attestation object created by calling
-     *  `DCAppAttestService#attestKey(_:clientDataHash:completionHandler:)`
-     * @param keyIdBase64 Base64-encoded key identifier which was created when calling
-     *  `DCAppAttestService#generateKey(completionHandler:)`
-     * @param serverChallenge The one-time challenge the server created. The iOS app incorporates a hash of this
-     *  challenge in the call to `DCAppAttestService#attestKey(_:clientDataHash:completionHandler:)`
-     *
-     * @throws AttestationException If any attestation validation error occurs, an [AttestationException] is thrown.
-     *
-     * @return An [AppleAppAttestStatement] object for the given [attestationObject].
-     */
-    fun validate(
+    override fun validate(
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
@@ -158,7 +177,7 @@ class AttestationValidator(
         //    Verify the validity of the certificates using Apple’s App Attest root certificate.
         val certs = appleAppAttestStatement.attStmt.x5c.map { Utils.readDerX509Certificate(it) }
         try {
-            certs.verifyChain(appleAppAttestRootCa, date = Date.from(clock.instant()))
+            certs.verifyChain(trustAnchor, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
             throw AttestationException.InvalidCertificateChain(
                 "The attestation object does not contain a valid certificate chain",
@@ -255,18 +274,4 @@ class AttestationValidator(
             throw AttestationException.InvalidAuthenticatorData("Credentials ID is not equal to Key ID")
         }
     }
-}
-
-sealed class AttestationException(message: String, cause: Throwable?) : RuntimeException(message, cause) {
-    class InvalidFormatException(message: String, cause: Throwable? = null) : AttestationException(message, cause)
-    class InvalidCertificateChain(message: String, cause: Throwable? = null) : AttestationException(message, cause)
-    class InvalidNonce(cause: Throwable? = null) : AttestationException("The attestation's nonce is invalid", cause)
-    class InvalidPublicKey(keyId: ByteArray) :
-        AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
-
-    class InvalidReceipt(cause: Throwable) : AttestationException(
-        "The attestation statement receipt did not pass validation", cause
-    )
-
-    class InvalidAuthenticatorData(message: String) : AttestationException(message, null)
 }

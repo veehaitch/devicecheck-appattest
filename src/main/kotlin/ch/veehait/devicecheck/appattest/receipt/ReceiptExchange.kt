@@ -2,6 +2,9 @@ package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import java.net.URI
 import java.security.PublicKey
 
@@ -21,6 +24,29 @@ interface ReceiptExchange {
     }
 
     /**
+     * Suspending implementation of [trade]
+     */
+    suspend fun tradeAsync(receiptP7: ByteArray, attestationPublicKey: PublicKey): Receipt = coroutineScope {
+        // Validate the receipt before sending it to Apple
+        val receipt = async { receiptValidator.validateReceipt(receiptP7, attestationPublicKey) }
+        val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
+
+        val response = appleReceiptHttpClientAdapter.post(
+            appleDeviceCheckUrl,
+            authorizationHeader.await(),
+            receipt.await().p7.toBase64().toByteArray(),
+        )
+
+        @Suppress("MagicNumber")
+        if (response.statusCode != 200) {
+            handleErrorResponse(response)
+            throw ReceiptExchangeException.HttpError("Caught an error in Apple's response: $response")
+        }
+
+        receiptValidator.validateReceipt(response.body.fromBase64(), attestationPublicKey)
+    }
+
+    /**
      * Exchange a [receiptP7] for a new one.
      *
      * Also verifies the validity of the passed [receiptP7] and the returned receipt.
@@ -29,22 +55,8 @@ interface ReceiptExchange {
      * @param attestationPublicKey The public key of the initial attestation statement
      * @return A new receipt superseding the old one
      */
-    fun trade(receiptP7: ByteArray, attestationPublicKey: PublicKey): Receipt {
-        // Validate the receipt before sending it to Apple
-        receiptValidator.validateReceipt(receiptP7, attestationPublicKey)
-
-        val response = appleReceiptHttpClientAdapter.post(
-            appleDeviceCheckUrl,
-            mapOf("Authorization" to appleJwsGenerator.issueToken()),
-            receiptP7.toBase64().toByteArray(),
-        )
-
-        @Suppress("MagicNumber")
-        if (response.statusCode != 200) {
-            handleErrorResponse(response)
-        }
-
-        return receiptValidator.validateReceipt(response.body.fromBase64(), attestationPublicKey)
+    fun trade(receiptP7: ByteArray, attestationPublicKey: PublicKey): Receipt = runBlocking {
+        tradeAsync(receiptP7, attestationPublicKey)
     }
 
     /**
@@ -52,9 +64,7 @@ interface ReceiptExchange {
      *
      * @param response The response from the request to Apple's servers
      */
-    fun handleErrorResponse(response: AppleReceiptHttpClientAdapter.Response) {
-        throw ReceiptExchangeException.HttpError("Caught an error in Apple's response: $response")
-    }
+    fun handleErrorResponse(response: AppleReceiptHttpClientAdapter.Response) {}
 }
 
 class ReceiptExchangeImpl(

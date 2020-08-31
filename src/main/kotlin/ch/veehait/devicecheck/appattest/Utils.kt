@@ -44,20 +44,25 @@ object Utils {
 object Extensions {
 
     fun List<X509Certificate>.verifyChain(
-        rootCaCertificate: X509Certificate,
+        trustAnchor: TrustAnchor,
         date: Date = Date.from(Instant.now())
     ) {
         val certFactory = CertificateFactory.getInstance("X509")
         val certPath = certFactory.generateCertPath(this)
-
         val certPathValidator = CertPathValidator.getInstance("PKIX")
-        val trustAnchor = TrustAnchor(rootCaCertificate, null)
         val pkixParameters = PKIXParameters(setOf(trustAnchor)).apply {
             isRevocationEnabled = false
             this.date = date
         }
 
         certPathValidator.validate(certPath, pkixParameters)
+    }
+
+    fun List<X509Certificate>.verifyChain(
+        rootCaCertificate: X509Certificate,
+        date: Date = Date.from(Instant.now())
+    ) {
+        verifyChain(TrustAnchor(rootCaCertificate, null), date)
     }
 
     fun readX509PublicKey(encoded: ByteArray): PublicKey {

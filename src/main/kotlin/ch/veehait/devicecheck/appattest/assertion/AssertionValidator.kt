@@ -1,5 +1,6 @@
 package ch.veehait.devicecheck.appattest.assertion
 
+import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.sha256
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
@@ -13,40 +14,28 @@ import java.security.interfaces.ECPublicKey
 
 interface AssertionValidator {
     val appId: String
+    val assertionChallengeValidator: AssertionChallengeValidator
 
-    @Suppress("LongParameterList")
     fun validate(
         assertion: ByteArray,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-        assertionChallengeValidator: AssertionChallengeValidator,
     )
 
-    @Suppress("LongParameterList")
     suspend fun validateAsync(
         assertion: ByteArray,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-        assertionChallengeValidator: AssertionChallengeValidator,
     )
 }
 
-interface AssertionChallengeValidator {
-    fun validate(
-        assertionObj: Assertion,
-        clientData: ByteArray,
-        attestationPublicKey: ECPublicKey,
-        challenge: ByteArray,
-    ): Boolean
-}
-
 class AssertionValidatorImpl(
-    appTeamIdentifier: String,
-    appBundleIdentifier: String,
+    app: App,
+    override val assertionChallengeValidator: AssertionChallengeValidator,
 ) : AssertionValidator {
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
     private val signatureInstance = Signature.getInstance("SHA256withECDSA")
@@ -96,7 +85,6 @@ class AssertionValidatorImpl(
     }
 
     private fun verifyChallenge(
-        assertionChallengeValidator: AssertionChallengeValidator,
         challenge: ByteArray,
         assertionObj: Assertion,
         clientData: ByteArray,
@@ -115,7 +103,7 @@ class AssertionValidatorImpl(
         }
     }
 
-    override val appId: String = "$appTeamIdentifier.$appBundleIdentifier"
+    override val appId: String = app.appIdentifier
 
     override suspend fun validateAsync(
         assertion: ByteArray,
@@ -123,7 +111,6 @@ class AssertionValidatorImpl(
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-        assertionChallengeValidator: AssertionChallengeValidator,
     ): Unit = coroutineScope {
         val assertionObject: Assertion = cborObjectMapper.readValue(assertion)
 
@@ -139,9 +126,7 @@ class AssertionValidatorImpl(
             )
         }
 
-        launch {
-            verifyChallenge(assertionChallengeValidator, challenge, assertionObject, clientData, attestationPublicKey)
-        }
+        launch { verifyChallenge(challenge, assertionObject, clientData, attestationPublicKey) }
     }
 
     override fun validate(
@@ -150,14 +135,7 @@ class AssertionValidatorImpl(
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-        assertionChallengeValidator: AssertionChallengeValidator,
     ) = runBlocking {
-        validateAsync(assertion, clientData, attestationPublicKey, lastCounter, challenge, assertionChallengeValidator)
+        validateAsync(assertion, clientData, attestationPublicKey, lastCounter, challenge)
     }
-}
-
-sealed class AssertionException(message: String, cause: Throwable?) : RuntimeException(message, cause) {
-    class InvalidAuthenticatorData(message: String) : AssertionException(message, null)
-    class InvalidSignature(cause: Throwable? = null) : AssertionException("The assertions signature is invalid", cause)
-    class InvalidChallenge(message: String, cause: Throwable? = null) : AssertionException(message, cause)
 }

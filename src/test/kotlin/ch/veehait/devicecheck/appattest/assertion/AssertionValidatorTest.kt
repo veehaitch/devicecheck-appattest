@@ -1,9 +1,11 @@
 package ch.veehait.devicecheck.appattest.assertion
 
+import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
+import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import ch.veehait.devicecheck.appattest.readTextResource
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -26,12 +28,13 @@ class AssertionValidatorTest : StringSpec() {
             val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
             val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
 
-            val attestationResponse = AttestationValidator(
-                appTeamIdentifier = attestationSample.teamIdentifier,
-                appBundleIdentifier = attestationSample.bundleIdentifier,
+            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
+            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+                app = app,
                 appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
                 clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
-            ).validate(
+            )
+            val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,
                 keyIdBase64 = attestationSample.keyId.toBase64(),
                 serverChallenge = attestationSample.clientData
@@ -39,11 +42,6 @@ class AssertionValidatorTest : StringSpec() {
 
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
-
-            val assertionValidator = AssertionValidatorImpl(
-                appTeamIdentifier = assertionSample.teamIdentifier,
-                appBundleIdentifier = assertionSample.bundleIdentifier,
-            )
 
             val assertionChallengeValidator = object : AssertionChallengeValidator {
                 override fun validate(
@@ -56,13 +54,16 @@ class AssertionValidatorTest : StringSpec() {
                 }
             }
 
+            val assertionValidator = AssertionValidatorImpl(
+                app = app,
+                assertionChallengeValidator = assertionChallengeValidator,
+            )
             assertionValidator.validate(
                 assertion = assertionSample.assertion,
                 clientData = assertionSample.clientData,
                 attestationPublicKey = attestationResponse.publicKey,
                 lastCounter = 0L,
                 challenge = assertionSample.challenge,
-                assertionChallengeValidator = assertionChallengeValidator,
             )
         }
     }

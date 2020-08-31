@@ -1,5 +1,6 @@
 package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.verifyChain
 import ch.veehait.devicecheck.appattest.Utils
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
@@ -15,6 +16,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.GeneralSecurityException
 import java.security.PublicKey
 import java.security.Security
+import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Duration
@@ -22,47 +24,80 @@ import java.time.Instant
 import java.util.Date
 import java.util.logging.Logger
 
-class ReceiptValidator(
-    appTeamIdentifier: String,
-    appBundleIdentifier: String,
-    applePublicRootCaPem: String = APPLE_PUBLIC_ROOT_CA_G3_BUILTIN,
-    private val clock: Clock = Clock.systemUTC()
-) {
+interface ReceiptValidator {
+    companion object {
+        val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofMinutes(10)
+        val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
+    }
+
+    val appId: String
+    val trustAnchor: TrustAnchor
+    val clock: Clock
+
+    suspend fun validateAttestationReceiptAsync(
+        attestStatement: AppleAppAttestStatement,
+        notBeforeDilation: Duration = APPLE_ATTESTATION_NOT_BEFORE_DILATION,
+        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
+    ): Receipt
+
+    fun validateAttestationReceipt(
+        attestStatement: AppleAppAttestStatement,
+        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
+    ): Receipt
+
+    suspend fun validateReceiptAsync(
+        receiptP7: ByteArray,
+        publicKey: PublicKey,
+        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE),
+    ): Receipt
+
+    fun validateReceipt(
+        receiptP7: ByteArray,
+        publicKey: PublicKey,
+        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE),
+    ): Receipt
+}
+
+class ReceiptValidatorImpl(
+    app: App,
+    override val trustAnchor: TrustAnchor = APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
+    override val clock: Clock = Clock.systemUTC(),
+) : ReceiptValidator {
     companion object {
         private val logger = Logger.getLogger(this::class.java.simpleName)
 
-        val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN =
-            """
-            -----BEGIN CERTIFICATE-----
-            MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9v
-            dCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UE
-            CgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgxOTA2WhcNMzkwNDMwMTgxOTA2
-            WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmlj
-            YXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzB2MBAGByqG
-            SM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHcFBbZDuWmBSp3ZHtfTjjTuxxE
-            tX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVztK517IDvYuVTZXpmkOlEKMaNC
-            MEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0P
-            AQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY2e3v9GwOAEZLuN+yRhHFD/3m
-            eoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkL
-            F1vLUagM6BgD56KyKA==
-            -----END CERTIFICATE-----
-            """.trimIndent()
-
-        val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofMinutes(10)
-        val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
+        val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR = TrustAnchor(
+            Utils.readPemX590Certificate(
+                """
+                -----BEGIN CERTIFICATE-----
+                MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9v
+                dCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UE
+                CgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgxOTA2WhcNMzkwNDMwMTgxOTA2
+                WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmlj
+                YXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzB2MBAGByqG
+                SM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHcFBbZDuWmBSp3ZHtfTjjTuxxE
+                tX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVztK517IDvYuVTZXpmkOlEKMaNC
+                MEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0P
+                AQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY2e3v9GwOAEZLuN+yRhHFD/3m
+                eoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkL
+                F1vLUagM6BgD56KyKA==
+                -----END CERTIFICATE-----
+                """.trimIndent(),
+            ),
+            null
+        )
     }
 
     init {
         Security.addProvider(BouncyCastleProvider())
     }
 
-    private val appId = "$appTeamIdentifier.$appBundleIdentifier"
-    private val applePublicRootCa = Utils.readPemX590Certificate(applePublicRootCaPem)
+    override val appId = app.appIdentifier
 
-    suspend fun validateAttestationReceiptAsync(
+    override suspend fun validateAttestationReceiptAsync(
         attestStatement: AppleAppAttestStatement,
-        notBeforeDilation: Duration = APPLE_ATTESTATION_NOT_BEFORE_DILATION,
-        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
+        notBeforeDilation: Duration,
+        maxAge: Duration,
     ): Receipt = coroutineScope {
         val receiptP7 = attestStatement.attStmt.receipt
         val attestationCertificate = attestStatement.attStmt.x5c.first().let(Utils::readDerX509Certificate)
@@ -74,26 +109,26 @@ class ReceiptValidator(
         validateReceiptAsync(receiptP7, publicKey, notAfter)
     }
 
-    fun validateAttestationReceipt(
+    override fun validateAttestationReceipt(
         attestStatement: AppleAppAttestStatement,
-        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE
+        maxAge: Duration,
     ): Receipt = runBlocking {
         validateAttestationReceiptAsync(attestStatement, maxAge = maxAge)
     }
 
-    fun validateReceipt(
+    override fun validateReceipt(
         receiptP7: ByteArray,
         publicKey: PublicKey,
-        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE)
+        notAfter: Instant,
     ): Receipt = runBlocking {
         validateReceiptAsync(receiptP7, publicKey, notAfter)
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
-    suspend fun validateReceiptAsync(
+    override suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: PublicKey,
-        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE)
+        notAfter: Instant,
     ): Receipt = coroutineScope {
         val signedData = readSignedData(receiptP7)
         val certs = readCertificateChain(signedData)
@@ -128,7 +163,7 @@ class ReceiptValidator(
 
     private fun verifyCertificateChain(certs: List<X509Certificate>) {
         try {
-            certs.verifyChain(applePublicRootCa, date = Date.from(clock.instant()))
+            certs.verifyChain(trustAnchor, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
             throw ReceiptException.InvalidCertificateChain(
                 "The assertion object does not contain a valid certificate chain",

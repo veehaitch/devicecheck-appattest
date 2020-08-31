@@ -1,10 +1,12 @@
 package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
+import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import ch.veehait.devicecheck.appattest.readTextResource
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -24,20 +26,21 @@ class ReceiptValidatorTest : StringSpec() {
     init {
         "validation succeeds for valid receipt" {
             // Test setup
+
             val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
             val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
 
+            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
             val attestationSampleCreationTimeClock = Clock.fixed(
                 attestationSample.timestamp.plusSeconds(5),
                 ZoneOffset.UTC
             )
-
-            val attestationResponse = AttestationValidator(
-                appTeamIdentifier = attestationSample.teamIdentifier,
-                appBundleIdentifier = attestationSample.bundleIdentifier,
+            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+                app = app,
                 appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
                 clock = attestationSampleCreationTimeClock
-            ).validate(
+            )
+            val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,
                 keyIdBase64 = attestationSample.keyId.toBase64(),
                 serverChallenge = attestationSample.clientData
@@ -52,9 +55,8 @@ class ReceiptValidatorTest : StringSpec() {
                 ZoneOffset.UTC
             )
 
-            val receiptValidator = ReceiptValidator(
-                attestationSample.teamIdentifier,
-                attestationSample.bundleIdentifier,
+            val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(
+                app = app,
                 clock = assertionSampleCreationTimeClock
             )
             receiptValidator.validateReceipt(
