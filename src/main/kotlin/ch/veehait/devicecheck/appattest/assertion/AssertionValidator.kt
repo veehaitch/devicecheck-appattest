@@ -45,8 +45,8 @@ interface AssertionChallengeValidator {
 }
 
 class AssertionValidatorImpl(
-    appleTeamIdentifier: String,
-    appCfBundleIdentifier: String,
+    appTeamIdentifier: String,
+    appBundleIdentifier: String,
 ) : AssertionValidator {
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
     private val signatureInstance = Signature.getInstance("SHA256withECDSA")
@@ -115,7 +115,7 @@ class AssertionValidatorImpl(
         }
     }
 
-    override val appId: String = "$appleTeamIdentifier.$appCfBundleIdentifier"
+    override val appId: String = "$appTeamIdentifier.$appBundleIdentifier"
 
     override suspend fun validateAsync(
         assertion: ByteArray,

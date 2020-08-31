@@ -1,41 +1,65 @@
 package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
-import ch.veehait.devicecheck.appattest.Extensions.readX509PublicKey
-import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
+import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.attestation.AttestationSample
+import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.readTextResource
+import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.kotest.core.spec.style.StringSpec
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
 class ReceiptValidatorTest : StringSpec() {
-    init {
-        val fixedClock = Clock.fixed(Instant.parse("2020-08-23T11:03:36.059Z"), ZoneOffset.UTC)
+    private val jsonObjectMapper = ObjectMapper(JsonFactory())
+        .registerModule(JavaTimeModule())
+        .registerModule(KotlinModule())
 
+    init {
         "validation succeeds for valid receipt" {
-            val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
-            val attestationObjectBase64 = javaClass.readTextResource("/iOS14-attestation-response-base64.cbor")
-            val attestStatement: AppleAppAttestStatement = cborObjectMapper.readValue(attestationObjectBase64.fromBase64())
-            val receipt = attestStatement.attStmt.receipt
+            // Test setup
+            val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
+            val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
+
+            val attestationSampleCreationTimeClock = Clock.fixed(
+                attestationSample.timestamp.plusSeconds(5),
+                ZoneOffset.UTC
+            )
+
+            val attestationResponse = AttestationValidator(
+                appTeamIdentifier = attestationSample.teamIdentifier,
+                appBundleIdentifier = attestationSample.bundleIdentifier,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                clock = attestationSampleCreationTimeClock
+            ).validate(
+                attestationObject = attestationSample.attestation,
+                keyIdBase64 = attestationSample.keyId.toBase64(),
+                serverChallenge = attestationSample.clientData
+            )
+
+            // Actual test
+            val receipt = javaClass
+                .readTextResource("/iOS14-attestation-receipt-response-base64.der")
+                .fromBase64()
+            val assertionSampleCreationTimeClock = Clock.fixed(
+                Instant.parse("2020-08-31T12:22:14.181Z").plusSeconds(5),
+                ZoneOffset.UTC
+            )
 
             val receiptValidator = ReceiptValidator(
-                "6MURL8TA57",
-                "de.vincent-haupert.apple-appattest-poc",
-                clock = fixedClock
+                attestationSample.teamIdentifier,
+                attestationSample.bundleIdentifier,
+                clock = assertionSampleCreationTimeClock
             )
             receiptValidator.validateReceipt(
-                receipt,
-                readX509PublicKey(
-                    (
-                        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXvYZVfyF46DnSS0+lythdJ" +
-                            "zwbK52LhBg/hbRbGAluH2AUTB2wF6aVZFUwJ/U+nMWn1YJytGLStxD8/N0sdiiHA=="
-                        ).fromBase64()
-                )
+                receiptP7 = receipt,
+                publicKey = attestationResponse.publicKey
             )
         }
     }

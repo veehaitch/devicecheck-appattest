@@ -23,8 +23,8 @@ import java.util.Date
 import java.util.logging.Logger
 
 class ReceiptValidator(
-    appleTeamIdentifier: String,
-    appCfBundleIdentifier: String,
+    appTeamIdentifier: String,
+    appBundleIdentifier: String,
     applePublicRootCaPem: String = APPLE_PUBLIC_ROOT_CA_G3_BUILTIN,
     private val clock: Clock = Clock.systemUTC()
 ) {
@@ -56,7 +56,7 @@ class ReceiptValidator(
         Security.addProvider(BouncyCastleProvider())
     }
 
-    private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
+    private val appId = "$appTeamIdentifier.$appBundleIdentifier"
     private val applePublicRootCa = Utils.readPemX590Certificate(applePublicRootCaPem)
 
     suspend fun validateAttestationReceiptAsync(

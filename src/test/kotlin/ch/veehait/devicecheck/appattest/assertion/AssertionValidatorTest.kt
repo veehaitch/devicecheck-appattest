@@ -1,36 +1,48 @@
 package ch.veehait.devicecheck.appattest.assertion
 
-import ch.veehait.devicecheck.appattest.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.attestation.AttestationSample
+import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.readTextResource
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.StringSpec
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.openssl.PEMParser
-import java.security.KeyFactory
+import org.bouncycastle.util.Arrays
 import java.security.interfaces.ECPublicKey
-import java.security.spec.X509EncodedKeySpec
+import java.time.Clock
+import java.time.ZoneOffset
 
 class AssertionValidatorTest : StringSpec() {
     init {
-        fun loadP256PublicKey(encoded: ByteArray): ECPublicKey {
-            val factory = KeyFactory.getInstance("EC", BouncyCastleProvider())
-            return factory.generatePublic(X509EncodedKeySpec(encoded)) as ECPublicKey
-        }
-
-        fun loadP256PublicKey(pem: String): ECPublicKey {
-            val input = pem.toByteArray().inputStream()
-            val pemParser = PEMParser(input.reader())
-            val keyInfo = SubjectPublicKeyInfo.getInstance(pemParser.readObject())
-
-            return loadP256PublicKey(keyInfo.encoded)
-        }
+        val jsonObjectMapper = ObjectMapper(JsonFactory())
+            .registerModule(JavaTimeModule())
+            .registerModule(KotlinModule())
 
         "Validating an assertion works" {
-            val assertion = javaClass.readTextResource("/iOS14-assertion-response-base64.cbor").fromBase64()
+            val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
+            val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
+
+            val attestationResponse = AttestationValidator(
+                appTeamIdentifier = attestationSample.teamIdentifier,
+                appBundleIdentifier = attestationSample.bundleIdentifier,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
+            ).validate(
+                attestationObject = attestationSample.attestation,
+                keyIdBase64 = attestationSample.keyId.toBase64(),
+                serverChallenge = attestationSample.clientData
+            )
+
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
             val assertionValidator = AssertionValidatorImpl(
-                "6MURL8TA57",
-                "de.vincent-haupert.apple-appattest-poc",
+                appTeamIdentifier = assertionSample.teamIdentifier,
+                appBundleIdentifier = assertionSample.bundleIdentifier,
             )
 
             val assertionChallengeValidator = object : AssertionChallengeValidator {
@@ -40,23 +52,16 @@ class AssertionValidatorTest : StringSpec() {
                     attestationPublicKey: ECPublicKey,
                     challenge: ByteArray,
                 ): Boolean {
-                    return true
+                    return Arrays.constantTimeAreEqual("wurzel".toByteArray(), challenge)
                 }
             }
 
             assertionValidator.validate(
-                assertion = assertion,
-                clientData = "wurzelpfropf".toByteArray(),
-                attestationPublicKey = loadP256PublicKey(
-                    """
-                    -----BEGIN PUBLIC KEY-----
-                    MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXvYZVfyF46DnSS0+lythdJzwbK52L
-                    hBg/hbRbGAluH2AUTB2wF6aVZFUwJ/U+nMWn1YJytGLStxD8/N0sdiiHA==
-                    -----END PUBLIC KEY-----
-                    """.trimIndent()
-                ),
+                assertion = assertionSample.assertion,
+                clientData = assertionSample.clientData,
+                attestationPublicKey = attestationResponse.publicKey,
                 lastCounter = 0L,
-                challenge = ByteArray(0),
+                challenge = assertionSample.challenge,
                 assertionChallengeValidator = assertionChallengeValidator,
             )
         }

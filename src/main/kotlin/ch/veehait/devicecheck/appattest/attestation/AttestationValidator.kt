@@ -36,19 +36,21 @@ import java.util.logging.Logger
  * The implementation closely follows the official article from Apple which outlines the necessary steps to validate
  * an attestation: https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
  *
- * @param appleTeamIdentifier Your 10-digit team identifier, as denoted on https://developer.apple.com/account.
- * @param appCfBundleIdentifier Your app’s CFBundleIdentifier value.
- * @param appleAppAttestRootCaPem Apple’s App Attest root certificate: https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem.
+ * @param appTeamIdentifier The 10-digit identifier of the team who signs your app, as denoted on
+ *                          https://developer.apple.com/account. Also known as app identifier prefix (without the
+ *                          trailing dot).
+ * @param appBundleIdentifier Your app’s CFBundleIdentifier value. Also known as app identifier suffix.
  * @param appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
+ * @param appleAppAttestRootCaPem Apple’s App Attest root certificate: https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem.
  * @param clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
  */
 @Suppress("TooManyFunctions")
 class AttestationValidator(
-    appleTeamIdentifier: String,
-    appCfBundleIdentifier: String,
+    appTeamIdentifier: String,
+    appBundleIdentifier: String,
     private val appleAppAttestEnvironment: AppleAppAttestEnvironment,
     appleAppAttestRootCaPem: String = APPLE_APP_ATTEST_ROOT_CA_BUILTIN,
-    private val clock: Clock = Clock.systemUTC()
+    private val clock: Clock = Clock.systemUTC(),
 ) {
     companion object {
         private val logger = Logger.getLogger(this::class.java.simpleName)
@@ -76,16 +78,16 @@ class AttestationValidator(
     }
 
     init {
-        if (appleTeamIdentifier.length != APPLE_TEAM_IDENTIFIER_LENGTH) {
+        if (appTeamIdentifier.length != APPLE_TEAM_IDENTIFIER_LENGTH) {
             throw IllegalArgumentException("The Apple team identifier must consist of exactly 10 digits")
         }
 
         Security.addProvider(BouncyCastleProvider())
     }
 
-    private val appId = "$appleTeamIdentifier.$appCfBundleIdentifier"
+    private val appId = "$appTeamIdentifier.$appBundleIdentifier"
     private val appleAppAttestRootCa = Utils.readPemX590Certificate(appleAppAttestRootCaPem)
-    private val receiptValidator = ReceiptValidator(appleTeamIdentifier, appCfBundleIdentifier, clock = clock)
+    private val receiptValidator = ReceiptValidator(appTeamIdentifier, appBundleIdentifier, clock = clock)
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
 
     /**
@@ -95,11 +97,11 @@ class AttestationValidator(
      */
     @Suppress("MemberVisibilityCanBePrivate")
     suspend fun validateAsync(
-        attestationObjectBase64: String,
+        attestationObject: ByteArray,
         keyIdBase64: String,
-        serverChallenge: ByteArray
+        serverChallenge: ByteArray,
     ): AppleAppAttestValidationResponse = coroutineScope {
-        val attestationStatement = parseAttestationObject(attestationObjectBase64)
+        val attestationStatement = parseAttestationObject(attestationObject)
         val keyId = keyIdBase64.fromBase64()
 
         launch { verifyAttestationFormat(attestationStatement) }
@@ -118,7 +120,7 @@ class AttestationValidator(
     /**
      * Validate an attestation object.
      *
-     * @param attestationObjectBase64 Base64-encoded attestation object created by calling
+     * @param attestationObject attestation object created by calling
      *  `DCAppAttestService#attestKey(_:clientDataHash:completionHandler:)`
      * @param keyIdBase64 Base64-encoded key identifier which was created when calling
      *  `DCAppAttestService#generateKey(completionHandler:)`
@@ -127,19 +129,18 @@ class AttestationValidator(
      *
      * @throws AttestationException If any attestation validation error occurs, an [AttestationException] is thrown.
      *
-     * @return An [AppleAppAttestStatement] object for the given [attestationObjectBase64].
+     * @return An [AppleAppAttestStatement] object for the given [attestationObject].
      */
     fun validate(
-        attestationObjectBase64: String,
+        attestationObject: ByteArray,
         keyIdBase64: String,
-        serverChallenge: ByteArray
+        serverChallenge: ByteArray,
     ): AppleAppAttestValidationResponse = runBlocking {
-        validateAsync(attestationObjectBase64, keyIdBase64, serverChallenge)
+        validateAsync(attestationObject, keyIdBase64, serverChallenge)
     }
 
-    private fun parseAttestationObject(attestationObjectBase64: String): AppleAppAttestStatement {
-        val attestationObjectCbor = attestationObjectBase64.fromBase64()
-        return cborObjectMapper.readValue(attestationObjectCbor, AppleAppAttestStatement::class.java)
+    private fun parseAttestationObject(attestationObject: ByteArray): AppleAppAttestStatement {
+        return cborObjectMapper.readValue(attestationObject, AppleAppAttestStatement::class.java)
     }
 
     private fun verifyAttestationFormat(appleAppAttestStatement: AppleAppAttestStatement) {
@@ -193,7 +194,7 @@ class AttestationValidator(
 
         //    ... and append that hash to the end of the authenticator data (authData from the decoded object).
         // 3. Generate a new SHA256 hash of the composite item to create nonce.
-        val expectedNonce = (appleAppAttestStatement.authData + clientDataHash).sha256()
+        val expectedNonce = appleAppAttestStatement.authData.plus(clientDataHash).sha256()
 
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER-encoded
         //    ASN.1 sequence. Decode the sequence and extract the single octet string that it contains ...
@@ -262,8 +263,10 @@ sealed class AttestationException(message: String, cause: Throwable?) : RuntimeE
     class InvalidNonce(cause: Throwable? = null) : AttestationException("The attestation's nonce is invalid", cause)
     class InvalidPublicKey(keyId: ByteArray) :
         AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
+
     class InvalidReceipt(cause: Throwable) : AttestationException(
         "The attestation statement receipt did not pass validation", cause
     )
+
     class InvalidAuthenticatorData(message: String) : AttestationException(message, null)
 }
