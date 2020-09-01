@@ -3,11 +3,11 @@ package ch.veehait.devicecheck.appattest.receipt
 import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
-import ch.veehait.devicecheck.appattest.readTextResource
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule

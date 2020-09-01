@@ -1,38 +1,26 @@
 package ch.veehait.devicecheck.appattest.assertion
 
-import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
+import ch.veehait.devicecheck.appattest.TestUtils
+import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
-import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
-import ch.veehait.devicecheck.appattest.readTextResource
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.StringSpec
 import org.bouncycastle.util.Arrays
 import java.security.interfaces.ECPublicKey
-import java.time.Clock
-import java.time.ZoneOffset
 
 class AssertionValidatorTest : StringSpec() {
     init {
-        val jsonObjectMapper = ObjectMapper(JsonFactory())
-            .registerModule(JavaTimeModule())
-            .registerModule(KotlinModule())
-
         "Validating an assertion works" {
-            val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
-            val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
+            val (attestationSample, app, clock) = TestUtils.loadValidAttestationSample()
 
-            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
             val attestationValidator: AttestationValidator = AttestationValidatorImpl(
                 app = app,
                 appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
+                clock = clock
             )
             val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,

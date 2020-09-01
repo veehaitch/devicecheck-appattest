@@ -1,5 +1,8 @@
 # Apple App Attest Validation
 
+![Build status](https://github.com/veehaitch/devicecheck-appattest/workflows/Gradle%2FJVM%20CI/badge.svg)
+![Code coverage](https://codecov.io/gh/veehaitch/devicecheck-appattest/branch/main/graphs/badge.svg?branch=main)
+
 Proof of concept for validating the authenticity of Apple App Attest statements, written in Kotlin.
 
 The implementation follows the steps outlined in the article ["Validating Apps That Connect to Your Server"](https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server) at Apple Developer.
