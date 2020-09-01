@@ -10,7 +10,8 @@ sealed class AttestationException(message: String, cause: Throwable?) : RuntimeE
         AttestationException("Expected key identifier '${keyId.toBase64()}'", null)
 
     class InvalidReceipt(cause: Throwable) : AttestationException(
-        "The attestation statement receipt did not pass validation", cause
+        "The attestation statement receipt did not pass validation",
+        cause
     )
 
     class InvalidAuthenticatorData(message: String) : AttestationException(message, null)
