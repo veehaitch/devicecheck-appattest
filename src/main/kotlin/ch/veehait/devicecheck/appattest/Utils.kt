@@ -33,11 +33,11 @@ object Utils {
     internal fun parseAuthenticatorData(
         authenticatorData: ByteArray,
         cborObjectMapper: ObjectMapper
-    ): AuthenticatorData<*> {
+    ): AuthenticatorData<AuthenticationExtensionAuthenticatorOutput> {
         val converter = AuthenticatorDataConverter(
             ObjectConverter(ObjectMapper().registerKotlinModule(), cborObjectMapper)
         )
-        return converter.convert<AuthenticationExtensionAuthenticatorOutput<*>>(authenticatorData)
+        return converter.convert(authenticatorData)
     }
 }
 
