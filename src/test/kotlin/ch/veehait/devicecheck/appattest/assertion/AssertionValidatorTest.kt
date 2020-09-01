@@ -9,11 +9,20 @@ import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.StringSpec
+import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.util.Arrays
 import java.security.interfaces.ECPublicKey
 
 class AssertionValidatorTest : StringSpec() {
     init {
+        "Assertion: equals/hashCode" {
+            EqualsVerifier.forClass(Assertion::class.java).verify()
+        }
+
+        "AssertionAuthenticatorData: equals/hashCode" {
+            EqualsVerifier.forClass(AssertionAuthenticatorData::class.java).verify()
+        }
+
         "Validating an assertion works" {
             val (attestationSample, app, clock) = TestUtils.loadValidAttestationSample()
 

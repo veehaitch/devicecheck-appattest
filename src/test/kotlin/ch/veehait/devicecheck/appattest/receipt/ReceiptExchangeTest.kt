@@ -13,6 +13,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.core.spec.style.StringSpec
+import nl.jqno.equalsverifier.EqualsVerifier
 import java.time.Clock
 import java.time.ZoneOffset
 
@@ -25,6 +26,10 @@ class ReceiptExchangeTest : StringSpec() {
     init {
         val appleDeviceCheckKid = "94M3Z58NQ7"
         val appleDeviceCheckPrivateKeyPem = System.getenv("APPLE_KEY_P8_$appleDeviceCheckKid")
+
+        "AppleReceiptHttpClientAdapter.Response: equals/hashCode" {
+            EqualsVerifier.forClass(AppleReceiptHttpClientAdapter.Response::class.java).verify()
+        }
 
         "receipt exchange works".config(enabled = appleDeviceCheckPrivateKeyPem != null) {
             // Test setup

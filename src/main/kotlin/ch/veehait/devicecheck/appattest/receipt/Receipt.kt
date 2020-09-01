@@ -131,7 +131,7 @@ data class ReceiptPayload(
         result = 31 * result + (environment?.hashCode() ?: 0)
         result = 31 * result + creationTime.hashCode()
         result = 31 * result + (riskMetric ?: 0)
-        result = 31 * result + notBefore.hashCode()
+        result = 31 * result + (notBefore?.hashCode() ?: 0)
         result = 31 * result + expirationTime.hashCode()
         return result
     }
