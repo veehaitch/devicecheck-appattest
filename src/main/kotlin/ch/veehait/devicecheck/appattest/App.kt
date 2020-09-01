@@ -19,6 +19,10 @@ data class App(
         if (teamIdentifier.length != APPLE_TEAM_IDENTIFIER_LENGTH) {
             throw IllegalArgumentException("The Apple team identifier must consist of exactly 10 digits")
         }
+
+        if (bundleIdentifier.isEmpty()) {
+            throw IllegalArgumentException("The Apple bundle identifier must not be empty")
+        }
     }
 
     val appIdentifier: String = "$teamIdentifier.$bundleIdentifier"
