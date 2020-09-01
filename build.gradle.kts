@@ -9,6 +9,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "1.4.0"
     id("io.gitlab.arturbosch.detekt") version "1.12.0"
     id("org.jmailen.kotlinter") version "3.0.2"
+    id("jacoco")
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -80,3 +81,11 @@ detekt {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
+}
+tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
+}
+
