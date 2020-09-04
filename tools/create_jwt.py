@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
 
 import json
 import time
+import os
 
 from typing import Dict
 
@@ -44,13 +45,22 @@ def genjwt(privkey_pem: bytes, team_id: str, key_id: str) -> str:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--private-key-pem_file", "-p")
-    parser.add_argument("--team-id", "-t")
-    parser.add_argument("--key-id", "-k")
+    parser.add_argument("--private-key-pem_file", "-p", required=False, default=None)
+    parser.add_argument("--team-id", "-t", required=True)
+    parser.add_argument("--key-id", "-k", required=True)
     args = parser.parse_args()
 
+    if args.private_key_pem_file:
+        privkey_pem = Path(args.private_key_pem_file).read_bytes()
+    else:
+        envname = f"APPLE_KEY_P8_{args.key_id}"
+        privkey_pem = os.getenv(envname).encode()
+        if not privkey_pem:
+            raise argparse.ArgumentError(
+                args.private_key_pem_file,
+                f"No private key given either as file or as environment variable ${envname}"
+            )
 
-    privkey_pem = Path(args.private_key_pem_file).read_bytes()
     jwt = genjwt(privkey_pem, args.team_id, args.key_id)
     print(jwt)
 
