@@ -8,7 +8,6 @@ def send(receipt: bytes, token: str, verify: bool = True) -> Response:
     s = requests.Session()
     s.headers.update({
         "Authorization": token,
-        "Content-Type": "base64"
     })
     s.verify = verify
 
