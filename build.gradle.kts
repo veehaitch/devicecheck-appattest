@@ -68,6 +68,9 @@ dependencies {
 
     // Testing of equals / hashcode
     testImplementation("nl.jqno.equalsverifier:equalsverifier:3.4.2")
+
+    // MockWebServer
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.8.1")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
