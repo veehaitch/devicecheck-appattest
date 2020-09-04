@@ -1,19 +1,52 @@
 package ch.veehait.devicecheck.appattest.assertion
 
+import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils
+import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.throwable.shouldHaveMessage
 import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.util.Arrays
+import java.security.SecureRandom
 import java.security.interfaces.ECPublicKey
+import java.time.Clock
 
 class AssertionValidatorTest : StringSpec() {
+    private fun attest(): Triple<AppleAppAttestValidationResponse, App, Clock> {
+        val (attestationSample, app, clock) = TestUtils.loadValidAttestationSample()
+        val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            app = app,
+            appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+            clock = clock
+        )
+        val attestationResponse = attestationValidator.validate(
+            attestationObject = attestationSample.attestation,
+            keyIdBase64 = attestationSample.keyId.toBase64(),
+            serverChallenge = attestationSample.clientData
+        )
+        return Triple(attestationResponse, app, clock)
+    }
+
+    private val assertionChallengeAlwaysAcceptedValidator = object : AssertionChallengeValidator {
+        override fun validate(
+            assertionObj: Assertion,
+            clientData: ByteArray,
+            attestationPublicKey: ECPublicKey,
+            challenge: ByteArray,
+        ): Boolean {
+            return true
+        }
+    }
+
     init {
         "Assertion: equals/hashCode" {
             EqualsVerifier.forClass(Assertion::class.java).verify()
@@ -24,19 +57,7 @@ class AssertionValidatorTest : StringSpec() {
         }
 
         "Validating an assertion works" {
-            val (attestationSample, app, clock) = TestUtils.loadValidAttestationSample()
-
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
-                app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                clock = clock
-            )
-            val attestationResponse = attestationValidator.validate(
-                attestationObject = attestationSample.attestation,
-                keyIdBase64 = attestationSample.keyId.toBase64(),
-                serverChallenge = attestationSample.clientData
-            )
-
+            val (attestationResponse, app, _) = attest()
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
@@ -62,6 +83,136 @@ class AssertionValidatorTest : StringSpec() {
                 lastCounter = 0L,
                 challenge = assertionSample.challenge,
             )
+        }
+
+        "Throws InvalidChallenge for invalid challenge" {
+            val (attestationResponse, app, _) = attest()
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
+
+            val assertionChallengeValidator = object : AssertionChallengeValidator {
+                override fun validate(
+                    assertionObj: Assertion,
+                    clientData: ByteArray,
+                    attestationPublicKey: ECPublicKey,
+                    challenge: ByteArray,
+                ): Boolean {
+                    return false
+                }
+            }
+
+            shouldThrow<AssertionException.InvalidChallenge> {
+                AssertionValidatorImpl(
+                    app = app,
+                    assertionChallengeValidator = assertionChallengeValidator,
+                ).validate(
+                    assertion = assertionSample.assertion,
+                    clientData = assertionSample.clientData,
+                    attestationPublicKey = attestationResponse.publicKey,
+                    lastCounter = 0L,
+                    challenge = assertionSample.challenge,
+                )
+            }
+        }
+
+        "Throws InvalidAuthenticatorData for invalid app ID" {
+            val (attestationResponse, app, _) = attest()
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
+
+            val wrongBundleId = "fporfplezruw"
+            val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
+                AssertionValidatorImpl(
+                    app = app.copy(bundleIdentifier = wrongBundleId),
+                    assertionChallengeValidator = assertionChallengeAlwaysAcceptedValidator,
+                ).validate(
+                    assertion = assertionSample.assertion,
+                    clientData = assertionSample.clientData,
+                    attestationPublicKey = attestationResponse.publicKey,
+                    lastCounter = 0L,
+                    challenge = assertionSample.challenge,
+                )
+            }
+            exception shouldHaveMessage "App ID hash does not match RP ID hash"
+        }
+
+        "Throws InvalidAuthenticatorData for invalid counter value" {
+            val (attestationResponse, app, _) = attest()
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
+
+            val wrongCounterValue = Long.MAX_VALUE
+            val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
+                AssertionValidatorImpl(
+                    app = app,
+                    assertionChallengeValidator = assertionChallengeAlwaysAcceptedValidator,
+                ).validate(
+                    assertion = assertionSample.assertion,
+                    clientData = assertionSample.clientData,
+                    attestationPublicKey = attestationResponse.publicKey,
+                    lastCounter = wrongCounterValue,
+                    challenge = assertionSample.challenge,
+                )
+            }
+            exception shouldHaveMessage "Assertion counter is not greater than the counter saved counter"
+        }
+
+        "Throws InvalidSignature for invalid signature" {
+            val (attestationResponse, app, _) = attest()
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
+
+            val assertionChallengeValidator = object : AssertionChallengeValidator {
+                override fun validate(
+                    assertionObj: Assertion,
+                    clientData: ByteArray,
+                    attestationPublicKey: ECPublicKey,
+                    challenge: ByteArray,
+                ): Boolean {
+                    return true
+                }
+            }
+
+            val wrongClientData = "fporfplezruw".toByteArray()
+            shouldThrow<AssertionException.InvalidSignature> {
+                AssertionValidatorImpl(
+                    app = app,
+                    assertionChallengeValidator = assertionChallengeValidator,
+                ).validate(
+                    assertion = assertionSample.assertion,
+                    clientData = wrongClientData,
+                    attestationPublicKey = attestationResponse.publicKey,
+                    lastCounter = 0L,
+                    challenge = assertionSample.challenge,
+                )
+            }
+        }
+
+        "Throws InvalidSignature for malformatted signature" {
+            val (attestationResponse, app, _) = attest()
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
+
+            val assertionObject: Assertion = cborObjectMapper.readValue(assertionSample.assertion)
+            val assertionObjectTampered = assertionObject.copy(
+                signature = ByteArray(assertionObject.signature.size).apply {
+                    SecureRandom().nextBytes(this)
+                }
+            )
+            val assertionTampered = cborObjectMapper.writeValueAsBytes(assertionObjectTampered)
+
+            shouldThrow<AssertionException.InvalidSignature> {
+                AssertionValidatorImpl(
+                    app = app,
+                    assertionChallengeValidator = assertionChallengeAlwaysAcceptedValidator,
+                ).validate(
+                    assertion = assertionTampered,
+                    clientData = assertionSample.clientData,
+                    attestationPublicKey = attestationResponse.publicKey,
+                    lastCounter = 0L,
+                    challenge = assertionSample.challenge,
+                )
+            }
         }
     }
 }
