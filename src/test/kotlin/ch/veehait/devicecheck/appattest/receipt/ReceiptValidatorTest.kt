@@ -136,7 +136,7 @@ class ReceiptValidatorTest : StringSpec() {
                 .readTextResource("/iOS14-attestation-receipt-response-base64.der")
                 .fromBase64()
             val assertionSampleCreationTimeClock = Clock.fixed(
-                Instant.parse("2020-08-31T12:22:14.181Z").plusSeconds(5),
+                Instant.parse("2020-09-12T15:43:29.000Z").plusSeconds(5),
                 ZoneOffset.UTC
             )
 

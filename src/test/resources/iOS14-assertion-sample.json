@@ -1,11 +1,11 @@
 {
-  "assertionBase64" : "omlzaWduYXR1cmVYRzBFAiEArwxKr2p6dMaLK9sL2x46VPVjmWDOJAlOToX98CmNN9oCIBs2xTKL6lxwyXBTN6OLpZuAxfsRqBm9SL42d5Dj8GndcWF1dGhlbnRpY2F0b3JEYXRhWCVFZRLqfiaUdquT4beXFoVZL\/c\/iUrA7C\/VSAigi\/tsj0AAAAAB",
-  "bundleIdentifier" : "de.vincent-haupert.apple-appattest-poc",
+  "timestamp" : "2020-09-12T15:15:19.821Z",
+  "assertionBase64" : "omlzaWduYXR1cmVYRzBFAiB8T1h1coaCNaQm34irgmghQTNpr01PFybL9XBFqwpvzAIhAP52xEA2oqyTLcriLKw2UDkKLYTjlh8xEKWn+MlrNcxbcWF1dGhlbnRpY2F0b3JEYXRhWCVFZRLqfiaUdquT4beXFoVZL\/c\/iUrA7C\/VSAigi\/tsj0AAAAAB",
+  "type" : "assertion",
   "challengeBase64" : "d3VyemVs",
-  "clientDataBase64" : "d3VyemVscGZyb3Bm",
   "clientDataHashSha256Base64" : "i+ZcylFa0JfJU5Z9GNY12G3XihQu09B3UmvtEca+xns=",
-  "keyIdBase64" : "fPtWcs2bdTSNDCfEG310yxrHBUIWx3LF1+ECeLUw6fQ=",
+  "bundleIdentifier" : "de.vincent-haupert.apple-appattest-poc",
   "teamIdentifier" : "6MURL8TA57",
-  "timestamp" : "2020-08-31T08:53:06.548Z",
-  "type" : "assertion"
+  "keyIdBase64" : "Vki4bBvlegQpojZm5hEJotg5s6JyF5A8clgJRhLLwEI=",
+  "clientDataBase64" : "d3VyemVscGZyb3Bm"
 }

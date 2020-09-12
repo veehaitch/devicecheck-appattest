@@ -26,7 +26,7 @@ import java.util.logging.Logger
 
 interface ReceiptValidator {
     companion object {
-        val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofMinutes(10)
+        val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofDays(1)
         val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
     }
 
