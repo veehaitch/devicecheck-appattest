@@ -13,6 +13,8 @@ import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.ints.shouldBeExactly
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
 import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.util.Arrays
@@ -54,6 +56,17 @@ class AssertionValidatorTest : StringSpec() {
 
         "AssertionAuthenticatorData: equals/hashCode" {
             EqualsVerifier.forClass(AssertionAuthenticatorData::class.java).verify()
+        }
+
+        "Assertion authenticator data claims extensions but does not include any" {
+            val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
+            val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
+
+            val assertionObject: Assertion = cborObjectMapper.readValue(assertionSample.assertion)
+            val flags = assertionObject.authenticatorData[32]
+
+            flags shouldBe 64
+            assertionObject.authenticatorData.size shouldBeExactly 37
         }
 
         "Validating an assertion works" {
