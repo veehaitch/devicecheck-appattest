@@ -124,7 +124,6 @@ class ReceiptValidatorImpl(
         validateReceiptAsync(receiptP7, publicKey, notAfter)
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
     override suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: PublicKey,

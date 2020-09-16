@@ -111,7 +111,6 @@ class ReceiptValidatorTest : StringSpec() {
 
         "validation succeeds for valid receipt" {
             // Test setup
-
             val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
             val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
 
@@ -136,7 +135,7 @@ class ReceiptValidatorTest : StringSpec() {
                 .readTextResource("/iOS14-attestation-receipt-response-base64.der")
                 .fromBase64()
             val assertionSampleCreationTimeClock = Clock.fixed(
-                Instant.parse("2020-09-12T15:43:29.000Z").plusSeconds(5),
+                Instant.parse("2020-09-16T05:58:31.094Z").plusSeconds(5),
                 ZoneOffset.UTC
             )
 
