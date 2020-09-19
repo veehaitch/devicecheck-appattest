@@ -6,9 +6,9 @@
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.0"
-    id("io.gitlab.arturbosch.detekt") version "1.12.0"
-    id("org.jmailen.kotlinter") version "3.0.2"
+    id("org.jetbrains.kotlin.jvm") version "1.4.10"
+    id("io.gitlab.arturbosch.detekt") version "1.13.1"
+    id("org.jmailen.kotlinter") version "3.2.0"
     id("jacoco")
 
     // Apply the java-library plugin for API and implementation separation.
@@ -58,10 +58,10 @@ dependencies {
     implementation("org.slf4j:slf4j-nop:1.7.30")
 
     // Apache Commons Codecs: Base64 URL-safe
-    implementation("commons-codec:commons-codec:1.14")
+    implementation("commons-codec:commons-codec:1.15")
 
     // Kotest
-    val kotestVersion = "4.2.0"
+    val kotestVersion = "4.2.4"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
