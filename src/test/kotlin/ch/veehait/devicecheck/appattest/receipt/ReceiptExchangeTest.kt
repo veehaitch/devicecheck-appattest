@@ -38,7 +38,7 @@ class ReceiptExchangeTest : StringSpec() {
                 serverChallenge = attestationSample.clientData
             )
 
-            val serverResponseClock = Clock.fixed(Instant.parse("2020-10-03T09:13:53.54Z"), ZoneOffset.UTC)
+            val serverResponseClock = Clock.fixed(Instant.parse("2020-10-22T17:21:33.761Z"), ZoneOffset.UTC)
             val date = DateTimeFormatter
                 .RFC_1123_DATE_TIME
                 .withZone(serverResponseClock.zone)
@@ -47,74 +47,72 @@ class ReceiptExchangeTest : StringSpec() {
             val responseBody =
                 """
                 MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgEFADCABgkqhkiG9w0BBwGggCSABIID
-                6DGCBHQwCQIBEQIBAQQBNTAPAgEGAgEBBAdSRUNFSVBUMDkCAQICAQEEMTZNVVJMOFRBNTcuZGUu
-                dmluY2VudC1oYXVwZXJ0LmFwcGxlLWFwcGF0dGVzdC1wb2MwggMDAgEDAgEBBIIC+TCCAvUwggJ7
-                oAMCAQICBgF07biyCTAKBggqhkjOPQQDAjBPMSMwIQYDVQQDDBpBcHBsZSBBcHAgQXR0ZXN0YXRp
+                6DGCBHYwCQIBEQIBAQQBMzAPAgEGAgEBBAdSRUNFSVBUMDkCAQICAQEEMTZNVVJMOFRBNTcuZGUu
+                dmluY2VudC1oYXVwZXJ0LmFwcGxlLWFwcGF0dGVzdC1wb2MwggMCAgEDAgEBBIIC+DCCAvQwggJ7
+                oAMCAQICBgF1UUFK/DAKBggqhkjOPQQDAjBPMSMwIQYDVQQDDBpBcHBsZSBBcHAgQXR0ZXN0YXRp
                 b24gQ0EgMTETMBEGA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDEw
-                MDIwOTA4NThaFw0yMDEwMDUwOTA4NThaMIGRMUkwRwYDVQQDDEA3ZGU4OTA2YzM5YmQ5YTFlZWY0
-                MzExMDU1ZDM2OWUyNTA3MDFjOWM1ZWRkNWExOWY4MWZkMGZjMmFhNjgwNzMwMRowGAYDVQQLDBFB
+                MjExNzAwMzRaFw0yMDEwMjQxNzAwMzRaMIGRMUkwRwYDVQQDDEA0Mzk2OTE0MWY0ZTdiNmI0NTdi
+                OWExNWMzMzEzOTA0ZjlhMWI5NGQwYmJjODQzZWRlZjU2ZWYyZThiOWUxMjQxMRowGAYDVQQLDBFB
                 QUEgQ2VydGlmaWNhdGlvbjETMBEGA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5p
-                YTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNdnqIkkWZEGx4wL7FEDAtDQpZdOYSmd0xIAQLPm
-                6A3pKDHRaDZr+hFpMt1/NWB1xr8ZlAzYcvd7kqVCanzaXFqjgf8wgfwwDAYDVR0TAQH/BAIwADAO
+                YTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABIQONb2ffZVQeK3Vj7ySBecVw3H5buLgzclejixB
+                G5cmy6B7OEDQ0aoB3UpCi+YvpPhG4q15Dlxj2bP7O0+npUCjgf8wgfwwDAYDVR0TAQH/BAIwADAO
                 BgNVHQ8BAf8EBAMCBPAwgYsGCSqGSIb3Y2QIBQR+MHykAwIBCr+JMAMCAQG/iTEDAgEAv4kyAwIB
                 AL+JMwMCAQG/iTQzBDE2TVVSTDhUQTU3LmRlLnZpbmNlbnQtaGF1cGVydC5hcHBsZS1hcHBhdHRl
                 c3QtcG9jpQYEBCBza3O/iTYDAgEFv4k3AwIBAL+JOQMCAQC/iToDAgEAMBkGCSqGSIb3Y2QIBwQM
-                MAq/ingGBAQxNC4yMDMGCSqGSIb3Y2QIAgQmMCShIgQgrdTTFFYVuwaViLkEvl+TSc+dERqJvb7B
-                lus6pTTWmmUwCgYIKoZIzj0EAwIDaAAwZQIwYCLJdzcW42G4vTtLxn1rd/UjJ3dqjSG9KarqApIZ
-                huy+lsq/K0rKGqCkyOYDCuDnAjEAgbLtTegrtUpOxw2rTnQTwu6vCWA+0NP6syJ24yPe6fqy0P7T
-                YCccg3TXG0Po6A+FMD4CAQQCAQEENu+/ve+/vVzvv71RWtCX77+9U++/vX0Y77+9Ne+/vW3XihQu
-                77+977+9d1Jr77+9Eca+77+9ezBgAgEFAgEBBFhMZHRVaXZ3cDYySkNhdFRSRVorT0o4OWE4aXBk
-                U29jVWtncENmL3NWNStKbjNzNHBQSVZUYU41bkt4blEEgZA3Vzk4ZnBRcy9idHAzR1dUZlNoY0hr
-                UW1kZz09MA8CAQcCAQEEB3NhbmRib3gwHwIBDAIBAQQXMjAyMC0xMC0wM1QwOToxMzo1My41NFow
-                HwIBEwIBAQQXMjAyMC0xMC0wNFQwOToxMzo1My41NFowHwIBFQIBAQQXMjAyMS0wMS0wMVQwOTox
-                Mzo1My41NFoAAAAAAACggDCCA60wggNUoAMCAQICEFkzVq3lWYLPREI3rN9FG1MwCgYIKoZIzj0E
-                AwIwfDEwMC4GA1UEAwwnQXBwbGUgQXBwbGljYXRpb24gSW50ZWdyYXRpb24gQ0EgNSAtIEcxMSYw
-                JAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5j
-                LjELMAkGA1UEBhMCVVMwHhcNMjAwNTE5MTc0NzMxWhcNMjEwNjE4MTc0NzMxWjBaMTYwNAYDVQQD
-                DC1BcHBsaWNhdGlvbiBBdHRlc3RhdGlvbiBGcmF1ZCBSZWNlaXB0IFNpZ25pbmcxEzARBgNVBAoM
-                CkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEf+kVNGzD
-                inuYPJPR0ENf2KvaVnAE0yxYhmVRlXq0ePfLKvi6Rff6eOrGLEnk+c3AhLUDFPECM9qbdvpEKiu4
-                cqOCAdgwggHUMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAU2Rf+S2eQOEuS9NvO1VeAFAuPPckw
-                QwYIKwYBBQUHAQEENzA1MDMGCCsGAQUFBzABhidodHRwOi8vb2NzcC5hcHBsZS5jb20vb2NzcDAz
-                LWFhaWNhNWcxMDEwggEcBgNVHSAEggETMIIBDzCCAQsGCSqGSIb3Y2QFATCB/TCBwwYIKwYBBQUH
-                AgIwgbYMgbNSZWxpYW5jZSBvbiB0aGlzIGNlcnRpZmljYXRlIGJ5IGFueSBwYXJ0eSBhc3N1bWVz
-                IGFjY2VwdGFuY2Ugb2YgdGhlIHRoZW4gYXBwbGljYWJsZSBzdGFuZGFyZCB0ZXJtcyBhbmQgY29u
-                ZGl0aW9ucyBvZiB1c2UsIGNlcnRpZmljYXRlIHBvbGljeSBhbmQgY2VydGlmaWNhdGlvbiBwcmFj
-                dGljZSBzdGF0ZW1lbnRzLjA1BggrBgEFBQcCARYpaHR0cDovL3d3dy5hcHBsZS5jb20vY2VydGlm
-                aWNhdGVhdXRob3JpdHkwHQYDVR0OBBYEFGkexw9H7OON3XU3RPPp4VpsEFYlMA4GA1UdDwEB/wQE
-                AwIHgDAPBgkqhkiG92NkDA8EAgUAMAoGCCqGSM49BAMCA0cAMEQCICUYFlxeKZxZ9oU5rV3bmfY3
-                PvYOzQhFqf13GtYkLSwiAiBdKpsqX6ujY4FljRhA969IC9droZTYNCCH9NaTW7UbrjCCAvkwggJ/
-                oAMCAQICEFb7g9Qr/43DN5kjtVqubr0wCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9v
-                dCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UE
-                CgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTkwMzIyMTc1MzMzWhcNMzQwMzIyMDAwMDAw
-                WjB8MTAwLgYDVQQDDCdBcHBsZSBBcHBsaWNhdGlvbiBJbnRlZ3JhdGlvbiBDQSA1IC0gRzExJjAk
-                BgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMu
-                MQswCQYDVQQGEwJVUzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJLOY719hrGrKAo7HOGv+wSU
-                gJGs9jHfpssoNW9ES+Eh5VfdEo2NuoJ8lb5J+r4zyq7NBBnxL0Ml+vS+s8uDfrqjgfcwgfQwDwYD
-                VR0TAQH/BAUwAwEB/zAfBgNVHSMEGDAWgBS7sN6hWDOImqSKmd6+veuv2sskqzBGBggrBgEFBQcB
-                AQQ6MDgwNgYIKwYBBQUHMAGGKmh0dHA6Ly9vY3NwLmFwcGxlLmNvbS9vY3NwMDMtYXBwbGVyb290
-                Y2FnMzA3BgNVHR8EMDAuMCygKqAohiZodHRwOi8vY3JsLmFwcGxlLmNvbS9hcHBsZXJvb3RjYWcz
-                LmNybDAdBgNVHQ4EFgQU2Rf+S2eQOEuS9NvO1VeAFAuPPckwDgYDVR0PAQH/BAQDAgEGMBAGCiqG
-                SIb3Y2QGAgMEAgUAMAoGCCqGSM49BAMDA2gAMGUCMQCNb6afoeDk7FtOc4qSfz14U5iP9NofWB7D
-                dUr+OKhMKoMaGqoNpmRt4bmT6NFVTO0CMGc7LLTh6DcHd8vV7HaoGjpVOz81asjF5pKw4WG+gElp
-                5F8rqWzhEQKqzGHZOLdzSjCCAkMwggHJoAMCAQICCC3F/IjSxUuVMAoGCCqGSM49BAMDMGcxGzAZ
-                BgNVBAMMEkFwcGxlIFJvb3QgQ0EgLSBHMzEmMCQGA1UECwwdQXBwbGUgQ2VydGlmaWNhdGlvbiBB
-                dXRob3JpdHkxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMB4XDTE0MDQzMDE4MTkw
-                NloXDTM5MDQzMDE4MTkwNlowZzEbMBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQL
-                DB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkG
-                A1UEBhMCVVMwdjAQBgcqhkjOPQIBBgUrgQQAIgNiAASY6S89QHKk7ZMicoETHN0QlfHFo05x3BQW
-                2Q7lpgUqd2R7X04407scRLV/9R+2MmJdyemEW08wTxFaAP1YWAyl9Q8sTQdHE3Xal5eXbzFc7Sud
-                eyA72LlU2V6ZpDpRCjGjQjBAMB0GA1UdDgQWBBS7sN6hWDOImqSKmd6+veuv2sskqzAPBgNVHRMB
-                Af8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAwNoADBlAjEAg+nBxBZeGl00GNnt
-                7/RsDgBGS7jfskYRxQ/95nqMoaZrzsID1Jz1k8Z0uGrfqiMVAjBtZooQytQN1E/NjUM+tIpjpTNu
-                423aF7dkH8hTJvmIYnQ5Cxdby1GoDOgYA+eisigAADGCAZUwggGRAgEBMIGQMHwxMDAuBgNVBAMM
+                MAq/ingGBAQxNC4yMDMGCSqGSIb3Y2QIAgQmMCShIgQgdZSdpJShcH16T199wFVVHW4pIl1ktyuX
+                eSpSzpPFlFgwCgYIKoZIzj0EAwIDZwAwZAIwHXiZzEPDa4erTnChXOJiXlDuM+ArGXPlJR3WpyV0
+                KVZPLPVWBGmBZA65dsnfiy/eAjBhp5/juiu6nNVWG6QAJwxVE/hTzaOw3LovBR8CXg3sqOE/d1v/
+                IBdxIZB0X2cXsGUwPgIBBAIBAQQ277+977+9XO+/vVFa0Jfvv71T77+9fRjvv70177+9bdeKFC7v
+                v73vv713Umvvv70Rxr7vv717MGACAQUCAQEEWEg4QXMzTFVRLzZRb2pGOFlmdUtXMHR0enVwbUVp
+                Vzc3SnI1OUZwbDI2NnI2aTJveFRDa0RPenZjZG9SQnIEgZJaNFdXR2x2eDh0MlZYWExkK1ZCT0Fx
+                SWJ3PT0wDwIBBwIBAQQHc2FuZGJveDAgAgEMAgEBBBgyMDIwLTEwLTIyVDE3OjIxOjMzLjc2MVow
+                IAIBEwIBAQQYMjAyMC0xMC0yM1QxNzoyMTozMy43NjFaMCACARUCAQEEGDIwMjEtMDEtMjBUMTc6
+                MjE6MzMuNzYxWgAAAAAAAKCAMIIDrTCCA1SgAwIBAgIQWTNWreVZgs9EQjes30UbUzAKBggqhkjO
+                PQQDAjB8MTAwLgYDVQQDDCdBcHBsZSBBcHBsaWNhdGlvbiBJbnRlZ3JhdGlvbiBDQSA1IC0gRzEx
+                JjAkBgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJ
+                bmMuMQswCQYDVQQGEwJVUzAeFw0yMDA1MTkxNzQ3MzFaFw0yMTA2MTgxNzQ3MzFaMFoxNjA0BgNV
+                BAMMLUFwcGxpY2F0aW9uIEF0dGVzdGF0aW9uIEZyYXVkIFJlY2VpcHQgU2lnbmluZzETMBEGA1UE
+                CgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAR/6RU0
+                bMOKe5g8k9HQQ1/Yq9pWcATTLFiGZVGVerR498sq+LpF9/p46sYsSeT5zcCEtQMU8QIz2pt2+kQq
+                K7hyo4IB2DCCAdQwDAYDVR0TAQH/BAIwADAfBgNVHSMEGDAWgBTZF/5LZ5A4S5L0287VV4AUC489
+                yTBDBggrBgEFBQcBAQQ3MDUwMwYIKwYBBQUHMAGGJ2h0dHA6Ly9vY3NwLmFwcGxlLmNvbS9vY3Nw
+                MDMtYWFpY2E1ZzEwMTCCARwGA1UdIASCARMwggEPMIIBCwYJKoZIhvdjZAUBMIH9MIHDBggrBgEF
+                BQcCAjCBtgyBs1JlbGlhbmNlIG9uIHRoaXMgY2VydGlmaWNhdGUgYnkgYW55IHBhcnR5IGFzc3Vt
+                ZXMgYWNjZXB0YW5jZSBvZiB0aGUgdGhlbiBhcHBsaWNhYmxlIHN0YW5kYXJkIHRlcm1zIGFuZCBj
+                b25kaXRpb25zIG9mIHVzZSwgY2VydGlmaWNhdGUgcG9saWN5IGFuZCBjZXJ0aWZpY2F0aW9uIHBy
+                YWN0aWNlIHN0YXRlbWVudHMuMDUGCCsGAQUFBwIBFilodHRwOi8vd3d3LmFwcGxlLmNvbS9jZXJ0
+                aWZpY2F0ZWF1dGhvcml0eTAdBgNVHQ4EFgQUaR7HD0fs443ddTdE8+nhWmwQViUwDgYDVR0PAQH/
+                BAQDAgeAMA8GCSqGSIb3Y2QMDwQCBQAwCgYIKoZIzj0EAwIDRwAwRAIgJRgWXF4pnFn2hTmtXduZ
+                9jc+9g7NCEWp/Xca1iQtLCICIF0qmypfq6NjgWWNGED3r0gL12uhlNg0IIf01pNbtRuuMIIC+TCC
+                An+gAwIBAgIQVvuD1Cv/jcM3mSO1Wq5uvTAKBggqhkjOPQQDAzBnMRswGQYDVQQDDBJBcHBsZSBS
+                b290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYD
+                VQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzAeFw0xOTAzMjIxNzUzMzNaFw0zNDAzMjIwMDAw
+                MDBaMHwxMDAuBgNVBAMMJ0FwcGxlIEFwcGxpY2F0aW9uIEludGVncmF0aW9uIENBIDUgLSBHMTEm
+                MCQGA1UECwwdQXBwbGUgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkxEzARBgNVBAoMCkFwcGxlIElu
+                Yy4xCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEks5jvX2GsasoCjsc4a/7
+                BJSAkaz2Md+myyg1b0RL4SHlV90SjY26gnyVvkn6vjPKrs0EGfEvQyX69L6zy4N+uqOB9zCB9DAP
+                BgNVHRMBAf8EBTADAQH/MB8GA1UdIwQYMBaAFLuw3qFYM4iapIqZ3r6966/ayySrMEYGCCsGAQUF
+                BwEBBDowODA2BggrBgEFBQcwAYYqaHR0cDovL29jc3AuYXBwbGUuY29tL29jc3AwMy1hcHBsZXJv
+                b3RjYWczMDcGA1UdHwQwMC4wLKAqoCiGJmh0dHA6Ly9jcmwuYXBwbGUuY29tL2FwcGxlcm9vdGNh
+                ZzMuY3JsMB0GA1UdDgQWBBTZF/5LZ5A4S5L0287VV4AUC489yTAOBgNVHQ8BAf8EBAMCAQYwEAYK
+                KoZIhvdjZAYCAwQCBQAwCgYIKoZIzj0EAwMDaAAwZQIxAI1vpp+h4OTsW05zipJ/PXhTmI/02h9Y
+                HsN1Sv44qEwqgxoaqg2mZG3huZPo0VVM7QIwZzsstOHoNwd3y9XsdqgaOlU7PzVqyMXmkrDhYb6A
+                SWnkXyupbOERAqrMYdk4t3NKMIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEb
+                MBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9u
+                IEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgx
+                OTA2WhcNMzkwNDMwMTgxOTA2WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNV
+                BAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQsw
+                CQYDVQQGEwJVUzB2MBAGByqGSM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHc
+                FBbZDuWmBSp3ZHtfTjjTuxxEtX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVzt
+                K517IDvYuVTZXpmkOlEKMaNCMEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1Ud
+                EwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY
+                2e3v9GwOAEZLuN+yRhHFD/3meoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOl
+                M27jbdoXt2QfyFMm+YhidDkLF1vLUagM6BgD56KyKAAAMYH9MIH6AgEBMIGQMHwxMDAuBgNVBAMM
                 J0FwcGxlIEFwcGxpY2F0aW9uIEludGVncmF0aW9uIENBIDUgLSBHMTEmMCQGA1UECwwdQXBwbGUg
                 Q2VydGlmaWNhdGlvbiBBdXRob3JpdHkxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVT
-                AhBZM1at5VmCz0RCN6zfRRtTMA0GCWCGSAFlAwQCAQUAoIGVMBgGCSqGSIb3DQEJAzELBgkqhkiG
-                9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIwMTAwMzA5MTM1M1owKgYJKoZIhvcNAQk0MR0wGzANBglg
-                hkgBZQMEAgEFAKEKBggqhkjOPQQDAjAvBgkqhkiG9w0BCQQxIgQg2GI/J/vHG/wBPGAgekK/TPzS
-                K6ITVN7QzzY+4sqM3WgwCgYIKoZIzj0EAwIERjBEAiA67xkgOwzVB08TLAzsc8n4I568q85BLMsW
-                xzw/XPedkwIgaJJWWf0Q/yZBXOAkImWEg3/NecFhOMevKEcS80jrVQEAAAAAAAA=
+                AhBZM1at5VmCz0RCN6zfRRtTMA0GCWCGSAFlAwQCAQUAMAoGCCqGSM49BAMCBEcwRQIhANC1EYrb
+                OsY03sHKl9X7SDPa3+K22w5CVnaNASAlLNafAiBzYy6sStgxAx62Xa0z4U7s4SLoI4cbT5Jq5bxU
+                n6o6bwAAAAAAAA==
                 """.trimIndent()
 
             val mockResponse = MockResponse().apply {
@@ -167,7 +165,7 @@ class ReceiptExchangeTest : StringSpec() {
             )
 
             receipt.p7 shouldBe mockResponse.getBody()!!.readByteArray().fromBase64()
-            receipt.payload.riskMetric shouldBe 5
+            receipt.payload.riskMetric shouldBe 3
 
             mockWebServer.shutdown()
         }
@@ -202,11 +200,10 @@ class ReceiptExchangeTest : StringSpec() {
                 ),
             )
 
-            val rec = receiptExchange.trade(
+            receiptExchange.trade(
                 receiptP7 = attestationResponse.receipt.p7,
                 attestationPublicKey = attestationResponse.publicKey
             )
-            print(rec)
         }
     }
 }
