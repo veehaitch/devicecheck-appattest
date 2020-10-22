@@ -39,10 +39,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 
     // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
 
     // CBOR
-    val jacksonVersion = "2.11.2"
+    val jacksonVersion = "2.11.3"
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion")
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
@@ -52,7 +52,7 @@ dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:1.66")
 
     // WebAuthN parsing
-    implementation("com.webauthn4j:webauthn4j-core:0.13.0.RELEASE")
+    implementation("com.webauthn4j:webauthn4j-core:0.14.0.RELEASE")
 
     // Logging
     implementation("org.slf4j:slf4j-nop:1.7.30")
@@ -61,16 +61,16 @@ dependencies {
     implementation("commons-codec:commons-codec:1.15")
 
     // Kotest
-    val kotestVersion = "4.2.4"
+    val kotestVersion = "4.3.0"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
 
     // Testing of equals / hashcode
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.4.2")
+    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.5")
 
     // MockWebServer
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.8.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
