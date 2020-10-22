@@ -133,13 +133,7 @@ class ReceiptValidatorImpl(
         val certs = readCertificateChain(signedData)
 
         // 1. Verify the signature.
-        launch {
-            try {
-                verifySignature(signedData, certs.first())
-            } catch (ex: ReceiptException.InvalidSignature) {
-                logger.warning("Receipt signature is invalid but proceeding anyway due to an Apple bug")
-            }
-        }
+        launch { verifySignature(signedData, certs.first()) }
 
         // 2. Evaluate the trustworthiness of the signing certificate up to the
         //    Apple public root certificate for App Attest.
