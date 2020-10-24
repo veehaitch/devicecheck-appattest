@@ -19,6 +19,8 @@ plugins {
 }
 
 java {
+    withJavadocJar()
+    withSourcesJar()
     sourceCompatibility = JavaVersion.VERSION_11
 }
 
