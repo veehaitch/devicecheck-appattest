@@ -1,4 +1,4 @@
-name: Gradle/JVM CI
+name: Build, test & publish
 
 on: [push]
 
@@ -20,6 +20,11 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
       - name: Build and test with Gradle
         run: ./gradlew clean check
+      - name: Publish package
+        if: ${{ success() && github.ref == 'refs/heads/main' }}
+        run: ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Codecov
         uses: codecov/codecov-action@v1.0.13
         with:

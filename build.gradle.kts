@@ -13,10 +13,37 @@ plugins {
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
+
+    // Publish build artifacts to an Apache Maven repository
+    `maven-publish`
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
+}
+
+allprojects {
+    group = "ch.veehaitch.devicecheck"
+    version = "0.1-SNAPSHOT"
+
+    publishing {
+        publications {
+            create<MavenPublication>("default") {
+                from(components["java"])
+            }
+        }
+
+        repositories {
+            maven {
+                name = "GitHubPackages"
+                url = uri("https://maven.pkg.github.com/veehaitch/devicecheck-appattest")
+                credentials {
+                    username = System.getenv("GITHUB_ACTOR")
+                    password = System.getenv("GITHUB_TOKEN")
+                }
+            }
+        }
+    }
 }
 
 repositories {
