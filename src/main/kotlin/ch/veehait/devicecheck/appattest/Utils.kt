@@ -9,17 +9,13 @@ import com.webauthn4j.data.extension.authenticator.AuthenticationExtensionAuthen
 import org.apache.commons.codec.binary.Base64
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Sequence
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.io.pem.PemReader
-import java.security.KeyFactory
 import java.security.MessageDigest
-import java.security.PublicKey
 import java.security.cert.CertPathValidator
 import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
-import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Date
 
@@ -32,7 +28,7 @@ object Utils {
 
     internal fun parseAuthenticatorData(
         authenticatorData: ByteArray,
-        cborObjectMapper: ObjectMapper
+        cborObjectMapper: ObjectMapper,
     ): AuthenticatorData<AuthenticationExtensionAuthenticatorOutput> {
         val converter = AuthenticatorDataConverter(
             ObjectConverter(ObjectMapper().registerKotlinModule(), cborObjectMapper)
@@ -45,7 +41,7 @@ object Extensions {
 
     fun List<X509Certificate>.verifyChain(
         trustAnchor: TrustAnchor,
-        date: Date = Date.from(Instant.now())
+        date: Date = Date.from(Instant.now()),
     ) {
         val certFactory = CertificateFactory.getInstance("X509")
         val certPath = certFactory.generateCertPath(this)
@@ -56,18 +52,6 @@ object Extensions {
         }
 
         certPathValidator.validate(certPath, pkixParameters)
-    }
-
-    fun List<X509Certificate>.verifyChain(
-        rootCaCertificate: X509Certificate,
-        date: Date = Date.from(Instant.now())
-    ) {
-        verifyChain(TrustAnchor(rootCaCertificate, null), date)
-    }
-
-    fun readX509PublicKey(encoded: ByteArray): PublicKey {
-        val factory = KeyFactory.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
-        return factory.generatePublic(X509EncodedKeySpec(encoded))
     }
 
     inline operator fun <reified T : Any> ASN1Sequence.get(index: Int): T = this.getObjectAt(index) as T
