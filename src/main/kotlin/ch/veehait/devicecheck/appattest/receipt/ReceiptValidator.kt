@@ -14,10 +14,10 @@ import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.GeneralSecurityException
-import java.security.PublicKey
 import java.security.Security
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
+import java.security.interfaces.ECPublicKey
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -47,13 +47,13 @@ interface ReceiptValidator {
 
     suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
-        publicKey: PublicKey,
+        publicKey: ECPublicKey,
         notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE),
     ): Receipt
 
     fun validateReceipt(
         receiptP7: ByteArray,
-        publicKey: PublicKey,
+        publicKey: ECPublicKey,
         notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE),
     ): Receipt
 }
@@ -101,7 +101,7 @@ class ReceiptValidatorImpl(
     ): Receipt = coroutineScope {
         val receiptP7 = attestStatement.attStmt.receipt
         val attestationCertificate = attestStatement.attStmt.x5c.first().let(Utils::readDerX509Certificate)
-        val publicKey = attestationCertificate.publicKey
+        val publicKey = attestationCertificate.publicKey as ECPublicKey
         val notAfter = attestationCertificate.notBefore.toInstant()
             .plus(notBeforeDilation)
             .plus(maxAge)
@@ -118,7 +118,7 @@ class ReceiptValidatorImpl(
 
     override fun validateReceipt(
         receiptP7: ByteArray,
-        publicKey: PublicKey,
+        publicKey: ECPublicKey,
         notAfter: Instant,
     ): Receipt = runBlocking {
         validateReceiptAsync(receiptP7, publicKey, notAfter)
@@ -126,7 +126,7 @@ class ReceiptValidatorImpl(
 
     override suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
-        publicKey: PublicKey,
+        publicKey: ECPublicKey,
         notAfter: Instant,
     ): Receipt = coroutineScope {
         val signedData = readSignedData(receiptP7)
@@ -179,7 +179,7 @@ class ReceiptValidatorImpl(
     }
 
     @Suppress("ThrowsCount")
-    private fun verifyPayload(signedData: CMSSignedData, publicKey: PublicKey, notAfter: Instant): ReceiptPayload {
+    private fun verifyPayload(signedData: CMSSignedData, publicKey: ECPublicKey, notAfter: Instant): ReceiptPayload {
         // 3. Parse the ASN.1 structure that makes up the payload.
         val receiptPayload = ReceiptPayload.parse(signedData)
 

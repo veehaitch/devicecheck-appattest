@@ -6,7 +6,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import java.net.URI
-import java.security.PublicKey
+import java.security.interfaces.ECPublicKey
 
 interface ReceiptExchange {
     val appleJwsGenerator: AppleJwsGenerator
@@ -26,7 +26,7 @@ interface ReceiptExchange {
     /**
      * Suspending implementation of [trade]
      */
-    suspend fun tradeAsync(receiptP7: ByteArray, attestationPublicKey: PublicKey): Receipt = coroutineScope {
+    suspend fun tradeAsync(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = coroutineScope {
         // Validate the receipt before sending it to Apple
         val receipt = async { receiptValidator.validateReceipt(receiptP7, attestationPublicKey) }
         val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
@@ -55,7 +55,7 @@ interface ReceiptExchange {
      * @param attestationPublicKey The public key of the initial attestation statement
      * @return A new receipt superseding the old one
      */
-    fun trade(receiptP7: ByteArray, attestationPublicKey: PublicKey): Receipt = runBlocking {
+    fun trade(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = runBlocking {
         tradeAsync(receiptP7, attestationPublicKey)
     }
 
