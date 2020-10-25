@@ -1,11 +1,10 @@
 package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.AppleAppAttest
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestUtils
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
-import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
-import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
@@ -27,10 +26,15 @@ class ReceiptExchangeTest : StringSpec() {
         "ReceiptExchange works with MockWebServer" {
             val (attestationSample, app, attestationClock) = TestUtils.loadValidAttestationSample()
 
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val appleAppAttest = AppleAppAttest(
                 app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                clock = attestationClock
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = attestationClock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = attestationClock
+                )
             )
             val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,
@@ -175,12 +179,17 @@ class ReceiptExchangeTest : StringSpec() {
 
         "receipt exchange works".config(enabled = appleDeviceCheckPrivateKeyPem != null) {
             // Test setup
-            val (attestationSample, app, clock) = TestUtils.loadValidAttestationSample()
+            val (attestationSample, app, attestationClock) = TestUtils.loadValidAttestationSample()
 
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val appleAppAttest = AppleAppAttest(
                 app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                clock = clock
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = attestationClock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = attestationClock
+                )
             )
             val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,
@@ -189,15 +198,13 @@ class ReceiptExchangeTest : StringSpec() {
             )
 
             // Actual test
-            val receiptExchange = ReceiptExchangeImpl(
+            val receiptExchange = appleAppAttest.createReceiptExchange(
                 appleJwsGenerator = AppleJwsGeneratorImpl(
                     appleTeamIdentifier = attestationSample.teamIdentifier,
                     keyIdentifier = appleDeviceCheckKid,
                     privateKeyPem = appleDeviceCheckPrivateKeyPem
                 ),
-                receiptValidator = ReceiptValidatorImpl(
-                    app = app,
-                ),
+                receiptValidator = appleAppAttest.createReceiptValidator(),
             )
 
             receiptExchange.trade(

@@ -1,14 +1,13 @@
 package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.App
+import ch.veehait.devicecheck.appattest.AppleAppAttest
 import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.Utils
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
-import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
-import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -119,10 +118,15 @@ class ReceiptValidatorTest : StringSpec() {
                 attestationSample.timestamp.plusSeconds(5),
                 ZoneOffset.UTC
             )
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val appleAppAttest = AppleAppAttest(
                 app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                clock = attestationSampleCreationTimeClock
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = attestationSampleCreationTimeClock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = attestationSampleCreationTimeClock
+                )
             )
             val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,
@@ -139,8 +143,7 @@ class ReceiptValidatorTest : StringSpec() {
                 ZoneOffset.UTC
             )
 
-            val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(
-                app = app,
+            val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
                 clock = assertionSampleCreationTimeClock
             )
             receiptValidator.validateReceipt(

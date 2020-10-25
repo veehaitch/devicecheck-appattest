@@ -1,6 +1,6 @@
 # Apple App Attest Validation
 
-![Build status](https://github.com/veehaitch/devicecheck-appattest/workflows/Gradle%2FJVM%20CI/badge.svg)
+![Build status](https://github.com/veehaitch/devicecheck-appattest/workflows/Build%2C%20test%20%26%20publish/badge.svg)
 ![Code coverage](https://codecov.io/gh/veehaitch/devicecheck-appattest/branch/main/graphs/badge.svg?branch=main)
 
 Proof of concept, server-side library for validating the authenticity of Apple App Attest artifacts, including 
@@ -42,10 +42,14 @@ To validate the authenticity of the `attestationObject`, instantiate an `Attesta
 calls `DCAppAttestService`. 
 
 ```kotlin
-// Create an AttestationValidator instance specific to a given iOS app and development team
-val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+// Create an instance of AppleAppAttest specific to a given iOS app, development team and Apple App attest environment
+val appleAppAttest = AppleAppAttest(
     app = App("6MURL8TA57", "de.vincent-haupert.apple-appattest-poc"),
+    appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
 )
+
+// Create an AttestationValidator instance
+val attestationValidator = appleAppAttest.createAttestationValidator()
 
 // Validate a single attestation object. Throws an AttestationException if a validation error occurs.
 val result: AppleAppAttestValidationResponse = attestationValidator.validate(
@@ -54,7 +58,9 @@ val result: AppleAppAttestValidationResponse = attestationValidator.validate(
     serverChallenge = "wurzelpfropf".toByteArray()
 )
 
-// If the method call returns, the validation has passed and you can now trust the returned public key and receipt.
+// If the method call returns, the validation has passed and you can now trust the returned result which contains
+// references to the attested public key and the verified receipt. You use the public key for the verification
+// of assertions and the receipt for obtaining a fraud risk metric.
 ```
 
 Also refer to [AttestationValidatorTest](src/test/kotlin/ch/veehait/devicecheck/appattest/attestation/AttestationValidatorTest.kt).

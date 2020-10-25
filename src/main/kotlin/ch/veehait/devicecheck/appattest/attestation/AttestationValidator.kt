@@ -34,7 +34,7 @@ import java.util.Date
 /**
  * Interface to validate the authenticity of an Apple App Attest attestation.
  *
- * @property appId The connecting app.
+ * @property app The connecting app.
  * @property appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
  * @property trustAnchor The root of the App Attest certificate chain.
  * @property receiptValidator A [ReceiptValidator] to validate the receipt contained in the attestation statement.
@@ -46,6 +46,31 @@ interface AttestationValidator {
     val trustAnchor: TrustAnchor
     val receiptValidator: ReceiptValidator
     val clock: Clock
+
+    companion object {
+        const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
+        val APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR = TrustAnchor(
+            Utils.readPemX590Certificate(
+                """
+                -----BEGIN CERTIFICATE-----
+                MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw
+                JAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwK
+                QXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDAzMTgxODMyNTNa
+                Fw00NTAzMTUwMDAwMDBaMFIxJjAkBgNVBAMMHUFwcGxlIEFwcCBBdHRlc3RhdGlv
+                biBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9y
+                bmlhMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERTHhmLW07ATaFQIEVwTtT4dyctdh
+                NbJhFs/Ii2FdCgAHGbpphY3+d8qjuDngIN3WVhQUBHAoMeQ/cLiP1sOUtgjqK9au
+                Yen1mMEvRq9Sk3Jm5X8U62H+xTD3FE9TgS41o0IwQDAPBgNVHRMBAf8EBTADAQH/
+                MB0GA1UdDgQWBBSskRBTM72+aEH/pwyp5frq5eWKoTAOBgNVHQ8BAf8EBAMCAQYw
+                CgYIKoZIzj0EAwMDaAAwZQIwQgFGnByvsiVbpTKwSga0kP0e8EeDS4+sQmTvb7vn
+                53O5+FRXgeLhpJ06ysC5PrOyAjEAp5U4xDgEgllF7En3VcE3iexZZtKeYnpqtijV
+                oyFraWVIyd/dganmrduC1bmTBGwD
+                -----END CERTIFICATE-----
+                """.trimIndent()
+            ),
+            null
+        )
+    }
 
     /**
      * Validate an attestation object.
@@ -88,39 +113,13 @@ interface AttestationValidator {
  * @param app The connecting app.
  */
 @Suppress("TooManyFunctions")
-class AttestationValidatorImpl(
+internal class AttestationValidatorImpl(
     override val app: App,
     override val appleAppAttestEnvironment: AppleAppAttestEnvironment,
     override val clock: Clock = Clock.systemUTC(),
     override val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(app, clock = clock),
-    override val trustAnchor: TrustAnchor = APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
+    override val trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
 ) : AttestationValidator {
-    companion object {
-        const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
-
-        val APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR = TrustAnchor(
-            Utils.readPemX590Certificate(
-                """
-                -----BEGIN CERTIFICATE-----
-                MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw
-                JAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwK
-                QXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDAzMTgxODMyNTNa
-                Fw00NTAzMTUwMDAwMDBaMFIxJjAkBgNVBAMMHUFwcGxlIEFwcCBBdHRlc3RhdGlv
-                biBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9y
-                bmlhMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERTHhmLW07ATaFQIEVwTtT4dyctdh
-                NbJhFs/Ii2FdCgAHGbpphY3+d8qjuDngIN3WVhQUBHAoMeQ/cLiP1sOUtgjqK9au
-                Yen1mMEvRq9Sk3Jm5X8U62H+xTD3FE9TgS41o0IwQDAPBgNVHRMBAf8EBTADAQH/
-                MB0GA1UdDgQWBBSskRBTM72+aEH/pwyp5frq5eWKoTAOBgNVHQ8BAf8EBAMCAQYw
-                CgYIKoZIzj0EAwMDaAAwZQIwQgFGnByvsiVbpTKwSga0kP0e8EeDS4+sQmTvb7vn
-                53O5+FRXgeLhpJ06ysC5PrOyAjEAp5U4xDgEgllF7En3VcE3iexZZtKeYnpqtijV
-                oyFraWVIyd/dganmrduC1bmTBGwD
-                -----END CERTIFICATE-----
-                """.trimIndent()
-            ),
-            null
-        )
-    }
-
     init {
         Security.addProvider(BouncyCastleProvider())
     }
@@ -196,7 +195,7 @@ class AttestationValidatorImpl(
      */
     private fun extractNonce(credCertDer: ByteArray): ByteArray {
         val credCert = Utils.readDerX509Certificate(credCertDer)
-        val value = credCert.getExtensionValue(APPLE_CRED_CERT_EXTENSION_OID)
+        val value = credCert.getExtensionValue(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID)
         val envelope = ASN1InputStream(value).readObjectAs<DEROctetString>()
         val sequence = ASN1InputStream(envelope.octetStream).readObjectAs<DLSequence>()
         val sequenceFirstObject = sequence.get<DLTaggedObject>(0)

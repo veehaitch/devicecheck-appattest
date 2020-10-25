@@ -22,12 +22,31 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.Date
-import java.util.logging.Logger
 
 interface ReceiptValidator {
     companion object {
         val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofDays(1)
         val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
+        val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR = TrustAnchor(
+            Utils.readPemX590Certificate(
+                """
+                -----BEGIN CERTIFICATE-----
+                MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9v
+                dCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UE
+                CgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgxOTA2WhcNMzkwNDMwMTgxOTA2
+                WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmlj
+                YXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzB2MBAGByqG
+                SM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHcFBbZDuWmBSp3ZHtfTjjTuxxE
+                tX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVztK517IDvYuVTZXpmkOlEKMaNC
+                MEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0P
+                AQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY2e3v9GwOAEZLuN+yRhHFD/3m
+                eoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkL
+                F1vLUagM6BgD56KyKA==
+                -----END CERTIFICATE-----
+                """.trimIndent(),
+            ),
+            null
+        )
     }
 
     val app: App
@@ -58,36 +77,11 @@ interface ReceiptValidator {
     ): Receipt
 }
 
-class ReceiptValidatorImpl(
+internal class ReceiptValidatorImpl(
     override val app: App,
-    override val trustAnchor: TrustAnchor = APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
+    override val trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
     override val clock: Clock = Clock.systemUTC(),
 ) : ReceiptValidator {
-    companion object {
-        private val logger = Logger.getLogger(this::class.java.simpleName)
-
-        val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR = TrustAnchor(
-            Utils.readPemX590Certificate(
-                """
-                -----BEGIN CERTIFICATE-----
-                MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9v
-                dCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UE
-                CgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgxOTA2WhcNMzkwNDMwMTgxOTA2
-                WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmlj
-                YXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzB2MBAGByqG
-                SM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHcFBbZDuWmBSp3ZHtfTjjTuxxE
-                tX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVztK517IDvYuVTZXpmkOlEKMaNC
-                MEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0P
-                AQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY2e3v9GwOAEZLuN+yRhHFD/3m
-                eoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkL
-                F1vLUagM6BgD56KyKA==
-                -----END CERTIFICATE-----
-                """.trimIndent(),
-            ),
-            null
-        )
-    }
-
     init {
         Security.addProvider(BouncyCastleProvider())
     }

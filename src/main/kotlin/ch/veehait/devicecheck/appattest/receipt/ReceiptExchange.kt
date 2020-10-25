@@ -67,13 +67,9 @@ interface ReceiptExchange {
     fun handleErrorResponse(response: AppleReceiptHttpClientAdapter.Response) {}
 }
 
-class ReceiptExchangeImpl(
+internal class ReceiptExchangeImpl(
     override val appleJwsGenerator: AppleJwsGenerator,
     override val receiptValidator: ReceiptValidator,
     override val appleDeviceCheckUrl: URI = ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL,
-    override val appleReceiptHttpClientAdapter: AppleReceiptHttpClientAdapter = DEFAULT_HTTP_CLIENT_ADAPTER,
-) : ReceiptExchange {
-    companion object {
-        private val DEFAULT_HTTP_CLIENT_ADAPTER = SimpleAppleReceiptHttpClientAdapter()
-    }
-}
+    override val appleReceiptHttpClientAdapter: AppleReceiptHttpClientAdapter = SimpleAppleReceiptHttpClientAdapter(),
+) : ReceiptExchange

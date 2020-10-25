@@ -29,7 +29,7 @@ interface AppleReceiptHttpClientAdapter {
     fun post(uri: URI, authorizationHeader: Map<String, String>, body: ByteArray): Response
 }
 
-class SimpleAppleReceiptHttpClientAdapter : AppleReceiptHttpClientAdapter {
+internal class SimpleAppleReceiptHttpClientAdapter : AppleReceiptHttpClientAdapter {
     private val httpClient = HttpClient.newHttpClient()
     override fun post(
         uri: URI,

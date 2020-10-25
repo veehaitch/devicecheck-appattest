@@ -1,6 +1,7 @@
 package ch.veehait.devicecheck.appattest.attestation
 
 import ch.veehait.devicecheck.appattest.App
+import ch.veehait.devicecheck.appattest.AppleAppAttest
 import ch.veehait.devicecheck.appattest.Extensions.sha256
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
@@ -30,10 +31,11 @@ class AttestationValidatorTest : StringSpec() {
         "Throws InvalidFormatException for wrong attestation format" {
             // Test setup
             val (attestationSample, app, clock) = loadValidAttestationSample()
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val attestationValidator = AppleAppAttest(
                 app = app,
-                clock = clock,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAttestationValidator(
+                clock = clock
             )
 
             // Actual test
@@ -49,10 +51,11 @@ class AttestationValidatorTest : StringSpec() {
 
         "Throws InvalidAuthenticatorData for wrong keyId" {
             val (attestationSample, app, clock) = loadValidAttestationSample()
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val attestationValidator = AppleAppAttest(
                 app = app.copy(teamIdentifier = "A".repeat(10)),
-                clock = clock,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAttestationValidator(
+                clock = clock
             )
 
             val exception = shouldThrow<AttestationException.InvalidAuthenticatorData> {
@@ -66,10 +69,11 @@ class AttestationValidatorTest : StringSpec() {
         "Throws InvalidPublicKey for wrong appId" {
             // Test setup
             val (attestationSample, app, clock) = loadValidAttestationSample()
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val attestationValidator = AppleAppAttest(
                 app = app,
-                clock = clock,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAttestationValidator(
+                clock = clock
             )
 
             // Actual test
@@ -84,10 +88,11 @@ class AttestationValidatorTest : StringSpec() {
         "Throws InvalidNonce for wrong challenge" {
             // Test setup
             val (attestationSample, app, clock) = loadValidAttestationSample()
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val attestationValidator = AppleAppAttest(
                 app = app,
-                clock = clock,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAttestationValidator(
+                clock = clock
             )
 
             // Actual test
@@ -137,11 +142,12 @@ class AttestationValidatorTest : StringSpec() {
             val wrongTrustAnchor = TrustAnchor(Utils.readPemX590Certificate(wrongCa), null)
 
             val (attestationSample, app, clock) = loadValidAttestationSample()
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val attestationValidator = AppleAppAttest(
                 app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAttestationValidator(
                 clock = clock,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                trustAnchor = wrongTrustAnchor,
+                trustAnchor = wrongTrustAnchor
             )
 
             shouldThrow<AttestationException.InvalidCertificateChain> {
@@ -156,10 +162,16 @@ class AttestationValidatorTest : StringSpec() {
             val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
 
             val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
-            val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+            val clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
+            val appleAppAttest = AppleAppAttest(
                 app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-                clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = clock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = clock
+                )
             )
 
             attestationValidator.validate(

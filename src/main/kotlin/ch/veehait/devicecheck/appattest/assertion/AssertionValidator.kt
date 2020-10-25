@@ -33,7 +33,7 @@ interface AssertionValidator {
     )
 }
 
-class AssertionValidatorImpl(
+internal class AssertionValidatorImpl(
     override val app: App,
     override val assertionChallengeValidator: AssertionChallengeValidator,
 ) : AssertionValidator {

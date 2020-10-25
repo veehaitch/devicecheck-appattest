@@ -1,6 +1,7 @@
 package ch.veehait.devicecheck.appattest.assertion
 
 import ch.veehait.devicecheck.appattest.App
+import ch.veehait.devicecheck.appattest.AppleAppAttest
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils
@@ -8,8 +9,6 @@ import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
-import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
-import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -25,10 +24,15 @@ import java.time.Clock
 class AssertionValidatorTest : StringSpec() {
     private fun attest(): Triple<AppleAppAttestValidationResponse, App, Clock> {
         val (attestationSample, app, clock) = TestUtils.loadValidAttestationSample()
-        val attestationValidator: AttestationValidator = AttestationValidatorImpl(
+        val appleAppAttest = AppleAppAttest(
             app = app,
-            appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
-            clock = clock
+            appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+        )
+        val attestationValidator = appleAppAttest.createAttestationValidator(
+            clock = clock,
+            receiptValidator = appleAppAttest.createReceiptValidator(
+                clock = clock,
+            ),
         )
         val attestationResponse = attestationValidator.validate(
             attestationObject = attestationSample.attestation,
@@ -84,11 +88,11 @@ class AssertionValidatorTest : StringSpec() {
                     return Arrays.constantTimeAreEqual("wurzel".toByteArray(), challenge)
                 }
             }
-
-            val assertionValidator = AssertionValidatorImpl(
+            val assertionValidator = AppleAppAttest(
                 app = app,
-                assertionChallengeValidator = assertionChallengeValidator,
-            )
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAssertionValidator(assertionChallengeValidator)
+
             assertionValidator.validate(
                 assertion = assertionSample.assertion,
                 clientData = assertionSample.clientData,
@@ -113,12 +117,13 @@ class AssertionValidatorTest : StringSpec() {
                     return false
                 }
             }
+            val assertionValidator = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAssertionValidator(assertionChallengeValidator)
 
             shouldThrow<AssertionException.InvalidChallenge> {
-                AssertionValidatorImpl(
-                    app = app,
-                    assertionChallengeValidator = assertionChallengeValidator,
-                ).validate(
+                assertionValidator.validate(
                     assertion = assertionSample.assertion,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
@@ -134,11 +139,13 @@ class AssertionValidatorTest : StringSpec() {
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
             val wrongBundleId = "fporfplezruw"
+            val assertionValidator = AppleAppAttest(
+                app = app.copy(bundleIdentifier = wrongBundleId),
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAssertionValidator(assertionChallengeAlwaysAcceptedValidator)
+
             val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
-                AssertionValidatorImpl(
-                    app = app.copy(bundleIdentifier = wrongBundleId),
-                    assertionChallengeValidator = assertionChallengeAlwaysAcceptedValidator,
-                ).validate(
+                assertionValidator.validate(
                     assertion = assertionSample.assertion,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
@@ -154,12 +161,14 @@ class AssertionValidatorTest : StringSpec() {
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
+            val assertionValidator = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAssertionValidator(assertionChallengeAlwaysAcceptedValidator)
             val wrongCounterValue = Long.MAX_VALUE
+
             val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
-                AssertionValidatorImpl(
-                    app = app,
-                    assertionChallengeValidator = assertionChallengeAlwaysAcceptedValidator,
-                ).validate(
+                assertionValidator.validate(
                     assertion = assertionSample.assertion,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
@@ -175,23 +184,14 @@ class AssertionValidatorTest : StringSpec() {
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
-            val assertionChallengeValidator = object : AssertionChallengeValidator {
-                override fun validate(
-                    assertionObj: Assertion,
-                    clientData: ByteArray,
-                    attestationPublicKey: ECPublicKey,
-                    challenge: ByteArray,
-                ): Boolean {
-                    return true
-                }
-            }
-
+            val assertionValidator = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAssertionValidator(assertionChallengeAlwaysAcceptedValidator)
             val wrongClientData = "fporfplezruw".toByteArray()
+
             shouldThrow<AssertionException.InvalidSignature> {
-                AssertionValidatorImpl(
-                    app = app,
-                    assertionChallengeValidator = assertionChallengeValidator,
-                ).validate(
+                assertionValidator.validate(
                     assertion = assertionSample.assertion,
                     clientData = wrongClientData,
                     attestationPublicKey = attestationResponse.publicKey,
@@ -206,6 +206,10 @@ class AssertionValidatorTest : StringSpec() {
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
+            val assertionValidator = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            ).createAssertionValidator(assertionChallengeAlwaysAcceptedValidator)
             val assertionObject: Assertion = cborObjectMapper.readValue(assertionSample.assertion)
             val assertionObjectTampered = assertionObject.copy(
                 signature = ByteArray(assertionObject.signature.size).apply {
@@ -215,10 +219,7 @@ class AssertionValidatorTest : StringSpec() {
             val assertionTampered = cborObjectMapper.writeValueAsBytes(assertionObjectTampered)
 
             shouldThrow<AssertionException.InvalidSignature> {
-                AssertionValidatorImpl(
-                    app = app,
-                    assertionChallengeValidator = assertionChallengeAlwaysAcceptedValidator,
-                ).validate(
+                assertionValidator.validate(
                     assertion = assertionTampered,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,

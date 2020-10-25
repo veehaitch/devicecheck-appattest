@@ -22,7 +22,7 @@ interface AppleJwsGenerator {
     fun issueToken(): String
 }
 
-class AppleJwsGeneratorImpl(
+internal class AppleJwsGeneratorImpl(
     override val appleTeamIdentifier: String,
     override val keyIdentifier: String,
     privateKeyPem: String,
