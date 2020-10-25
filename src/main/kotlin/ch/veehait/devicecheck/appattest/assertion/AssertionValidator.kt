@@ -13,7 +13,7 @@ import java.security.Signature
 import java.security.interfaces.ECPublicKey
 
 interface AssertionValidator {
-    val appId: String
+    val app: App
     val assertionChallengeValidator: AssertionChallengeValidator
 
     fun validate(
@@ -34,7 +34,7 @@ interface AssertionValidator {
 }
 
 class AssertionValidatorImpl(
-    app: App,
+    override val app: App,
     override val assertionChallengeValidator: AssertionChallengeValidator,
 ) : AssertionValidator {
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
@@ -70,7 +70,7 @@ class AssertionValidatorImpl(
     ) {
         // 4. Compute the SHA256 hash of the client’s App ID,
         //    and verify that it matches the RP ID in the authenticator data.
-        val expectedRpId = appId.toByteArray().sha256()
+        val expectedRpId = app.appIdentifier.toByteArray().sha256()
         if (!expectedRpId.contentEquals(authenticatorData.rpIdHash)) {
             throw AssertionException.InvalidAuthenticatorData("App ID hash does not match RP ID hash")
         }
@@ -102,8 +102,6 @@ class AssertionValidatorImpl(
             throw AssertionException.InvalidChallenge("The given challenge is invalid")
         }
     }
-
-    override val appId: String = app.appIdentifier
 
     override suspend fun validateAsync(
         assertion: ByteArray,

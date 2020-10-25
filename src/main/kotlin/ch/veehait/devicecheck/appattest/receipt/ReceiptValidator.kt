@@ -30,7 +30,7 @@ interface ReceiptValidator {
         val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
     }
 
-    val appId: String
+    val app: App
     val trustAnchor: TrustAnchor
     val clock: Clock
 
@@ -59,7 +59,7 @@ interface ReceiptValidator {
 }
 
 class ReceiptValidatorImpl(
-    app: App,
+    override val app: App,
     override val trustAnchor: TrustAnchor = APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
     override val clock: Clock = Clock.systemUTC(),
 ) : ReceiptValidator {
@@ -91,8 +91,6 @@ class ReceiptValidatorImpl(
     init {
         Security.addProvider(BouncyCastleProvider())
     }
-
-    override val appId = app.appIdentifier
 
     override suspend fun validateAttestationReceiptAsync(
         attestStatement: AppleAppAttestStatement,
@@ -185,7 +183,7 @@ class ReceiptValidatorImpl(
 
         // 4. Verify that the receipt contains the App ID of your app in field 2.
         //    Your app’s App ID is the concatenation of your 10-digit Team ID, a period, and the app’s bundle ID.
-        if (receiptPayload.appId != appId) {
+        if (receiptPayload.appId != app.appIdentifier) {
             throw ReceiptException.InvalidPayload("Unexpected App ID: ${receiptPayload.appId}")
         }
 

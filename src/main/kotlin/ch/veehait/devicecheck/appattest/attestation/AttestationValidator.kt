@@ -41,7 +41,7 @@ import java.util.Date
  * @property clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
  */
 interface AttestationValidator {
-    val appId: String
+    val app: App
     val appleAppAttestEnvironment: AppleAppAttestEnvironment
     val trustAnchor: TrustAnchor
     val receiptValidator: ReceiptValidator
@@ -89,7 +89,7 @@ interface AttestationValidator {
  */
 @Suppress("TooManyFunctions")
 class AttestationValidatorImpl(
-    app: App,
+    override val app: App,
     override val appleAppAttestEnvironment: AppleAppAttestEnvironment,
     override val clock: Clock = Clock.systemUTC(),
     override val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(app, clock = clock),
@@ -126,8 +126,6 @@ class AttestationValidatorImpl(
     }
 
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
-
-    override val appId = app.appIdentifier
 
     override suspend fun validateAsync(
         attestationObject: ByteArray,
@@ -250,7 +248,7 @@ class AttestationValidatorImpl(
 
         // 6. Compute the SHA256 hash of your app’s App ID, and verify that this is the same as the authenticator
         //    data’s RP ID hash.
-        if (!authenticatorData.rpIdHash!!.contentEquals(appId.toByteArray().sha256())) {
+        if (!authenticatorData.rpIdHash!!.contentEquals(app.appIdentifier.toByteArray().sha256())) {
             throw AttestationException.InvalidAuthenticatorData("App ID does not match RP ID hash")
         }
 
