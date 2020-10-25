@@ -100,6 +100,9 @@ dependencies {
 
     // MockWebServer
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+
+    // JWS issuing
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

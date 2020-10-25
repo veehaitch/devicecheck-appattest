@@ -143,7 +143,7 @@ class ReceiptExchangeTest : StringSpec() {
             val mockWebServerUri = mockWebServer.url("/v1/attestationData").toUri()
 
             // Actual test
-            val receiptExchange = ReceiptExchangeImpl(
+            val receiptExchange = appleAppAttest.createReceiptExchange(
                 appleJwsGenerator = AppleJwsGeneratorImpl(
                     appleTeamIdentifier = attestationSample.teamIdentifier,
                     keyIdentifier = "WURZELPFRO",
@@ -155,12 +155,12 @@ class ReceiptExchangeTest : StringSpec() {
                         qrZEaNW3gX1JVxnJpOEaSwdvGr6moRGwq+7MrhI9Mlmx4uI+S2A0oR9B
                         -----END PRIVATE KEY-----
                         """.trimIndent(),
-                ),
-                receiptValidator = ReceiptValidatorImpl(
-                    app = app,
                     clock = serverResponseClock,
                 ),
-                appleDeviceCheckUrl = mockWebServerUri
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = serverResponseClock,
+                ),
+                appleDeviceCheckUrl = mockWebServerUri,
             )
 
             val receipt = receiptExchange.trade(
