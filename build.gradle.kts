@@ -10,6 +10,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.13.1"
     id("org.jmailen.kotlinter") version "3.2.0"
     id("jacoco")
+    id("com.github.ben-manes.versions") version "0.33.0"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
