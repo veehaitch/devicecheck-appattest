@@ -1,0 +1,421 @@
+PKCS7: 
+  type: pkcs7-signedData (1.2.840.113549.1.7.2)
+  d.sign: 
+    version: 1
+    md_algs:
+        algorithm: sha256 (2.16.840.1.101.3.4.2.1)
+        parameter: NULL
+    contents: 
+      type: pkcs7-data (1.2.840.113549.1.7.1)
+      d.data: 
+        0000 - 31 82 04 76 30 09 02 01-11 02 01 01 04 01 33   1..v0.........3
+        000f - 30 0f 02 01 06 02 01 01-04 07 52 45 43 45 49   0.........RECEI
+        001e - 50 54 30 39 02 01 02 02-01 01 04 31 36 4d 55   PT09.......16MU
+        002d - 52 4c 38 54 41 35 37 2e-64 65 2e 76 69 6e 63   RL8TA57.de.vinc
+        003c - 65 6e 74 2d 68 61 75 70-65 72 74 2e 61 70 70   ent-haupert.app
+        004b - 6c 65 2d 61 70 70 61 74-74 65 73 74 2d 70 6f   le-appattest-po
+        005a - 63 30 82 03 02 02 01 03-02 01 01 04 82 02 f8   c0.............
+        0069 - 30 82 02 f4 30 82 02 7b-a0 03 02 01 02 02 06   0...0..{.......
+        0078 - 01 75 51 41 4a fc 30 0a-06 08 2a 86 48 ce 3d   .uQAJ.0...*.H.=
+        0087 - 04 03 02 30 4f 31 23 30-21 06 03 55 04 03 0c   ...0O1#0!..U...
+        0096 - 1a 41 70 70 6c 65 20 41-70 70 20 41 74 74 65   .Apple App Atte
+        00a5 - 73 74 61 74 69 6f 6e 20-43 41 20 31 31 13 30   station CA 11.0
+        00b4 - 11 06 03 55 04 0a 0c 0a-41 70 70 6c 65 20 49   ...U....Apple I
+        00c3 - 6e 63 2e 31 13 30 11 06-03 55 04 08 0c 0a 43   nc.1.0...U....C
+        00d2 - 61 6c 69 66 6f 72 6e 69-61 30 1e 17 0d 32 30   alifornia0...20
+        00e1 - 31 30 32 31 31 37 30 30-33 34 5a 17 0d 32 30   1021170034Z..20
+        00f0 - 31 30 32 34 31 37 30 30-33 34 5a 30 81 91 31   1024170034Z0..1
+        00ff - 49 30 47 06 03 55 04 03-0c 40 34 33 39 36 39   I0G..U...@43969
+        010e - 31 34 31 66 34 65 37 62-36 62 34 35 37 62 39   141f4e7b6b457b9
+        011d - 61 31 35 63 33 33 31 33-39 30 34 66 39 61 31   a15c3313904f9a1
+        012c - 62 39 34 64 30 62 62 63-38 34 33 65 64 65 66   b94d0bbc843edef
+        013b - 35 36 65 66 32 65 38 62-39 65 31 32 34 31 31   56ef2e8b9e12411
+        014a - 1a 30 18 06 03 55 04 0b-0c 11 41 41 41 20 43   .0...U....AAA C
+        0159 - 65 72 74 69 66 69 63 61-74 69 6f 6e 31 13 30   ertification1.0
+        0168 - 11 06 03 55 04 0a 0c 0a-41 70 70 6c 65 20 49   ...U....Apple I
+        0177 - 6e 63 2e 31 13 30 11 06-03 55 04 08 0c 0a 43   nc.1.0...U....C
+        0186 - 61 6c 69 66 6f 72 6e 69-61 30 59 30 13 06 07   alifornia0Y0...
+        0195 - 2a 86 48 ce 3d 02 01 06-08 2a 86 48 ce 3d 03   *.H.=....*.H.=.
+        01a4 - 01 07 03 42 00 04 84 0e-35 bd 9f 7d 95 50 78   ...B....5..}.Px
+        01b3 - ad d5 8f bc 92 05 e7 15-c3 71 f9 6e e2 e0 cd   .........q.n...
+        01c2 - c9 5e 8e 2c 41 1b 97 26-cb a0 7b 38 40 d0 d1   .^.,A..&..{8@..
+        01d1 - aa 01 dd 4a 42 8b e6 2f-a4 f8 46 e2 ad 79 0e   ...JB../..F..y.
+        01e0 - 5c 63 d9 b3 fb 3b 4f a7-a5 40 a3 81 ff 30 81   \c...;O..@...0.
+        01ef - fc 30 0c 06 03 55 1d 13-01 01 ff 04 02 30 00   .0...U.......0.
+        01fe - 30 0e 06 03 55 1d 0f 01-01 ff 04 04 03 02 04   0...U..........
+        020d - f0 30 81 8b 06 09 2a 86-48 86 f7 63 64 08 05   .0....*.H..cd..
+        021c - 04 7e 30 7c a4 03 02 01-0a bf 89 30 03 02 01   .~0|.......0...
+        022b - 01 bf 89 31 03 02 01 00-bf 89 32 03 02 01 00   ...1......2....
+        023a - bf 89 33 03 02 01 01 bf-89 34 33 04 31 36 4d   ..3......43.16M
+        0249 - 55 52 4c 38 54 41 35 37-2e 64 65 2e 76 69 6e   URL8TA57.de.vin
+        0258 - 63 65 6e 74 2d 68 61 75-70 65 72 74 2e 61 70   cent-haupert.ap
+        0267 - 70 6c 65 2d 61 70 70 61-74 74 65 73 74 2d 70   ple-appattest-p
+        0276 - 6f 63 a5 06 04 04 20 73-6b 73 bf 89 36 03 02   oc.... sks..6..
+        0285 - 01 05 bf 89 37 03 02 01-00 bf 89 39 03 02 01   ....7......9...
+        0294 - 00 bf 89 3a 03 02 01 00-30 19 06 09 2a 86 48   ...:....0...*.H
+        02a3 - 86 f7 63 64 08 07 04 0c-30 0a bf 8a 78 06 04   ..cd....0...x..
+        02b2 - 04 31 34 2e 32 30 33 06-09 2a 86 48 86 f7 63   .14.203..*.H..c
+        02c1 - 64 08 02 04 26 30 24 a1-22 04 20 75 94 9d a4   d...&0$.". u...
+        02d0 - 94 a1 70 7d 7a 4f 5f 7d-c0 55 55 1d 6e 29 22   ..p}zO_}.UU.n)"
+        02df - 5d 64 b7 2b 97 79 2a 52-ce 93 c5 94 58 30 0a   ]d.+.y*R....X0.
+        02ee - 06 08 2a 86 48 ce 3d 04-03 02 03 67 00 30 64   ..*.H.=....g.0d
+        02fd - 02 30 1d 78 99 cc 43 c3-6b 87 ab 4e 70 a1 5c   .0.x..C.k..Np.\
+        030c - e2 62 5e 50 ee 33 e0 2b-19 73 e5 25 1d d6 a7   .b^P.3.+.s.%...
+        031b - 25 74 29 56 4f 2c f5 56-04 69 81 64 0e b9 76   %t)VO,.V.i.d..v
+        032a - c9 df 8b 2f de 02 30 61-a7 9f e3 ba 2b ba 9c   .../..0a....+..
+        0339 - d5 56 1b a4 00 27 0c 55-13 f8 53 cd a3 b0 dc   .V...'.U..S....
+        0348 - ba 2f 05 1f 02 5e 0d ec-a8 e1 3f 77 5b ff 20   ./...^....?w[. 
+        0357 - 17 71 21 90 74 5f 67 17-b0 65 30 3e 02 01 04   .q!.t_g..e0>...
+        0366 - 02 01 01 04 36 ef bf bd-ef bf bd 5c ef bf bd   ....6......\...
+        0375 - 51 5a d0 97 ef bf bd 53-ef bf bd 7d 18 ef bf   QZ.....S...}...
+        0384 - bd 35 ef bf bd 6d d7 8a-14 2e ef bf bd ef bf   .5...m.........
+        0393 - bd 77 52 6b ef bf bd 11-c6 be ef bf bd 7b 30   .wRk.........{0
+        03a2 - 60 02 01 05 02 01 01 04-58 48 38 41 73 33 4c   `.......XH8As3L
+        03b1 - 55 51 2f 36 51 6f 6a 46-38 59 66 75 4b 57 30   UQ/6QojF8YfuKW0
+        03c0 - 74 74 7a 75 70 6d 45 69-57 37 37 4a 72 35 39   ttzupmEiW77Jr59
+        03cf - 46 70 6c 32 36 36 72 36-69 32 6f 78 54 43 6b   Fpl266r6i2oxTCk
+        03de - 44 4f 7a 76 63 64 6f 52-42 72 5a 34 57 57 47   DOzvcdoRBrZ4WWG
+        03ed - 6c 76 78 38 74 32 56 58-58 4c 64 2b 56 42 4f   lvx8t2VXXLd+VBO
+        03fc - 41 71 49 62 77 3d 3d 30-0f 02 01 07 02 01 01   AqIbw==0.......
+        040b - 04 07 73 61 6e 64 62 6f-78 30 20 02 01 0c 02   ..sandbox0 ....
+        041a - 01 01 04 18 32 30 32 30-2d 31 30 2d 32 32 54   ....2020-10-22T
+        0429 - 31 37 3a 32 31 3a 33 33-2e 37 36 31 5a 30 20   17:21:33.761Z0 
+        0438 - 02 01 13 02 01 01 04 18-32 30 32 30 2d 31 30   ........2020-10
+        0447 - 2d 32 33 54 31 37 3a 32-31 3a 33 33 2e 37 36   -23T17:21:33.76
+        0456 - 31 5a 30 20 02 01 15 02-01 01 04 18 32 30 32   1Z0 ........202
+        0465 - 31 2d 30 31 2d 32 30 54-31 37 3a 32 31 3a 33   1-01-20T17:21:3
+        0474 - 33 2e 37 36 31 5a                              3.761Z
+    cert:
+        cert_info: 
+          version: 2
+          serialNumber: 118567856829321097286951820829395327827
+          signature: 
+            algorithm: ecdsa-with-SHA256 (1.2.840.10045.4.3.2)
+            parameter: <ABSENT>
+          issuer: CN=Apple Application Integration CA 5 - G1, OU=Apple Certification Authority, O=Apple Inc., C=US
+          validity: 
+            notBefore: May 19 17:47:31 2020 GMT
+            notAfter: Jun 18 17:47:31 2021 GMT
+          subject: CN=Application Attestation Fraud Receipt Signing, O=Apple Inc., C=US
+          key: 
+            algor: 
+              algorithm: id-ecPublicKey (1.2.840.10045.2.1)
+              parameter: OBJECT:prime256v1 (1.2.840.10045.3.1.7)
+            public_key:  (0 unused bits)
+              0000 - 04 7f e9 15 34 6c c3 8a-7b 98 3c 93 d1 d0   ....4l..{.<...
+              000e - 43 5f d8 ab da 56 70 04-d3 2c 58 86 65 51   C_...Vp..,X.eQ
+              001c - 95 7a b4 78 f7 cb 2a f8-ba 45 f7 fa 78 ea   .z.x..*..E..x.
+              002a - c6 2c 49 e4 f9 cd c0 84-b5 03 14 f1 02 33   .,I..........3
+              0038 - da 9b 76 fa 44 2a 2b b8-72                  ..v.D*+.r
+          issuerUID: <ABSENT>
+          subjectUID: <ABSENT>
+          extensions:
+              object: X509v3 Basic Constraints (2.5.29.19)
+              critical: TRUE
+              value: 
+                0000 - 30                                       0
+                0002 - <SPACES/NULS>
+
+              object: X509v3 Authority Key Identifier (2.5.29.35)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 30 16 80 14 d9 17 fe 4b-67 90 38 4b 92   0......Kg.8K.
+                000d - f4 db ce d5 57 80 14 0b-8f 3d c9         ....W....=.
+
+              object: Authority Information Access (1.3.6.1.5.5.7.1.1)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 30 35 30 33 06 08 2b 06-01 05 05 07 30   0503..+.....0
+                000d - 01 86 27 68 74 74 70 3a-2f 2f 6f 63 73   ..'http://ocs
+                001a - 70 2e 61 70 70 6c 65 2e-63 6f 6d 2f 6f   p.apple.com/o
+                0027 - 63 73 70 30 33 2d 61 61-69 63 61 35 67   csp03-aaica5g
+                0034 - 31 30 31                                 101
+
+              object: X509v3 Certificate Policies (2.5.29.32)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 30 82 01 0f 30 82 01 0b-06 09 2a 86 48   0...0.....*.H
+                000d - 86 f7 63 64 05 01 30 81-fd 30 81 c3 06   ..cd..0..0...
+                001a - 08 2b 06 01 05 05 07 02-02 30 81 b6 0c   .+.......0...
+                0027 - 81 b3 52 65 6c 69 61 6e-63 65 20 6f 6e   ..Reliance on
+                0034 - 20 74 68 69 73 20 63 65-72 74 69 66 69    this certifi
+                0041 - 63 61 74 65 20 62 79 20-61 6e 79 20 70   cate by any p
+                004e - 61 72 74 79 20 61 73 73-75 6d 65 73 20   arty assumes 
+                005b - 61 63 63 65 70 74 61 6e-63 65 20 6f 66   acceptance of
+                0068 - 20 74 68 65 20 74 68 65-6e 20 61 70 70    the then app
+                0075 - 6c 69 63 61 62 6c 65 20-73 74 61 6e 64   licable stand
+                0082 - 61 72 64 20 74 65 72 6d-73 20 61 6e 64   ard terms and
+                008f - 20 63 6f 6e 64 69 74 69-6f 6e 73 20 6f    conditions o
+                009c - 66 20 75 73 65 2c 20 63-65 72 74 69 66   f use, certif
+                00a9 - 69 63 61 74 65 20 70 6f-6c 69 63 79 20   icate policy 
+                00b6 - 61 6e 64 20 63 65 72 74-69 66 69 63 61   and certifica
+                00c3 - 74 69 6f 6e 20 70 72 61-63 74 69 63 65   tion practice
+                00d0 - 20 73 74 61 74 65 6d 65-6e 74 73 2e 30    statements.0
+                00dd - 35 06 08 2b 06 01 05 05-07 02 01 16 29   5..+........)
+                00ea - 68 74 74 70 3a 2f 2f 77-77 77 2e 61 70   http://www.ap
+                00f7 - 70 6c 65 2e 63 6f 6d 2f-63 65 72 74 69   ple.com/certi
+                0104 - 66 69 63 61 74 65 61 75-74 68 6f 72 69   ficateauthori
+                0111 - 74 79                                    ty
+
+              object: X509v3 Subject Key Identifier (2.5.29.14)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 04 14 69 1e c7 0f 47 ec-e3 8d dd 75 37   ..i...G....u7
+                000d - 44 f3 e9 e1 5a 6c 10 56-25               D...Zl.V%
+
+              object: X509v3 Key Usage (2.5.29.15)
+              critical: TRUE
+              value: 
+                0000 - 03 02 07 80                              ....
+
+              object: undefined (1.2.840.113635.100.12.15)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 05                                       .
+                0002 - <SPACES/NULS>
+        sig_alg: 
+          algorithm: ecdsa-with-SHA256 (1.2.840.10045.4.3.2)
+          parameter: <ABSENT>
+        signature:  (0 unused bits)
+          0000 - 30 44 02 20 25 18 16 5c-5e 29 9c 59 f6 85 39   0D. %..\^).Y..9
+          000f - ad 5d db 99 f6 37 3e f6-0e cd 08 45 a9 fd 77   .]...7>....E..w
+          001e - 1a d6 24 2d 2c 22 02 20-5d 2a 9b 2a 5f ab a3   ..$-,". ]*.*_..
+          002d - 63 81 65 8d 18 40 f7 af-48 0b d7 6b a1 94 d8   c.e..@..H..k...
+          003c - 34 20 87 f4 d6 93 5b b5-1b ae                  4 ....[...
+
+        cert_info: 
+          version: 2
+          serialNumber: 115619547954640339158468688677373374141
+          signature: 
+            algorithm: ecdsa-with-SHA384 (1.2.840.10045.4.3.3)
+            parameter: <ABSENT>
+          issuer: CN=Apple Root CA - G3, OU=Apple Certification Authority, O=Apple Inc., C=US
+          validity: 
+            notBefore: Mar 22 17:53:33 2019 GMT
+            notAfter: Mar 22 00:00:00 2034 GMT
+          subject: CN=Apple Application Integration CA 5 - G1, OU=Apple Certification Authority, O=Apple Inc., C=US
+          key: 
+            algor: 
+              algorithm: id-ecPublicKey (1.2.840.10045.2.1)
+              parameter: OBJECT:prime256v1 (1.2.840.10045.3.1.7)
+            public_key:  (0 unused bits)
+              0000 - 04 92 ce 63 bd 7d 86 b1-ab 28 0a 3b 1c e1   ...c.}...(.;..
+              000e - af fb 04 94 80 91 ac f6-31 df a6 cb 28 35   ........1...(5
+              001c - 6f 44 4b e1 21 e5 57 dd-12 8d 8d ba 82 7c   oDK.!.W......|
+              002a - 95 be 49 fa be 33 ca ae-cd 04 19 f1 2f 43   ..I..3....../C
+              0038 - 25 fa f4 be b3 cb 83 7e-ba                  %......~.
+          issuerUID: <ABSENT>
+          subjectUID: <ABSENT>
+          extensions:
+              object: X509v3 Basic Constraints (2.5.29.19)
+              critical: TRUE
+              value: 
+                0000 - 30 03 01 01 ff                           0....
+
+              object: X509v3 Authority Key Identifier (2.5.29.35)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 30 16 80 14 bb b0 de a1-58 33 88 9a a4   0.......X3...
+                000d - 8a 99 de be bd eb af da-cb 24 ab         .........$.
+
+              object: Authority Information Access (1.3.6.1.5.5.7.1.1)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 30 38 30 36 06 08 2b 06-01 05 05 07 30   0806..+.....0
+                000d - 01 86 2a 68 74 74 70 3a-2f 2f 6f 63 73   ..*http://ocs
+                001a - 70 2e 61 70 70 6c 65 2e-63 6f 6d 2f 6f   p.apple.com/o
+                0027 - 63 73 70 30 33 2d 61 70-70 6c 65 72 6f   csp03-applero
+                0034 - 6f 74 63 61 67 33                        otcag3
+
+              object: X509v3 CRL Distribution Points (2.5.29.31)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 30 2e 30 2c a0 2a a0 28-86 26 68 74 74   0.0,.*.(.&htt
+                000d - 70 3a 2f 2f 63 72 6c 2e-61 70 70 6c 65   p://crl.apple
+                001a - 2e 63 6f 6d 2f 61 70 70-6c 65 72 6f 6f   .com/appleroo
+                0027 - 74 63 61 67 33 2e 63 72-6c               tcag3.crl
+
+              object: X509v3 Subject Key Identifier (2.5.29.14)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 04 14 d9 17 fe 4b 67 90-38 4b 92 f4 db   .....Kg.8K...
+                000d - ce d5 57 80 14 0b 8f 3d-c9               ..W....=.
+
+              object: X509v3 Key Usage (2.5.29.15)
+              critical: TRUE
+              value: 
+                0000 - 03 02 01 06                              ....
+
+              object: undefined (1.2.840.113635.100.6.2.3)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 05                                       .
+                0002 - <SPACES/NULS>
+        sig_alg: 
+          algorithm: ecdsa-with-SHA384 (1.2.840.10045.4.3.3)
+          parameter: <ABSENT>
+        signature:  (0 unused bits)
+          0000 - 30 65 02 31 00 8d 6f a6-9f a1 e0 e4 ec 5b 4e   0e.1..o......[N
+          000f - 73 8a 92 7f 3d 78 53 98-8f f4 da 1f 58 1e c3   s...=xS.....X..
+          001e - 75 4a fe 38 a8 4c 2a 83-1a 1a aa 0d a6 64 6d   uJ.8.L*......dm
+          002d - e1 b9 93 e8 d1 55 4c ed-02 30 67 3b 2c b4 e1   .....UL..0g;,..
+          003c - e8 37 07 77 cb d5 ec 76-a8 1a 3a 55 3b 3f 35   .7.w...v..:U;?5
+          004b - 6a c8 c5 e6 92 b0 e1 61-be 80 49 69 e4 5f 2b   j......a..Ii._+
+          005a - a9 6c e1 11 02 aa cc 61-d9 38 b7 73 4a         .l.....a.8.sJ
+
+        cert_info: 
+          version: 2
+          serialNumber: 3298319966700653461
+          signature: 
+            algorithm: ecdsa-with-SHA384 (1.2.840.10045.4.3.3)
+            parameter: <ABSENT>
+          issuer: CN=Apple Root CA - G3, OU=Apple Certification Authority, O=Apple Inc., C=US
+          validity: 
+            notBefore: Apr 30 18:19:06 2014 GMT
+            notAfter: Apr 30 18:19:06 2039 GMT
+          subject: CN=Apple Root CA - G3, OU=Apple Certification Authority, O=Apple Inc., C=US
+          key: 
+            algor: 
+              algorithm: id-ecPublicKey (1.2.840.10045.2.1)
+              parameter: OBJECT:secp384r1 (1.3.132.0.34)
+            public_key:  (0 unused bits)
+              0000 - 04 98 e9 2f 3d 40 72 a4-ed 93 22 72 81 13   .../=@r..."r..
+              000e - 1c dd 10 95 f1 c5 a3 4e-71 dc 14 16 d9 0e   .......Nq.....
+              001c - e5 a6 05 2a 77 64 7b 5f-4e 38 d3 bb 1c 44   ...*wd{_N8...D
+              002a - b5 7f f5 1f b6 32 62 5d-c9 e9 84 5b 4f 30   .....2b]...[O0
+              0038 - 4f 11 5a 00 fd 58 58 0c-a5 f5 0f 2c 4d 07   O.Z..XX....,M.
+              0046 - 47 13 75 da 97 97 97 6f-31 5c ed 2b 9d 7b   G.u....o1\.+.{
+              0054 - 20 3b d8 b9 54 d9 5e 99-a4 3a 51 0a 31       ;..T.^..:Q.1
+          issuerUID: <ABSENT>
+          subjectUID: <ABSENT>
+          extensions:
+              object: X509v3 Subject Key Identifier (2.5.29.14)
+              critical: BOOL ABSENT
+              value: 
+                0000 - 04 14 bb b0 de a1 58 33-88 9a a4 8a 99   ......X3.....
+                000d - de be bd eb af da cb 24-ab               .......$.
+
+              object: X509v3 Basic Constraints (2.5.29.19)
+              critical: TRUE
+              value: 
+                0000 - 30 03 01 01 ff                           0....
+
+              object: X509v3 Key Usage (2.5.29.15)
+              critical: TRUE
+              value: 
+                0000 - 03 02 01 06                              ....
+        sig_alg: 
+          algorithm: ecdsa-with-SHA384 (1.2.840.10045.4.3.3)
+          parameter: <ABSENT>
+        signature:  (0 unused bits)
+          0000 - 30 65 02 31 00 83 e9 c1-c4 16 5e 1a 5d 34 18   0e.1......^.]4.
+          000f - d9 ed ef f4 6c 0e 00 46-4b b8 df b2 46 11 c5   ....l..FK...F..
+          001e - 0f fd e6 7a 8c a1 a6 6b-ce c2 03 d4 9c f5 93   ...z...k.......
+          002d - c6 74 b8 6a df aa 23 15-02 30 6d 66 8a 10 ca   .t.j..#..0mf...
+          003c - d4 0d d4 4f cd 8d 43 3e-b4 8a 63 a5 33 6e e3   ...O..C>..c.3n.
+          004b - 6d da 17 b7 64 1f c8 53-26 f9 88 62 74 39 0b   m...d..S&..bt9.
+          005a - 17 5b cb 51 a8 0c e8 18-03 e7 a2 b2 28         .[.Q........(
+    crl:
+      <EMPTY>
+    signer_info:
+        version: 1
+        issuer_and_serial: 
+          issuer: CN=Apple Application Integration CA 5 - G1, OU=Apple Certification Authority, O=Apple Inc., C=US
+          serial: 118567856829321097286951820829395327827
+        digest_alg: 
+          algorithm: sha256 (2.16.840.1.101.3.4.2.1)
+          parameter: NULL
+        auth_attr:
+          <EMPTY>
+        digest_enc_alg: 
+          algorithm: ecdsa-with-SHA256 (1.2.840.10045.4.3.2)
+          parameter: <ABSENT>
+        enc_digest: 
+          0000 - 30 45 02 21 00 d0 b5 11-8a db 3a c6 34 de c1   0E.!......:.4..
+          000f - ca 97 d5 fb 48 33 da df-e2 b6 db 0e 42 56 76   ....H3......BVv
+          001e - 8d 01 20 25 2c d6 9f 02-20 73 63 2e ac 4a d8   .. %,... sc..J.
+          002d - 31 03 1e b6 5d ad 33 e1-4e ec e1 22 e8 23 87   1...].3.N..".#.
+          003c - 1b 4f 92 6a e5 bc 54 9f-aa 3a 6f               .O.j..T..:o
+        unauth_attr:
+          <EMPTY>
+-----BEGIN PKCS7-----
+MIIOsQYJKoZIhvcNAQcCoIIOojCCDp4CAQExDzANBglghkgBZQMEAgEFADCCBI0G
+CSqGSIb3DQEHAaCCBH4EggR6MYIEdjAJAgERAgEBBAEzMA8CAQYCAQEEB1JFQ0VJ
+UFQwOQIBAgIBAQQxNk1VUkw4VEE1Ny5kZS52aW5jZW50LWhhdXBlcnQuYXBwbGUt
+YXBwYXR0ZXN0LXBvYzCCAwICAQMCAQEEggL4MIIC9DCCAnugAwIBAgIGAXVRQUr8
+MAoGCCqGSM49BAMCME8xIzAhBgNVBAMMGkFwcGxlIEFwcCBBdHRlc3RhdGlvbiBD
+QSAxMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4X
+DTIwMTAyMTE3MDAzNFoXDTIwMTAyNDE3MDAzNFowgZExSTBHBgNVBAMMQDQzOTY5
+MTQxZjRlN2I2YjQ1N2I5YTE1YzMzMTM5MDRmOWExYjk0ZDBiYmM4NDNlZGVmNTZl
+ZjJlOGI5ZTEyNDExGjAYBgNVBAsMEUFBQSBDZXJ0aWZpY2F0aW9uMRMwEQYDVQQK
+DApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMFkwEwYHKoZIzj0CAQYI
+KoZIzj0DAQcDQgAEhA41vZ99lVB4rdWPvJIF5xXDcflu4uDNyV6OLEEblybLoHs4
+QNDRqgHdSkKL5i+k+EbirXkOXGPZs/s7T6elQKOB/zCB/DAMBgNVHRMBAf8EAjAA
+MA4GA1UdDwEB/wQEAwIE8DCBiwYJKoZIhvdjZAgFBH4wfKQDAgEKv4kwAwIBAb+J
+MQMCAQC/iTIDAgEAv4kzAwIBAb+JNDMEMTZNVVJMOFRBNTcuZGUudmluY2VudC1o
+YXVwZXJ0LmFwcGxlLWFwcGF0dGVzdC1wb2OlBgQEIHNrc7+JNgMCAQW/iTcDAgEA
+v4k5AwIBAL+JOgMCAQAwGQYJKoZIhvdjZAgHBAwwCr+KeAYEBDE0LjIwMwYJKoZI
+hvdjZAgCBCYwJKEiBCB1lJ2klKFwfXpPX33AVVUdbikiXWS3K5d5KlLOk8WUWDAK
+BggqhkjOPQQDAgNnADBkAjAdeJnMQ8Nrh6tOcKFc4mJeUO4z4CsZc+UlHdanJXQp
+Vk8s9VYEaYFkDrl2yd+LL94CMGGnn+O6K7qc1VYbpAAnDFUT+FPNo7Dcui8FHwJe
+Deyo4T93W/8gF3EhkHRfZxewZTA+AgEEAgEBBDbvv73vv71c77+9UVrQl++/vVPv
+v719GO+/vTXvv71t14oULu+/ve+/vXdSa++/vRHGvu+/vXswYAIBBQIBAQRYSDhB
+czNMVVEvNlFvakY4WWZ1S1cwdHR6dXBtRWlXNzdKcjU5RnBsMjY2cjZpMm94VENr
+RE96dmNkb1JCclo0V1dHbHZ4OHQyVlhYTGQrVkJPQXFJYnc9PTAPAgEHAgEBBAdz
+YW5kYm94MCACAQwCAQEEGDIwMjAtMTAtMjJUMTc6MjE6MzMuNzYxWjAgAgETAgEB
+BBgyMDIwLTEwLTIzVDE3OjIxOjMzLjc2MVowIAIBFQIBAQQYMjAyMS0wMS0yMFQx
+NzoyMTozMy43NjFaoIII9TCCA60wggNUoAMCAQICEFkzVq3lWYLPREI3rN9FG1Mw
+CgYIKoZIzj0EAwIwfDEwMC4GA1UEAwwnQXBwbGUgQXBwbGljYXRpb24gSW50ZWdy
+YXRpb24gQ0EgNSAtIEcxMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1
+dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMjAw
+NTE5MTc0NzMxWhcNMjEwNjE4MTc0NzMxWjBaMTYwNAYDVQQDDC1BcHBsaWNhdGlv
+biBBdHRlc3RhdGlvbiBGcmF1ZCBSZWNlaXB0IFNpZ25pbmcxEzARBgNVBAoMCkFw
+cGxlIEluYy4xCzAJBgNVBAYTAlVTMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE
+f+kVNGzDinuYPJPR0ENf2KvaVnAE0yxYhmVRlXq0ePfLKvi6Rff6eOrGLEnk+c3A
+hLUDFPECM9qbdvpEKiu4cqOCAdgwggHUMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgw
+FoAU2Rf+S2eQOEuS9NvO1VeAFAuPPckwQwYIKwYBBQUHAQEENzA1MDMGCCsGAQUF
+BzABhidodHRwOi8vb2NzcC5hcHBsZS5jb20vb2NzcDAzLWFhaWNhNWcxMDEwggEc
+BgNVHSAEggETMIIBDzCCAQsGCSqGSIb3Y2QFATCB/TCBwwYIKwYBBQUHAgIwgbYM
+gbNSZWxpYW5jZSBvbiB0aGlzIGNlcnRpZmljYXRlIGJ5IGFueSBwYXJ0eSBhc3N1
+bWVzIGFjY2VwdGFuY2Ugb2YgdGhlIHRoZW4gYXBwbGljYWJsZSBzdGFuZGFyZCB0
+ZXJtcyBhbmQgY29uZGl0aW9ucyBvZiB1c2UsIGNlcnRpZmljYXRlIHBvbGljeSBh
+bmQgY2VydGlmaWNhdGlvbiBwcmFjdGljZSBzdGF0ZW1lbnRzLjA1BggrBgEFBQcC
+ARYpaHR0cDovL3d3dy5hcHBsZS5jb20vY2VydGlmaWNhdGVhdXRob3JpdHkwHQYD
+VR0OBBYEFGkexw9H7OON3XU3RPPp4VpsEFYlMA4GA1UdDwEB/wQEAwIHgDAPBgkq
+hkiG92NkDA8EAgUAMAoGCCqGSM49BAMCA0cAMEQCICUYFlxeKZxZ9oU5rV3bmfY3
+PvYOzQhFqf13GtYkLSwiAiBdKpsqX6ujY4FljRhA969IC9droZTYNCCH9NaTW7Ub
+rjCCAvkwggJ/oAMCAQICEFb7g9Qr/43DN5kjtVqubr0wCgYIKoZIzj0EAwMwZzEb
+MBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0
+aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UE
+BhMCVVMwHhcNMTkwMzIyMTc1MzMzWhcNMzQwMzIyMDAwMDAwWjB8MTAwLgYDVQQD
+DCdBcHBsZSBBcHBsaWNhdGlvbiBJbnRlZ3JhdGlvbiBDQSA1IC0gRzExJjAkBgNV
+BAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBs
+ZSBJbmMuMQswCQYDVQQGEwJVUzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJLO
+Y719hrGrKAo7HOGv+wSUgJGs9jHfpssoNW9ES+Eh5VfdEo2NuoJ8lb5J+r4zyq7N
+BBnxL0Ml+vS+s8uDfrqjgfcwgfQwDwYDVR0TAQH/BAUwAwEB/zAfBgNVHSMEGDAW
+gBS7sN6hWDOImqSKmd6+veuv2sskqzBGBggrBgEFBQcBAQQ6MDgwNgYIKwYBBQUH
+MAGGKmh0dHA6Ly9vY3NwLmFwcGxlLmNvbS9vY3NwMDMtYXBwbGVyb290Y2FnMzA3
+BgNVHR8EMDAuMCygKqAohiZodHRwOi8vY3JsLmFwcGxlLmNvbS9hcHBsZXJvb3Rj
+YWczLmNybDAdBgNVHQ4EFgQU2Rf+S2eQOEuS9NvO1VeAFAuPPckwDgYDVR0PAQH/
+BAQDAgEGMBAGCiqGSIb3Y2QGAgMEAgUAMAoGCCqGSM49BAMDA2gAMGUCMQCNb6af
+oeDk7FtOc4qSfz14U5iP9NofWB7DdUr+OKhMKoMaGqoNpmRt4bmT6NFVTO0CMGc7
+LLTh6DcHd8vV7HaoGjpVOz81asjF5pKw4WG+gElp5F8rqWzhEQKqzGHZOLdzSjCC
+AkMwggHJoAMCAQICCC3F/IjSxUuVMAoGCCqGSM49BAMDMGcxGzAZBgNVBAMMEkFw
+cGxlIFJvb3QgQ0EgLSBHMzEmMCQGA1UECwwdQXBwbGUgQ2VydGlmaWNhdGlvbiBB
+dXRob3JpdHkxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMB4XDTE0
+MDQzMDE4MTkwNloXDTM5MDQzMDE4MTkwNlowZzEbMBkGA1UEAwwSQXBwbGUgUm9v
+dCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0
+eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwdjAQBgcqhkjOPQIB
+BgUrgQQAIgNiAASY6S89QHKk7ZMicoETHN0QlfHFo05x3BQW2Q7lpgUqd2R7X044
+07scRLV/9R+2MmJdyemEW08wTxFaAP1YWAyl9Q8sTQdHE3Xal5eXbzFc7SudeyA7
+2LlU2V6ZpDpRCjGjQjBAMB0GA1UdDgQWBBS7sN6hWDOImqSKmd6+veuv2sskqzAP
+BgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAwNoADBl
+AjEAg+nBxBZeGl00GNnt7/RsDgBGS7jfskYRxQ/95nqMoaZrzsID1Jz1k8Z0uGrf
+qiMVAjBtZooQytQN1E/NjUM+tIpjpTNu423aF7dkH8hTJvmIYnQ5Cxdby1GoDOgY
+A+eisigxgf0wgfoCAQEwgZAwfDEwMC4GA1UEAwwnQXBwbGUgQXBwbGljYXRpb24g
+SW50ZWdyYXRpb24gQ0EgNSAtIEcxMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0
+aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMC
+EFkzVq3lWYLPREI3rN9FG1MwDQYJYIZIAWUDBAIBBQAwCgYIKoZIzj0EAwIERzBF
+AiEA0LURits6xjTewcqX1ftIM9rf4rbbDkJWdo0BICUs1p8CIHNjLqxK2DEDHrZd
+rTPhTuzhIugjhxtPkmrlvFSfqjpv
+-----END PKCS7-----
