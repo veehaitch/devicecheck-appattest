@@ -13,7 +13,9 @@ import ch.veehait.devicecheck.appattest.receipt.ReceiptExchangeImpl
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
 import ch.veehait.devicecheck.appattest.receipt.SimpleAppleReceiptHttpClientAdapter
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.net.URI
+import java.security.Security
 import java.security.cert.TrustAnchor
 import java.time.Clock
 
@@ -21,10 +23,14 @@ class AppleAppAttest(
     private val app: App,
     private val appleAppAttestEnvironment: AppleAppAttestEnvironment,
 ) {
+    init {
+        Security.addProvider(BouncyCastleProvider())
+    }
+
     fun createAttestationValidator(
         trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
-        receiptValidator: ReceiptValidator = createReceiptValidator(trustAnchor),
         clock: Clock = Clock.systemUTC(),
+        receiptValidator: ReceiptValidator = createReceiptValidator(trustAnchor, clock),
     ): AttestationValidator = AttestationValidatorImpl(
         app = app,
         appleAppAttestEnvironment = appleAppAttestEnvironment,

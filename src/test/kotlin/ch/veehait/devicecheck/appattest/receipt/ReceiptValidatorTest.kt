@@ -2,7 +2,6 @@ package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.AppleAppAttest
-import ch.veehait.devicecheck.appattest.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.Utils
@@ -13,8 +12,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.string.shouldStartWith
 import nl.jqno.equalsverifier.EqualsVerifier
+import org.bouncycastle.asn1.cms.ContentInfo
+import org.bouncycastle.openssl.PEMParser
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Instant
@@ -108,6 +111,53 @@ class ReceiptValidatorTest : StringSpec() {
                 .verify()
         }
 
+        "validation fails for too old receipt" {
+            // Test setup
+            val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
+            val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
+
+            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
+            val attestationSampleCreationTimeClock = Clock.fixed(
+                attestationSample.timestamp.plusSeconds(5),
+                ZoneOffset.UTC
+            )
+            val appleAppAttest = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = attestationSampleCreationTimeClock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = attestationSampleCreationTimeClock
+                )
+            )
+            val attestationResponse = attestationValidator.validate(
+                attestationObject = attestationSample.attestation,
+                keyIdBase64 = attestationSample.keyId.toBase64(),
+                serverChallenge = attestationSample.clientData
+            )
+
+            // Actual test
+            val receiptP7 = attestationResponse.receipt.p7
+
+            val clockTooLate = Clock.fixed(
+                attestationSampleCreationTimeClock.instant()
+                    .plus(ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE),
+                ZoneOffset.UTC
+            )
+            val receiptValidator = appleAppAttest.createReceiptValidator(
+                clock = clockTooLate
+            )
+
+            val exception = shouldThrow<ReceiptException.InvalidPayload> {
+                receiptValidator.validateReceipt(
+                    receiptP7 = receiptP7,
+                    publicKey = attestationResponse.publicKey,
+                )
+            }
+            exception.message shouldStartWith "Receipt's creation time is after "
+        }
+
         "validation succeeds for valid receipt" {
             // Test setup
             val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
@@ -136,8 +186,12 @@ class ReceiptValidatorTest : StringSpec() {
 
             // Actual test
             val receipt = javaClass
-                .readTextResource("/iOS14-attestation-receipt-response-base64.der")
-                .fromBase64()
+                .readTextResource("/iOS14-attestation-receipt-response-base64.p7s")
+                .toByteArray()
+                .inputStream()
+                .reader()
+                .let(::PEMParser)
+                .readObject() as ContentInfo
             val assertionSampleCreationTimeClock = Clock.fixed(
                 Instant.parse("2020-10-22T17:21:33.761Z").plusSeconds(5),
                 ZoneOffset.UTC
@@ -147,7 +201,7 @@ class ReceiptValidatorTest : StringSpec() {
                 clock = assertionSampleCreationTimeClock
             )
             receiptValidator.validateReceipt(
-                receiptP7 = receipt,
+                receiptP7 = receipt.encoded,
                 publicKey = attestationResponse.publicKey
             )
         }

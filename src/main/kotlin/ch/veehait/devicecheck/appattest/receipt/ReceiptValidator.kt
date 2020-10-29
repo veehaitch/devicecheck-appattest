@@ -3,7 +3,6 @@ package ch.veehait.devicecheck.appattest.receipt
 import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.Extensions.verifyChain
 import ch.veehait.devicecheck.appattest.Utils
-import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestStatement
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -14,7 +13,6 @@ import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.GeneralSecurityException
-import java.security.Security
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
@@ -23,10 +21,21 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Date
 
+/**
+ * Interface to validate the authenticity of an Apple App Attest receipt.
+ *
+ * @property app The connecting app.
+ * @property trustAnchor The root of the receipt certificate chain.
+ * @property maxAge The maximum validity period of a receipt. Defaults to [APPLE_RECOMMENDED_MAX_AGE] which reflects
+ *   the value Apple recommends.
+ * @property clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
+ */
 interface ReceiptValidator {
     companion object {
-        val APPLE_ATTESTATION_NOT_BEFORE_DILATION: Duration = Duration.ofDays(1)
+        /** The maximum validity period of a receipt after issuing */
         val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
+
+        /** The root certificate authority of the signer of the receipt */
         val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR = TrustAnchor(
             Utils.readPemX590Certificate(
                 """
@@ -51,62 +60,43 @@ interface ReceiptValidator {
 
     val app: App
     val trustAnchor: TrustAnchor
+    val maxAge: Duration
     val clock: Clock
 
-    suspend fun validateAttestationReceiptAsync(
-        attestStatement: AppleAppAttestStatement,
-        notBeforeDilation: Duration = APPLE_ATTESTATION_NOT_BEFORE_DILATION,
-        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
-    ): Receipt
-
-    fun validateAttestationReceipt(
-        attestStatement: AppleAppAttestStatement,
-        maxAge: Duration = APPLE_RECOMMENDED_MAX_AGE,
-    ): Receipt
-
+    /**
+     * Validate an Apple App Attest receipt. Suspending version of [validateReceipt].
+     *
+     * @see validateReceipt
+     */
     suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE),
+        notAfter: Instant = clock.instant().minus(maxAge),
     ): Receipt
 
+    /**
+     * Validate an Apple App Attest receipt.
+     *
+     * @param receiptP7 A DER-encoded PKCS #7 object received as part of an attestation statement or in response to
+     *   a remote call to Apple's servers which exchanges an existing receipt for a new receipt.
+     * @param publicKey The P-256 public key of the attestation object which is used to validate the [receiptP7].
+     * @param notAfter An instant of time which marks the latest creation time for the passed [receiptP7] to be
+     *   considered valid.
+     * @return A validated [Receipt] which can be trusted.
+     */
     fun validateReceipt(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant = clock.instant().plus(APPLE_RECOMMENDED_MAX_AGE),
+        notAfter: Instant = clock.instant().minus(maxAge),
     ): Receipt
 }
 
 internal class ReceiptValidatorImpl(
     override val app: App,
     override val trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
+    override val maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE,
     override val clock: Clock = Clock.systemUTC(),
 ) : ReceiptValidator {
-    init {
-        Security.addProvider(BouncyCastleProvider())
-    }
-
-    override suspend fun validateAttestationReceiptAsync(
-        attestStatement: AppleAppAttestStatement,
-        notBeforeDilation: Duration,
-        maxAge: Duration,
-    ): Receipt = coroutineScope {
-        val receiptP7 = attestStatement.attStmt.receipt
-        val attestationCertificate = attestStatement.attStmt.x5c.first().let(Utils::readDerX509Certificate)
-        val publicKey = attestationCertificate.publicKey as ECPublicKey
-        val notAfter = attestationCertificate.notBefore.toInstant()
-            .plus(notBeforeDilation)
-            .plus(maxAge)
-
-        validateReceiptAsync(receiptP7, publicKey, notAfter)
-    }
-
-    override fun validateAttestationReceipt(
-        attestStatement: AppleAppAttestStatement,
-        maxAge: Duration,
-    ): Receipt = runBlocking {
-        validateAttestationReceiptAsync(attestStatement, maxAge = maxAge)
-    }
 
     override fun validateReceipt(
         receiptP7: ByteArray,
@@ -183,7 +173,7 @@ internal class ReceiptValidatorImpl(
 
         // 5. Verify that the receipt’s creation time, given in field 12, is no more than five minutes old.
         //    This helps to thwart replay attacks.
-        if (receiptPayload.creationTime.isAfter(notAfter)) {
+        if (notAfter.isAfter(receiptPayload.creationTime)) {
             throw ReceiptException.InvalidPayload("Receipt's creation time is after $notAfter")
         }
 

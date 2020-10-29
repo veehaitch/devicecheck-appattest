@@ -114,7 +114,7 @@ internal class AssertionValidatorImpl(
 
         launch { verifySignature(assertionObject, clientData, attestationPublicKey) }
 
-        // XXX: We cannot use Utils#parseAuthenticatorData here as Apple sets the "Extension Data" (ED) flag
+        // XXX: We cannot use [Utils.parseAuthenticatorData] here as Apple sets the "Extension Data" (ED) flag
         //      although it does not contain any. Using an own structure which ignores the flags altogether until
         //      Apple fixes this.
         launch {

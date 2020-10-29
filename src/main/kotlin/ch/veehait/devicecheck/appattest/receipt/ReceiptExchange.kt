@@ -7,7 +7,15 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import java.net.URI
 import java.security.interfaces.ECPublicKey
+import java.time.Instant
 
+/**
+ * Interface to perform a remote call to an Apple server to exchange an existing receipt for a new one.
+ *
+ * @property appleJwsGenerator An [AppleJwsGenerator] instance to issue a signed JWT for authentication to Apple's
+ *   App Attest server.
+ * @property receiptValidator A [ReceiptValidator] to assert the validity of passed and returned receipts.
+ */
 interface ReceiptExchange {
     val appleJwsGenerator: AppleJwsGenerator
     val receiptValidator: ReceiptValidator
@@ -15,20 +23,27 @@ interface ReceiptExchange {
     val appleReceiptHttpClientAdapter: AppleReceiptHttpClientAdapter
 
     companion object {
+        /** The Apple App Attest receipt endpoint for production use */
         val APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL: URI = URI.create(
             "https://data.appattest.apple.com/v1/attestationData"
         )
+
+        /** The Apple App Attest receipt endpoint for development use */
         val APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL: URI = URI.create(
             "https://data-development.appattest.apple.com/v1/attestationData"
         )
     }
 
     /**
-     * Suspending implementation of [trade]
+     * Exchange a [receiptP7] for a new one. Suspending version of [trade].
+     *
+     * @see trade
      */
     suspend fun tradeAsync(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = coroutineScope {
-        // Validate the receipt before sending it to Apple
-        val receipt = async { receiptValidator.validateReceipt(receiptP7, attestationPublicKey) }
+        // Validate the receipt before sending it to Apple. We cannot validate the creation time as we do not when it
+        // should have been issued at latest. Therefore, we use an epoch instant which de facto skips this check. As
+        // we also validate the new receipt on return, this should be acceptable.
+        val receipt = async { receiptValidator.validateReceipt(receiptP7, attestationPublicKey, Instant.EPOCH) }
         val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
 
         val response = appleReceiptHttpClientAdapter.post(
@@ -62,7 +77,7 @@ interface ReceiptExchange {
     /**
      * Handle any response with a status code not equal to 200 (OK).
      *
-     * @param response The response from the request to Apple's servers
+     * @param response The response from the request to Apple's servers.
      */
     fun handleErrorResponse(response: AppleReceiptHttpClientAdapter.Response) {}
 }
