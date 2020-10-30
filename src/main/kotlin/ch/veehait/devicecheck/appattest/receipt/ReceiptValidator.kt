@@ -1,8 +1,8 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.App
-import ch.veehait.devicecheck.appattest.Extensions.verifyChain
-import ch.veehait.devicecheck.appattest.Utils
+import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.util.Extensions.verifyChain
+import ch.veehait.devicecheck.appattest.util.Utils
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -161,9 +161,9 @@ internal class ReceiptValidatorImpl(
     }
 
     @Suppress("ThrowsCount")
-    private fun verifyPayload(signedData: CMSSignedData, publicKey: ECPublicKey, notAfter: Instant): ReceiptPayload {
+    private fun verifyPayload(signedData: CMSSignedData, publicKey: ECPublicKey, notAfter: Instant): Receipt.Payload {
         // 3. Parse the ASN.1 structure that makes up the payload.
-        val receiptPayload = ReceiptPayload.parse(signedData)
+        val receiptPayload = Receipt.Payload.parse(signedData)
 
         // 4. Verify that the receipt contains the App ID of your app in field 2.
         //    Your app’s App ID is the concatenation of your 10-digit Team ID, a period, and the app’s bundle ID.

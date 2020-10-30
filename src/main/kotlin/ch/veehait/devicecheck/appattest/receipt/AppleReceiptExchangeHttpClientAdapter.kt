@@ -5,7 +5,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-interface AppleReceiptHttpClientAdapter {
+interface AppleReceiptExchangeHttpClientAdapter {
     data class Response(val body: ByteArray, val statusCode: Int) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -29,13 +29,13 @@ interface AppleReceiptHttpClientAdapter {
     fun post(uri: URI, authorizationHeader: Map<String, String>, body: ByteArray): Response
 }
 
-internal class SimpleAppleReceiptHttpClientAdapter : AppleReceiptHttpClientAdapter {
+internal class SimpleAppleReceiptExchangeHttpClientAdapter : AppleReceiptExchangeHttpClientAdapter {
     private val httpClient = HttpClient.newHttpClient()
     override fun post(
         uri: URI,
         authorizationHeader: Map<String, String>,
         body: ByteArray,
-    ): AppleReceiptHttpClientAdapter.Response {
+    ): AppleReceiptExchangeHttpClientAdapter.Response {
         val request = HttpRequest.newBuilder()
             .uri(uri)
             .apply { authorizationHeader.forEach { (k, v) -> header(k, v) } }
@@ -43,6 +43,6 @@ internal class SimpleAppleReceiptHttpClientAdapter : AppleReceiptHttpClientAdapt
             .build()
 
         val httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
-        return AppleReceiptHttpClientAdapter.Response(httpResponse.body(), httpResponse.statusCode())
+        return AppleReceiptExchangeHttpClientAdapter.Response(httpResponse.body(), httpResponse.statusCode())
     }
 }

@@ -14,7 +14,7 @@ import java.time.Clock
 import java.util.Date
 
 class AppleJwsGeneratorImpl(
-    override val appleTeamIdentifier: String,
+    override val teamIdentifier: String,
     override val keyIdentifier: String,
     privateKeyPem: String,
     private val clock: Clock = Clock.systemUTC(),
@@ -38,7 +38,7 @@ class AppleJwsGeneratorImpl(
 
         val jwsClaims = JWTClaimsSet
             .Builder()
-            .issuer(appleTeamIdentifier)
+            .issuer(teamIdentifier)
             .issueTime(Date.from(clock.instant()))
             .build()
 

@@ -1,11 +1,12 @@
 package ch.veehait.devicecheck.appattest.assertion
 
-import ch.veehait.devicecheck.appattest.App
-import ch.veehait.devicecheck.appattest.Extensions.sha256
+import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -26,23 +27,24 @@ interface AssertionValidator {
     /**
      * Validate an assertion object.
      *
-     * @param assertion attestation object created by calling
+     * @param assertionObject attestation object created by calling
      *   `DCAppAttestService.generateAssertion(_:clientDataHash:completionHandler:)`
      * @param clientData The data the client asserted. Make sure to pass the raw data before hashing.
-     * @param attestationPublicKey The attested public key stored for the client which sent the [assertion].
+     * @param attestationPublicKey The attested public key stored for the client which sent the [assertionObject].
      * @param lastCounter The value of the counter which was validated last.
      * @param challenge The challenge the client included in [clientData] and which is validated
      *   using [assertionChallengeValidator].
+     * @return A parsed and validated [Assertion].
      *
      * @throws AssertionException
      */
     fun validate(
-        assertion: ByteArray,
+        assertionObject: ByteArray,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-    )
+    ): Assertion
 
     /**
      * Validate an assertion object. Suspending version of [validate].
@@ -50,12 +52,12 @@ interface AssertionValidator {
      * @see [validate]
      */
     suspend fun validateAsync(
-        assertion: ByteArray,
+        assertionObject: ByteArray,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-    )
+    ): Assertion
 }
 
 internal class AssertionValidatorImpl(
@@ -65,12 +67,16 @@ internal class AssertionValidatorImpl(
     private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
     private val signatureInstance = Signature.getInstance("SHA256withECDSA")
 
-    private fun verifySignature(assertionObj: Assertion, clientData: ByteArray, attestationPublicKey: ECPublicKey) {
+    private fun verifySignature(
+        assertionEnvelope: AssertionEnvelope,
+        clientData: ByteArray,
+        attestationPublicKey: ECPublicKey,
+    ) {
         // 1. Compute clientDataHash as the SHA256 hash of clientData.
         val clientDataHash = clientData.sha256()
 
         // 2. Concatenate authenticatorData and clientDataHash and apply a SHA256 hash over the result to form nonce.
-        val nonce = assertionObj.authenticatorData.plus(clientDataHash).sha256()
+        val nonce = assertionEnvelope.authenticatorData.plus(clientDataHash).sha256()
 
         // 3. Use the public key that you stored from the attestation object to verify
         //    that the assertion’s signature is valid for nonce.
@@ -78,7 +84,7 @@ internal class AssertionValidatorImpl(
             signatureInstance.run {
                 initVerify(attestationPublicKey)
                 update(nonce)
-                verify(assertionObj.signature)
+                verify(assertionEnvelope.signature)
             }
         }.onFailure { cause ->
             throw AssertionException.InvalidSignature(cause)
@@ -89,10 +95,18 @@ internal class AssertionValidatorImpl(
         }
     }
 
+    @Suppress("ThrowsCount")
     private fun verifyAuthenticatorData(
-        authenticatorData: AssertionAuthenticatorData,
+        authenticatorDataBlob: ByteArray,
         lastCounter: Long,
-    ) {
+    ): Assertion.AssertionAuthenticatorData {
+        // XXX: We cannot use [Utils.parseAuthenticatorData] here as Apple sets the "Extension Data" (ED) flag
+        //      although it does not contain any. Using an own structure which ignores the flags altogether until
+        //      Apple fixes this.
+        val authenticatorData = runCatching { Assertion.AssertionAuthenticatorData.parse(authenticatorDataBlob) }
+            .getOrElse {
+                throw AssertionException.InvalidAuthenticatorData("Could not parse assertion authenticatorData")
+            }
         // 4. Compute the SHA256 hash of the client’s App ID,
         //    and verify that it matches the RP ID in the authenticator data.
         val expectedRpId = app.appIdentifier.toByteArray().sha256()
@@ -107,6 +121,8 @@ internal class AssertionValidatorImpl(
                 "Assertion counter is not greater than the counter saved counter"
             )
         }
+
+        return authenticatorData
     }
 
     private fun verifyChallenge(
@@ -129,36 +145,34 @@ internal class AssertionValidatorImpl(
     }
 
     override suspend fun validateAsync(
-        assertion: ByteArray,
+        assertionObject: ByteArray,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-    ): Unit = coroutineScope {
-        val assertionObject: Assertion = cborObjectMapper.readValue(assertion)
+    ): Assertion = coroutineScope {
+        val assertionEnvelope: AssertionEnvelope = cborObjectMapper.readValue(assertionObject)
 
-        launch { verifySignature(assertionObject, clientData, attestationPublicKey) }
+        launch { verifySignature(assertionEnvelope, clientData, attestationPublicKey) }
 
-        // XXX: We cannot use [Utils.parseAuthenticatorData] here as Apple sets the "Extension Data" (ED) flag
-        //      although it does not contain any. Using an own structure which ignores the flags altogether until
-        //      Apple fixes this.
-        launch {
-            verifyAuthenticatorData(
-                AssertionAuthenticatorData.parse(assertionObject.authenticatorData),
-                lastCounter
-            )
+        val authenticatorData = async {
+            verifyAuthenticatorData(assertionEnvelope.authenticatorData, lastCounter)
         }
 
-        launch { verifyChallenge(challenge, assertionObject, clientData, attestationPublicKey) }
+        val assertion = Assertion(assertionEnvelope.signature, authenticatorData.await())
+
+        launch { verifyChallenge(challenge, assertion, clientData, attestationPublicKey) }
+
+        assertion
     }
 
     override fun validate(
-        assertion: ByteArray,
+        assertionObject: ByteArray,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-    ) = runBlocking {
-        validateAsync(assertion, clientData, attestationPublicKey, lastCounter, challenge)
+    ): Assertion = runBlocking {
+        validateAsync(assertionObject, clientData, attestationPublicKey, lastCounter, challenge)
     }
 }

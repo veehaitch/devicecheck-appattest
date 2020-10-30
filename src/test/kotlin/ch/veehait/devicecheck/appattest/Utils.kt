@@ -2,6 +2,7 @@ package ch.veehait.devicecheck.appattest
 
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
+import ch.veehait.devicecheck.appattest.common.App
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory

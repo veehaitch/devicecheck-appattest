@@ -1,6 +1,6 @@
 package ch.veehait.devicecheck.appattest.attestation
 
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 
 sealed class AttestationException(message: String, cause: Throwable?) : RuntimeException(message, cause) {
     class InvalidFormatException(message: String, cause: Throwable? = null) : AttestationException(message, cause)

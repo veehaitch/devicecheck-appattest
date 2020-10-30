@@ -1,14 +1,14 @@
 package ch.veehait.devicecheck.appattest.assertion
 
-import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.AppleAppAttest
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils
 import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
+import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -58,15 +58,19 @@ class AssertionValidatorTest : StringSpec() {
             EqualsVerifier.forClass(Assertion::class.java).verify()
         }
 
-        "AssertionAuthenticatorData: equals/hashCode" {
-            EqualsVerifier.forClass(AssertionAuthenticatorData::class.java).verify()
+        "Assertion.AssertionAuthenticatorData: equals/hashCode" {
+            EqualsVerifier.forClass(Assertion.AssertionAuthenticatorData::class.java).verify()
+        }
+
+        "AssertionEnvelope: equals/hashCode" {
+            EqualsVerifier.forClass(AssertionEnvelope::class.java).verify()
         }
 
         "Assertion authenticator data claims extensions but does not include any" {
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
-            val assertionObject: Assertion = cborObjectMapper.readValue(assertionSample.assertion)
+            val assertionObject: AssertionEnvelope = cborObjectMapper.readValue(assertionSample.assertion)
             val flags = assertionObject.authenticatorData[32]
 
             flags shouldBe 64
@@ -93,13 +97,15 @@ class AssertionValidatorTest : StringSpec() {
                 appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
             ).createAssertionValidator(assertionChallengeValidator)
 
-            assertionValidator.validate(
-                assertion = assertionSample.assertion,
+            val assertion = assertionValidator.validate(
+                assertionObject = assertionSample.assertion,
                 clientData = assertionSample.clientData,
                 attestationPublicKey = attestationResponse.publicKey,
                 lastCounter = 0L,
                 challenge = assertionSample.challenge,
             )
+
+            assertion.authenticatorData.signCount shouldBe 1L
         }
 
         "Throws InvalidChallenge for invalid challenge" {
@@ -124,7 +130,7 @@ class AssertionValidatorTest : StringSpec() {
 
             shouldThrow<AssertionException.InvalidChallenge> {
                 assertionValidator.validate(
-                    assertion = assertionSample.assertion,
+                    assertionObject = assertionSample.assertion,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
                     lastCounter = 0L,
@@ -146,7 +152,7 @@ class AssertionValidatorTest : StringSpec() {
 
             val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
                 assertionValidator.validate(
-                    assertion = assertionSample.assertion,
+                    assertionObject = assertionSample.assertion,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
                     lastCounter = 0L,
@@ -169,7 +175,7 @@ class AssertionValidatorTest : StringSpec() {
 
             val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
                 assertionValidator.validate(
-                    assertion = assertionSample.assertion,
+                    assertionObject = assertionSample.assertion,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
                     lastCounter = wrongCounterValue,
@@ -192,7 +198,7 @@ class AssertionValidatorTest : StringSpec() {
 
             shouldThrow<AssertionException.InvalidSignature> {
                 assertionValidator.validate(
-                    assertion = assertionSample.assertion,
+                    assertionObject = assertionSample.assertion,
                     clientData = wrongClientData,
                     attestationPublicKey = attestationResponse.publicKey,
                     lastCounter = 0L,
@@ -210,9 +216,9 @@ class AssertionValidatorTest : StringSpec() {
                 app = app,
                 appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
             ).createAssertionValidator(assertionChallengeAlwaysAcceptedValidator)
-            val assertionObject: Assertion = cborObjectMapper.readValue(assertionSample.assertion)
-            val assertionObjectTampered = assertionObject.copy(
-                signature = ByteArray(assertionObject.signature.size).apply {
+            val assertionEnvelope: AssertionEnvelope = cborObjectMapper.readValue(assertionSample.assertion)
+            val assertionObjectTampered = assertionEnvelope.copy(
+                signature = ByteArray(assertionEnvelope.signature.size).apply {
                     SecureRandom().nextBytes(this)
                 }
             )
@@ -220,7 +226,7 @@ class AssertionValidatorTest : StringSpec() {
 
             shouldThrow<AssertionException.InvalidSignature> {
                 assertionValidator.validate(
-                    assertion = assertionTampered,
+                    assertionObject = assertionTampered,
                     clientData = assertionSample.clientData,
                     attestationPublicKey = attestationResponse.publicKey,
                     lastCounter = 0L,

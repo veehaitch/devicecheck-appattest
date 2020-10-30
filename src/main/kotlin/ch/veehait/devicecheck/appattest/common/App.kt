@@ -1,11 +1,11 @@
-package ch.veehait.devicecheck.appattest
+package ch.veehait.devicecheck.appattest.common
 
 /**
  * The [App] that leverages the DCAppAttest service.
  *
- * @param appTeamIdentifier The 10-digit identifier of the team who signs your app, as denoted on
+ * @param teamIdentifier The 10-digit identifier of the team who signs your app, as denoted on
  *   https://developer.apple.com/account. Also known as app identifier prefix (without the trailing dot).
- * @param appBundleIdentifier Your app’s CFBundleIdentifier value. Also known as app identifier suffix.
+ * @param bundleIdentifier Your app’s CFBundleIdentifier value. Also known as app identifier suffix.
  */
 data class App(
     val teamIdentifier: String,

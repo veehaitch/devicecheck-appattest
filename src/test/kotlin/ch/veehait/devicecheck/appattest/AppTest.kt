@@ -1,5 +1,6 @@
 package ch.veehait.devicecheck.appattest
 
+import ch.veehait.devicecheck.appattest.common.App
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

@@ -1,14 +1,14 @@
 package ch.veehait.devicecheck.appattest.attestation
 
-import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.AppleAppAttest
-import ch.veehait.devicecheck.appattest.Extensions.sha256
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.loadValidAttestationSample
-import ch.veehait.devicecheck.appattest.Utils
+import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.util.Extensions.sha256
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -21,11 +21,11 @@ import java.time.ZoneOffset
 class AttestationValidatorTest : StringSpec() {
     init {
         "AttestationStatement: equals/hashCode" {
-            EqualsVerifier.forClass(AttestationStatement::class.java).verify()
+            EqualsVerifier.forClass(AttestationObject.AttestationStatement::class.java).verify()
         }
 
         "AppleAppAttestStatement: equals/hashCode" {
-            EqualsVerifier.forClass(AppleAppAttestStatement::class.java).verify()
+            EqualsVerifier.forClass(AttestationObject::class.java).verify()
         }
 
         "Throws InvalidFormatException for wrong attestation format" {
@@ -41,7 +41,7 @@ class AttestationValidatorTest : StringSpec() {
             // Actual test
             shouldThrow<AttestationException.InvalidFormatException> {
                 with(attestationSample) {
-                    val attestationStatement = cborObjectMapper.readValue(attestation, AppleAppAttestStatement::class.java)
+                    val attestationStatement = cborObjectMapper.readValue(attestation, AttestationObject::class.java)
                     val attestationStatementWrong = attestationStatement.copy(fmt = "wurzelpfropf")
                     val attestationWrong = cborObjectMapper.writeValueAsBytes(attestationStatementWrong)
                     attestationValidator.validate(attestationWrong, keyId.toBase64(), clientData)

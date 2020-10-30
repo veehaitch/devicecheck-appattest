@@ -1,12 +1,12 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.App
 import ch.veehait.devicecheck.appattest.AppleAppAttest
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
-import ch.veehait.devicecheck.appattest.Utils
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
+import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -106,7 +106,7 @@ class ReceiptValidatorTest : StringSpec() {
 
         "ReceiptPayload: equals/hashCode" {
             val (red, blue) = equalsVerifierX509Certs()
-            EqualsVerifier.forClass(ReceiptPayload::class.java)
+            EqualsVerifier.forClass(Receipt.Payload::class.java)
                 .withPrefabValues(X509Certificate::class.java, red, blue)
                 .verify()
         }

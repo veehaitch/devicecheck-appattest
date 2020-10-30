@@ -1,7 +1,7 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.Extensions.fromBase64
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
+import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
@@ -15,12 +15,15 @@ import java.time.Instant
  * @property appleJwsGenerator An [AppleJwsGenerator] instance to issue a signed JWT for authentication to Apple's
  *   App Attest server.
  * @property receiptValidator A [ReceiptValidator] to assert the validity of passed and returned receipts.
+ * @property appleDeviceCheckUrl The endpoint to use for trading a receipt.
+ * @property appleReceiptExchangeHttpClientAdapter An HTTP client adapter to execute the call to [appleDeviceCheckUrl]
+ *   using [appleJwsGenerator] for authentication.
  */
 interface ReceiptExchange {
     val appleJwsGenerator: AppleJwsGenerator
     val receiptValidator: ReceiptValidator
     val appleDeviceCheckUrl: URI
-    val appleReceiptHttpClientAdapter: AppleReceiptHttpClientAdapter
+    val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter
 
     companion object {
         /** The Apple App Attest receipt endpoint for production use */
@@ -40,13 +43,13 @@ interface ReceiptExchange {
      * @see trade
      */
     suspend fun tradeAsync(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = coroutineScope {
-        // Validate the receipt before sending it to Apple. We cannot validate the creation time as we do not when it
-        // should have been issued at latest. Therefore, we use an epoch instant which de facto skips this check. As
+        // Validate the receipt before sending it to Apple. We cannot validate the creation time as we do not know when
+        // it should have been issued at latest. Therefore, we use an epoch instant which de facto skips this check. As
         // we also validate the new receipt on return, this should be acceptable.
         val receipt = async { receiptValidator.validateReceipt(receiptP7, attestationPublicKey, Instant.EPOCH) }
         val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
 
-        val response = appleReceiptHttpClientAdapter.post(
+        val response = appleReceiptExchangeHttpClientAdapter.post(
             appleDeviceCheckUrl,
             authorizationHeader.await(),
             receipt.await().p7.toBase64().toByteArray(),
@@ -79,12 +82,13 @@ interface ReceiptExchange {
      *
      * @param response The response from the request to Apple's servers.
      */
-    fun handleErrorResponse(response: AppleReceiptHttpClientAdapter.Response) {}
+    fun handleErrorResponse(response: AppleReceiptExchangeHttpClientAdapter.Response) {}
 }
 
 internal class ReceiptExchangeImpl(
     override val appleJwsGenerator: AppleJwsGenerator,
     override val receiptValidator: ReceiptValidator,
     override val appleDeviceCheckUrl: URI = ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL,
-    override val appleReceiptHttpClientAdapter: AppleReceiptHttpClientAdapter = SimpleAppleReceiptHttpClientAdapter(),
+    override val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter =
+        SimpleAppleReceiptExchangeHttpClientAdapter(),
 ) : ReceiptExchange

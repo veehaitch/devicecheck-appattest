@@ -1,16 +1,16 @@
 package ch.veehait.devicecheck.appattest.attestation
 
-import ch.veehait.devicecheck.appattest.App
-import ch.veehait.devicecheck.appattest.Extensions.fromBase64
-import ch.veehait.devicecheck.appattest.Extensions.get
-import ch.veehait.devicecheck.appattest.Extensions.readObjectAs
-import ch.veehait.devicecheck.appattest.Extensions.sha256
-import ch.veehait.devicecheck.appattest.Extensions.verifyChain
-import ch.veehait.devicecheck.appattest.Utils
-import ch.veehait.devicecheck.appattest.Utils.parseAuthenticatorData
+import ch.veehait.devicecheck.appattest.common.App
 import ch.veehait.devicecheck.appattest.receipt.Receipt
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
+import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.util.Extensions.get
+import ch.veehait.devicecheck.appattest.util.Extensions.readObjectAs
+import ch.veehait.devicecheck.appattest.util.Extensions.sha256
+import ch.veehait.devicecheck.appattest.util.Extensions.verifyChain
+import ch.veehait.devicecheck.appattest.util.Utils
+import ch.veehait.devicecheck.appattest.util.Utils.parseAuthenticatorData
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -32,9 +32,6 @@ import java.util.Date
 
 /**
  * Interface to validate the authenticity of an Apple App Attest attestation.
- *
- * **Official documentation:** [Validating Apps That Connect to Your Server](
- *   https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server)
  *
  * @property app The connecting app.
  * @property appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
@@ -124,16 +121,16 @@ internal class AttestationValidatorImpl(
         keyIdBase64: String,
         serverChallenge: ByteArray,
     ): AppleAppAttestValidationResponse = coroutineScope {
-        val attestationStatement = parseAttestationObject(attestationObject)
+        val attestation = parseAttestationObject(attestationObject)
         val keyId = keyIdBase64.fromBase64()
 
-        launch { verifyAttestationFormat(attestationStatement) }
-        launch { verifyCertificateChain(attestationStatement) }
-        launch { verifyNonce(attestationStatement, serverChallenge) }
-        val publicKey = async { verifyPublicKey(attestationStatement, keyId) }
-        launch { verifyAuthenticatorData(attestationStatement, keyId) }
+        launch { verifyAttestationFormat(attestation) }
+        launch { verifyCertificateChain(attestation) }
+        launch { verifyNonce(attestation, serverChallenge) }
+        val publicKey = async { verifyPublicKey(attestation, keyId) }
+        launch { verifyAuthenticatorData(attestation, keyId) }
         val receipt = async {
-            runCatching { validateAttestationReceiptAsync(attestationStatement) }
+            runCatching { validateAttestationReceiptAsync(attestation) }
                 .getOrElse { throw AttestationException.InvalidReceipt(it) }
         }
 
@@ -148,24 +145,24 @@ internal class AttestationValidatorImpl(
         validateAsync(attestationObject, keyIdBase64, serverChallenge)
     }
 
-    private fun parseAttestationObject(attestationObject: ByteArray): AppleAppAttestStatement {
-        return cborObjectMapper.readValue(attestationObject, AppleAppAttestStatement::class.java)
+    private fun parseAttestationObject(attestationObject: ByteArray): AttestationObject {
+        return cborObjectMapper.readValue(attestationObject, AttestationObject::class.java)
     }
 
-    private fun verifyAttestationFormat(appleAppAttestStatement: AppleAppAttestStatement) {
-        if (appleAppAttestStatement.fmt != AppleAppAttestStatement.APPLE_ATTESTATION_FORMAT_NAME) {
+    private fun verifyAttestationFormat(attestationObject: AttestationObject) {
+        if (attestationObject.fmt != AttestationObject.APPLE_APP_ATTEST_ATTESTATION_STATEMENT_FORMAT_IDENTIFIER) {
             throw AttestationException.InvalidFormatException(
-                "Expected `${AppleAppAttestStatement.APPLE_ATTESTATION_FORMAT_NAME}` " +
-                    "but was ${appleAppAttestStatement.fmt}"
+                "Expected `${AttestationObject.APPLE_APP_ATTEST_ATTESTATION_STATEMENT_FORMAT_IDENTIFIER}` " +
+                    "but was ${attestationObject.fmt}"
             )
         }
     }
 
-    private fun verifyCertificateChain(appleAppAttestStatement: AppleAppAttestStatement) {
+    private fun verifyCertificateChain(attestationObject: AttestationObject) {
         // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest,
         //    starting from the credential certificate stored in the first data buffer in the array (credcert).
         //    Verify the validity of the certificates using Apple’s App Attest root certificate.
-        val certs = appleAppAttestStatement.attStmt.x5c.map { Utils.readDerX509Certificate(it) }
+        val certs = attestationObject.attStmt.x5c.map { Utils.readDerX509Certificate(it) }
         try {
             certs.verifyChain(trustAnchor, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
@@ -196,19 +193,19 @@ internal class AttestationValidatorImpl(
         return leafOctetString.octets
     }
 
-    private fun verifyNonce(appleAppAttestStatement: AppleAppAttestStatement, serverChallenge: ByteArray) {
+    private fun verifyNonce(attestationObject: AttestationObject, serverChallenge: ByteArray) {
         // 2. Create clientDataHash as the SHA256 hash of the one-time challenge sent to your app before performing
         //    the attestation, ...
         val clientDataHash = serverChallenge.sha256()
 
         //    ... and append that hash to the end of the authenticator data (authData from the decoded object).
         // 3. Generate a new SHA256 hash of the composite item to create nonce.
-        val expectedNonce = appleAppAttestStatement.authData.plus(clientDataHash).sha256()
+        val expectedNonce = attestationObject.authData.plus(clientDataHash).sha256()
 
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER-encoded
         //    ASN.1 sequence. Decode the sequence and extract the single octet string that it contains ...
         val actualNonce = kotlin.runCatching {
-            extractNonce(appleAppAttestStatement.attStmt.x5c.first())
+            extractNonce(attestationObject.attStmt.x5c.first())
         }.getOrElse {
             throw AttestationException.InvalidNonce(it)
         }
@@ -219,9 +216,9 @@ internal class AttestationValidatorImpl(
         }
     }
 
-    private fun verifyPublicKey(appleAppAttestStatement: AppleAppAttestStatement, keyId: ByteArray): ECPublicKey {
+    private fun verifyPublicKey(attestationObject: AttestationObject, keyId: ByteArray): ECPublicKey {
         // 5. Create the SHA256 hash of the public key in credCert, ...
-        val credCert = Utils.readDerX509Certificate(appleAppAttestStatement.attStmt.x5c.first())
+        val credCert = Utils.readDerX509Certificate(attestationObject.attStmt.x5c.first())
         val publicKey = credCert.publicKey as ECPublicKey
         val uncompressedPublicKey = ECUtil.createUncompressedPublicKey(publicKey)
         val actualKeyId = uncompressedPublicKey.sha256()
@@ -235,8 +232,8 @@ internal class AttestationValidatorImpl(
     }
 
     @Suppress("ThrowsCount")
-    private fun verifyAuthenticatorData(appleAppAttestStatement: AppleAppAttestStatement, keyId: ByteArray) {
-        val authenticatorData = parseAuthenticatorData(appleAppAttestStatement.authData, cborObjectMapper)
+    private fun verifyAuthenticatorData(attestationObject: AttestationObject, keyId: ByteArray) {
+        val authenticatorData = parseAuthenticatorData(attestationObject.authData, cborObjectMapper)
 
         // 6. Compute the SHA256 hash of your app’s App ID, and verify that this is the same as the authenticator
         //    data’s RP ID hash.
@@ -252,7 +249,7 @@ internal class AttestationValidatorImpl(
         // 8. Verify that the authenticator data’s aaguid field is either appattestdevelop if operating in the
         //    development environment, or appattest followed by seven 0x00 bytes if operating in the production
         //    environment.
-        if (authenticatorData.attestedCredentialData.aaguid != appleAppAttestEnvironment.asAaguid()) {
+        if (authenticatorData.attestedCredentialData.aaguid != appleAppAttestEnvironment.aaguid) {
             throw AttestationException.InvalidAuthenticatorData(
                 "AAGUID does match neither ${AppleAppAttestEnvironment.DEVELOPMENT.identifier} " +
                     "nor ${AppleAppAttestEnvironment.PRODUCTION.identifier}"
@@ -265,9 +262,7 @@ internal class AttestationValidatorImpl(
         }
     }
 
-    private suspend fun validateAttestationReceiptAsync(
-        attestStatement: AppleAppAttestStatement,
-    ): Receipt {
+    private suspend fun validateAttestationReceiptAsync(attestStatement: AttestationObject): Receipt {
         val receiptP7 = attestStatement.attStmt.receipt
         val attestationCertificate = attestStatement.attStmt.x5c.first().let(Utils::readDerX509Certificate)
         val publicKey = attestationCertificate.publicKey as ECPublicKey

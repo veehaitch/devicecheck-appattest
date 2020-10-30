@@ -1,10 +1,10 @@
 package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.AppleAppAttest
-import ch.veehait.devicecheck.appattest.Extensions.fromBase64
-import ch.veehait.devicecheck.appattest.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.TestUtils
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
@@ -20,7 +20,7 @@ class ReceiptExchangeTest : StringSpec() {
     init {
 
         "AppleReceiptHttpClientAdapter.Response: equals/hashCode" {
-            EqualsVerifier.forClass(AppleReceiptHttpClientAdapter.Response::class.java).verify()
+            EqualsVerifier.forClass(AppleReceiptExchangeHttpClientAdapter.Response::class.java).verify()
         }
 
         "ReceiptExchange works with MockWebServer" {
@@ -145,7 +145,7 @@ class ReceiptExchangeTest : StringSpec() {
             // Actual test
             val receiptExchange = appleAppAttest.createReceiptExchange(
                 appleJwsGenerator = AppleJwsGeneratorImpl(
-                    appleTeamIdentifier = attestationSample.teamIdentifier,
+                    teamIdentifier = attestationSample.teamIdentifier,
                     keyIdentifier = "WURZELPFRO",
                     privateKeyPem =
                         """
@@ -200,7 +200,7 @@ class ReceiptExchangeTest : StringSpec() {
             // Actual test
             val receiptExchange = appleAppAttest.createReceiptExchange(
                 appleJwsGenerator = AppleJwsGeneratorImpl(
-                    appleTeamIdentifier = attestationSample.teamIdentifier,
+                    teamIdentifier = attestationSample.teamIdentifier,
                     keyIdentifier = appleDeviceCheckKid,
                     privateKeyPem = appleDeviceCheckPrivateKeyPem
                 ),
