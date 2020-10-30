@@ -12,10 +12,30 @@ import kotlinx.coroutines.runBlocking
 import java.security.Signature
 import java.security.interfaces.ECPublicKey
 
+/**
+ * Interface to validate the authenticity of an Apple App Attest assertion.
+ *
+ * @property app The connecting app.
+ * @property assertionChallengeValidator An instance of [AssertionChallengeValidator] which validates the challenge
+ *   included in the assertion. The implementation is specific to the [app] and the backend it connects to.
+ */
 interface AssertionValidator {
     val app: App
     val assertionChallengeValidator: AssertionChallengeValidator
 
+    /**
+     * Validate an assertion object.
+     *
+     * @param assertion attestation object created by calling
+     *   `DCAppAttestService.generateAssertion(_:clientDataHash:completionHandler:)`
+     * @param clientData The data the client asserted. Make sure to pass the raw data before hashing.
+     * @param attestationPublicKey The attested public key stored for the client which sent the [assertion].
+     * @param lastCounter The value of the counter which was validated last.
+     * @param challenge The challenge the client included in [clientData] and which is validated
+     *   using [assertionChallengeValidator].
+     *
+     * @throws AssertionException
+     */
     fun validate(
         assertion: ByteArray,
         clientData: ByteArray,
@@ -24,6 +44,11 @@ interface AssertionValidator {
         challenge: ByteArray,
     )
 
+    /**
+     * Validate an assertion object. Suspending version of [validate].
+     *
+     * @see [validate]
+     */
     suspend fun validateAsync(
         assertion: ByteArray,
         clientData: ByteArray,
