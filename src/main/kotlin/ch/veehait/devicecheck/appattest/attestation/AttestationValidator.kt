@@ -1,6 +1,7 @@
 package ch.veehait.devicecheck.appattest.attestation
 
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
@@ -258,8 +259,8 @@ internal class AttestationValidatorImpl(
         //    environment.
         if (authenticatorData.attestedCredentialData.aaguid != appleAppAttestEnvironment.aaguid) {
             throw AttestationException.InvalidAuthenticatorData(
-                "AAGUID does match neither ${AppleAppAttestEnvironment.DEVELOPMENT.identifier} " +
-                    "nor ${AppleAppAttestEnvironment.PRODUCTION.identifier}"
+                "AAGUID does match neither ${AppleAppAttestEnvironment.DEVELOPMENT} " +
+                    "nor ${AppleAppAttestEnvironment.PRODUCTION}"
             )
         }
 

@@ -1,4 +1,4 @@
-package ch.veehait.devicecheck.appattest.attestation
+package ch.veehait.devicecheck.appattest.common
 
 import ch.veehait.devicecheck.appattest.util.Extensions.toUUID
 import java.util.UUID
@@ -9,7 +9,7 @@ import java.util.UUID
  * @property identifier An App Attest–specific constant that indicates whether the attested key belongs to the
  *   development or production environment.
  */
-enum class AppleAppAttestEnvironment(val identifier: String) {
+enum class AppleAppAttestEnvironment(private val identifier: String) {
     /**
      * The App Attest sandbox environment that you use to test a device without affecting its risk metrics. Keys you
      * create in the sandbox environment don’t work in the production environment.

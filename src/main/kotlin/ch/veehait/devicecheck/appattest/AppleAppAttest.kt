@@ -3,10 +3,10 @@ package ch.veehait.devicecheck.appattest
 import ch.veehait.devicecheck.appattest.assertion.AssertionChallengeValidator
 import ch.veehait.devicecheck.appattest.assertion.AssertionValidator
 import ch.veehait.devicecheck.appattest.assertion.AssertionValidatorImpl
-import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidatorImpl
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.receipt.AppleJwsGenerator
 import ch.veehait.devicecheck.appattest.receipt.AppleReceiptExchangeHttpClientAdapter
 import ch.veehait.devicecheck.appattest.receipt.ReceiptExchange
