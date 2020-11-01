@@ -141,7 +141,7 @@ internal class ReceiptValidatorImpl(
             certs.verifyChain(trustAnchor, date = Date.from(clock.instant()))
         } catch (ex: GeneralSecurityException) {
             throw ReceiptException.InvalidCertificateChain(
-                "The assertion object does not contain a valid certificate chain",
+                "The receipt object does not contain a valid certificate chain",
                 ex
             )
         }
