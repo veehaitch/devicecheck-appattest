@@ -1,6 +1,7 @@
 package ch.veehait.devicecheck.appattest.attestation
 
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
@@ -10,11 +11,9 @@ import ch.veehait.devicecheck.appattest.util.Extensions.readObjectAs
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import ch.veehait.devicecheck.appattest.util.Extensions.verifyChain
 import ch.veehait.devicecheck.appattest.util.Utils
-import ch.veehait.devicecheck.appattest.util.Utils.parseAuthenticatorData
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.webauthn4j.util.ECUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -23,10 +22,13 @@ import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.DLTaggedObject
+import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.util.Arrays.constantTimeAreEqual
 import java.security.GeneralSecurityException
+import java.security.KeyFactory
 import java.security.cert.TrustAnchor
 import java.security.interfaces.ECPublicKey
+import java.security.spec.X509EncodedKeySpec
 import java.time.Clock
 import java.util.Date
 
@@ -218,9 +220,8 @@ internal class AttestationValidatorImpl(
 
     private fun verifyPublicKey(attestationObject: AttestationObject, keyId: ByteArray): ECPublicKey {
         // 5. Create the SHA256 hash of the public key in credCert, ...
-        val credCert = Utils.readDerX509Certificate(attestationObject.attStmt.x5c.first())
-        val publicKey = credCert.publicKey as ECPublicKey
-        val uncompressedPublicKey = ECUtil.createUncompressedPublicKey(publicKey)
+        val credCert = X509CertificateHolder(attestationObject.attStmt.x5c.first())
+        val uncompressedPublicKey = credCert.subjectPublicKeyInfo.publicKeyData.bytes
         val actualKeyId = uncompressedPublicKey.sha256()
 
         //    ... and verify that it matches the key identifier from your app.
@@ -228,16 +229,22 @@ internal class AttestationValidatorImpl(
             throw AttestationException.InvalidPublicKey(keyId)
         }
 
-        return publicKey
+        return KeyFactory
+            .getInstance("EC")
+            .generatePublic(X509EncodedKeySpec(credCert.subjectPublicKeyInfo.encoded)) as ECPublicKey
     }
 
     @Suppress("ThrowsCount")
     private fun verifyAuthenticatorData(attestationObject: AttestationObject, keyId: ByteArray) {
-        val authenticatorData = parseAuthenticatorData(attestationObject.authData, cborObjectMapper)
+        val authenticatorData = AuthenticatorData.parse(attestationObject.authData)
+
+        if (authenticatorData.attestedCredentialData == null) {
+            throw AttestationException.InvalidAuthenticatorData("Does not contain attested credentials")
+        }
 
         // 6. Compute the SHA256 hash of your app’s App ID, and verify that this is the same as the authenticator
         //    data’s RP ID hash.
-        if (!authenticatorData.rpIdHash!!.contentEquals(app.appIdentifier.toByteArray().sha256())) {
+        if (!authenticatorData.rpIdHash.contentEquals(app.appIdentifier.toByteArray().sha256())) {
             throw AttestationException.InvalidAuthenticatorData("App ID does not match RP ID hash")
         }
 
@@ -257,7 +264,7 @@ internal class AttestationValidatorImpl(
         }
 
         // 9. Verify that the authenticator data’s credentialId field is the same as the key identifier.
-        if (!authenticatorData.attestedCredentialData.credentialId!!.contentEquals(keyId)) {
+        if (!authenticatorData.attestedCredentialData.credentialId.contentEquals(keyId)) {
             throw AttestationException.InvalidAuthenticatorData("Credentials ID is not equal to Key ID")
         }
     }

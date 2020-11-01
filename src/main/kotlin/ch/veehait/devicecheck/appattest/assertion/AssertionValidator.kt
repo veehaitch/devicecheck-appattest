@@ -1,6 +1,8 @@
 package ch.veehait.devicecheck.appattest.assertion
 
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.common.AuthenticatorData
+import ch.veehait.devicecheck.appattest.common.AuthenticatorDataFlag
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
@@ -12,6 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.security.Signature
 import java.security.interfaces.ECPublicKey
+import kotlin.experimental.and
+import kotlin.experimental.xor
 
 /**
  * Interface to validate the authenticity of an Apple App Attest assertion.
@@ -99,11 +103,16 @@ internal class AssertionValidatorImpl(
     private fun verifyAuthenticatorData(
         authenticatorDataBlob: ByteArray,
         lastCounter: Long,
-    ): Assertion.AssertionAuthenticatorData {
-        // XXX: We cannot use [Utils.parseAuthenticatorData] here as Apple sets the "Extension Data" (ED) flag
-        //      although it does not contain any. Using an own structure which ignores the flags altogether until
-        //      Apple fixes this.
-        val authenticatorData = runCatching { Assertion.AssertionAuthenticatorData.parse(authenticatorDataBlob) }
+    ): AuthenticatorData {
+        // XXX: Due to an Apple bug, the flags byte of the authenticatorData claims to contain attestedCredentialsData
+        //      although Apple's documentation explicitly states that it does not. Until this is fixed (I have reported
+        //      this to Apple and they are on it), we have to fix the flags on our own here to allow for the parsing to
+        //      succeed.
+        authenticatorDataBlob[AuthenticatorData.FLAGS_INDEX] = authenticatorDataBlob[AuthenticatorData.FLAGS_INDEX]
+            .and(AuthenticatorDataFlag.ED.bitmask.xor(1))
+            .and(AuthenticatorDataFlag.AT.bitmask.xor(1))
+
+        val authenticatorData = runCatching { AuthenticatorData.parse(authenticatorDataBlob) }
             .getOrElse {
                 throw AssertionException.InvalidAuthenticatorData("Could not parse assertion authenticatorData")
             }

@@ -1,6 +1,7 @@
 package ch.veehait.devicecheck.appattest.attestation
 
-import com.webauthn4j.data.attestation.authenticator.AAGUID
+import ch.veehait.devicecheck.appattest.util.Extensions.toUUID
+import java.util.UUID
 
 /**
  * The environment for an app that uses the App Attest service to validate itself.
@@ -24,10 +25,5 @@ enum class AppleAppAttestEnvironment(val identifier: String) {
     /**
      * The AAGUID representing the environment.
      */
-    @Suppress("MagicNumber")
-    val aaguid: AAGUID = AAGUID(
-        ByteArray(16).apply {
-            identifier.toByteArray().copyInto(this, 0)
-        }
-    )
+    val aaguid: UUID = identifier.toByteArray().toUUID()
 }

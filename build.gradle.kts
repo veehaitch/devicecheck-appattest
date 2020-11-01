@@ -79,14 +79,8 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion")
     implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
 
-    // WebAuthN parsing
-    implementation("com.webauthn4j:webauthn4j-core:0.14.0.RELEASE")
-
     // Logging
     implementation("org.slf4j:slf4j-nop:1.7.30")
-
-    // Apache Commons Codecs: Base64 URL-safe
-    implementation("commons-codec:commons-codec:1.15")
 
     // Kotest
     val kotestVersion = "4.3.1"

@@ -58,10 +58,6 @@ class AssertionValidatorTest : StringSpec() {
             EqualsVerifier.forClass(Assertion::class.java).verify()
         }
 
-        "Assertion.AssertionAuthenticatorData: equals/hashCode" {
-            EqualsVerifier.forClass(Assertion.AssertionAuthenticatorData::class.java).verify()
-        }
-
         "AssertionEnvelope: equals/hashCode" {
             EqualsVerifier.forClass(AssertionEnvelope::class.java).verify()
         }
