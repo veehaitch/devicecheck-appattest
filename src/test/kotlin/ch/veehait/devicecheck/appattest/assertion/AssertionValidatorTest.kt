@@ -8,18 +8,22 @@ import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.common.AuthenticatorData
+import ch.veehait.devicecheck.appattest.common.AuthenticatorDataFlag
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.throwable.shouldHaveMessage
 import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.util.Arrays
 import java.security.SecureRandom
 import java.security.interfaces.ECPublicKey
 import java.time.Clock
+import kotlin.experimental.and
 
 class AssertionValidatorTest : StringSpec() {
     private fun attest(): Triple<AppleAppAttestValidationResponse, App, Clock> {
@@ -62,14 +66,14 @@ class AssertionValidatorTest : StringSpec() {
             EqualsVerifier.forClass(AssertionEnvelope::class.java).verify()
         }
 
-        "Assertion authenticator data claims extensions but does not include any" {
+        "Assertion authenticator data claims attested credentials but does not include any" {
             val assertionSampleJson = javaClass.readTextResource("/iOS14-assertion-sample.json")
             val assertionSample: AssertionSample = jsonObjectMapper.readValue(assertionSampleJson)
 
             val assertionObject: AssertionEnvelope = cborObjectMapper.readValue(assertionSample.assertion)
-            val flags = assertionObject.authenticatorData[32]
+            val flagsByte = assertionObject.authenticatorData[AuthenticatorData.FLAGS_INDEX]
 
-            flags shouldBe 64
+            flagsByte.and(AuthenticatorDataFlag.AT.bitmask).toInt() shouldNotBe 0
             assertionObject.authenticatorData.size shouldBeExactly 37
         }
 
