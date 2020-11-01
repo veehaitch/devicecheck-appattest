@@ -1,22 +1,19 @@
 package ch.veehait.devicecheck.appattest.receipt
 
-import ch.veehait.devicecheck.appattest.AppleAppAttest
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
-import ch.veehait.devicecheck.appattest.attestation.AttestationSample
-import ch.veehait.devicecheck.appattest.common.App
-import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.TestUtils.loadValidatedAttestationResponse
+import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
-import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.kotest.matchers.throwable.shouldHaveMessage
 import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.openssl.PEMParser
@@ -114,31 +111,10 @@ class ReceiptValidatorTest : StringSpec() {
                 .verify()
         }
 
-        "validation fails for too old receipt" {
+        "Throws InvalidPayload for too old receipt" {
             // Test setup
-            val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
-            val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
-
-            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
-            val attestationSampleCreationTimeClock = Clock.fixed(
-                attestationSample.timestamp.plusSeconds(5),
-                ZoneOffset.UTC
-            )
-            val appleAppAttest = AppleAppAttest(
-                app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
-            )
-            val attestationValidator = appleAppAttest.createAttestationValidator(
-                clock = attestationSampleCreationTimeClock,
-                receiptValidator = appleAppAttest.createReceiptValidator(
-                    clock = attestationSampleCreationTimeClock
-                )
-            )
-            val attestationResponse = attestationValidator.validate(
-                attestationObject = attestationSample.attestation,
-                keyIdBase64 = attestationSample.keyId.toBase64(),
-                serverChallenge = attestationSample.clientData
-            )
+            val (attestationResponse, appleAppAttest, attestationSampleCreationTimeClock) =
+                loadValidatedAttestationResponse()
 
             // Actual test
             val receiptP7 = attestationResponse.receipt.p7
@@ -161,31 +137,96 @@ class ReceiptValidatorTest : StringSpec() {
             exception.message shouldStartWith "Receipt's creation time is after "
         }
 
+        "Throws InvalidPayload for wrong app identifier" {
+            // Test setup
+            val (attestationResponse, appleAppAttest, assertionSampleCreationTimeClock) =
+                loadValidatedAttestationResponse()
+            val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
+                clock = assertionSampleCreationTimeClock
+            )
+
+            // Actual test
+            val receiptP7WrongAppId = attestationResponse.receipt.p7.apply {
+                this[83] = 0x41
+            }
+
+            val exception = shouldThrow<ReceiptException.InvalidPayload> {
+                receiptValidator.validateReceipt(
+                    receiptP7 = receiptP7WrongAppId,
+                    publicKey = attestationResponse.publicKey,
+                )
+            }
+            exception.message shouldStartWith "Unexpected App ID:"
+        }
+
+        "Throws InvalidPayload for wrong public key" {
+            // Test setup
+            val (attestationResponse, appleAppAttest, assertionSampleCreationTimeClock) =
+                loadValidatedAttestationResponse()
+            val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
+                clock = assertionSampleCreationTimeClock
+            )
+
+            // Actual test
+            val receiptP7WrongPublicKey = attestationResponse.receipt.p7.apply {
+                this[500] = 0x41
+            }
+
+            val exception = shouldThrow<ReceiptException.InvalidPayload> {
+                receiptValidator.validateReceipt(
+                    receiptP7 = receiptP7WrongPublicKey,
+                    publicKey = attestationResponse.publicKey,
+                )
+            }
+            exception shouldHaveMessage "Public key from receipt and attestation statement do not match"
+        }
+
+        "Throws InvalidCertificateChain for wrong root CA" {
+            // Test setup
+            val (attestationResponse, appleAppAttest, assertionSampleCreationTimeClock) =
+                loadValidatedAttestationResponse()
+
+            // Actual test
+            val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
+                clock = assertionSampleCreationTimeClock,
+                // Wrong trust anchor
+                trustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
+            )
+
+            val exception = shouldThrow<ReceiptException.InvalidCertificateChain> {
+                receiptValidator.validateReceipt(
+                    receiptP7 = attestationResponse.receipt.p7,
+                    publicKey = attestationResponse.publicKey,
+                )
+            }
+            exception shouldHaveMessage "The receipt object does not contain a valid certificate chain"
+        }
+
+        "Throws InvalidSignature for invalid signature".config(enabled = false) {
+            // Test setup
+            val (attestationResponse, appleAppAttest, assertionSampleCreationTimeClock) =
+                loadValidatedAttestationResponse()
+            val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
+                clock = assertionSampleCreationTimeClock
+            )
+
+            // Actual test
+            val receiptP7InvalidSignature = attestationResponse.receipt.p7.apply {
+                this[3700] = (this[3700] + 0x41).toByte()
+            }
+
+            val exception = shouldThrow<ReceiptException.InvalidSignature> {
+                receiptValidator.validateReceipt(
+                    receiptP7 = receiptP7InvalidSignature,
+                    publicKey = attestationResponse.publicKey,
+                )
+            }
+            exception shouldHaveMessage "The receipt signature is invalid"
+        }
+
         "validation succeeds for valid receipt" {
             // Test setup
-            val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
-            val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
-
-            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
-            val attestationSampleCreationTimeClock = Clock.fixed(
-                attestationSample.timestamp.plusSeconds(5),
-                ZoneOffset.UTC
-            )
-            val appleAppAttest = AppleAppAttest(
-                app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
-            )
-            val attestationValidator = appleAppAttest.createAttestationValidator(
-                clock = attestationSampleCreationTimeClock,
-                receiptValidator = appleAppAttest.createReceiptValidator(
-                    clock = attestationSampleCreationTimeClock
-                )
-            )
-            val attestationResponse = attestationValidator.validate(
-                attestationObject = attestationSample.attestation,
-                keyIdBase64 = attestationSample.keyId.toBase64(),
-                serverChallenge = attestationSample.clientData
-            )
+            val (attestationResponse, appleAppAttest, _) = loadValidatedAttestationResponse()
 
             // Actual test
             val receiptP7s = javaClass
@@ -210,7 +251,7 @@ class ReceiptValidatorTest : StringSpec() {
             )
 
             with(receipt.payload) {
-                appId.value shouldBe app.appIdentifier
+                appId.value shouldBe "6MURL8TA57.de.vincent-haupert.apple-appattest-poc"
                 attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
                 clientHash.value shouldBe "77+977+9XO+/vVFa0Jfvv71T77+9fRjvv70177+9bdeKFC7vv73vv713Umvvv70Rxr7vv717".fromBase64()
                 creationTime.value shouldBe Instant.parse("2020-11-21T22:16:05.466Z")

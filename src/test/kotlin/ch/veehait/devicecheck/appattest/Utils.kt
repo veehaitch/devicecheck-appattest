@@ -1,8 +1,11 @@
 package ch.veehait.devicecheck.appattest
 
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
@@ -32,5 +35,26 @@ object TestUtils {
         val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
         val clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
         return Triple(attestationSample, app, clock)
+    }
+
+    fun loadValidatedAttestationResponse(): Triple<AppleAppAttestValidationResponse, AppleAppAttest, Clock> {
+        val (attestationSample, app, clock) = loadValidAttestationSample()
+        val appleAppAttest = AppleAppAttest(
+            app = app,
+            appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+        )
+        val attestationValidator = appleAppAttest.createAttestationValidator(
+            clock = clock,
+            receiptValidator = appleAppAttest.createReceiptValidator(
+                clock = clock
+            )
+        )
+        val attestationResponse = attestationValidator.validate(
+            attestationObject = attestationSample.attestation,
+            keyIdBase64 = attestationSample.keyId.toBase64(),
+            serverChallenge = attestationSample.clientData
+        )
+
+        return Triple(attestationResponse, appleAppAttest, clock)
     }
 }
