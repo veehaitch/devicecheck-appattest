@@ -79,9 +79,6 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion")
     implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
 
-    // Logging
-    implementation("org.slf4j:slf4j-nop:1.7.30")
-
     // Kotest
     val kotestVersion = "4.3.1"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
