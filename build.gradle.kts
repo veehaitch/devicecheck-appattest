@@ -1,9 +1,8 @@
-import org.jetbrains.dokka.gradle.DokkaTask
 import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.10"
+    id("org.jetbrains.kotlin.jvm") version "1.4.20-M1"
     id("io.gitlab.arturbosch.detekt") version "1.14.2"
     id("org.jmailen.kotlinter") version "3.2.0"
     id("jacoco")
@@ -67,7 +66,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 
     // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0")
 
     // CBOR
     val jacksonVersion = "2.11.3"
@@ -76,8 +75,9 @@ dependencies {
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Bouncy Castle
-    implementation("org.bouncycastle:bcprov-jdk15on:1.66")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.66")
+    val bouncyCastleVersion = "1.67"
+    implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion")
+    implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
 
     // WebAuthN parsing
     implementation("com.webauthn4j:webauthn4j-core:0.14.0.RELEASE")
@@ -89,7 +89,7 @@ dependencies {
     implementation("commons-codec:commons-codec:1.15")
 
     // Kotest
-    val kotestVersion = "4.3.0"
+    val kotestVersion = "4.3.1"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
@@ -101,7 +101,7 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 
     // JWS issuing
-    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.1")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.2")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
