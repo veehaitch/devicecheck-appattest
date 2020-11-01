@@ -43,7 +43,7 @@ internal object Extensions {
 
     @Suppress("MagicNumber")
     fun ByteArray.readAsUInt16(): Int {
-        assert(this.size == 2) { "Expected an unsigned 2 byte integer" }
+        require(this.size == 2) { "Expected an unsigned 2 byte integer" }
         return ByteBuffer
             .wrap(ByteArray(2) + this)
             .order(ByteOrder.BIG_ENDIAN)
@@ -52,7 +52,7 @@ internal object Extensions {
 
     @Suppress("MagicNumber")
     fun ByteArray.readAsUInt32(): Long {
-        assert(this.size == 4) { "Expected an unsigned 4 byte integer" }
+        require(this.size == 4) { "Expected an unsigned 4 byte integer" }
         return ByteBuffer
             .wrap(ByteArray(4) + this)
             .order(ByteOrder.BIG_ENDIAN)
@@ -64,7 +64,7 @@ internal object Extensions {
      */
     @Suppress("MagicNumber")
     fun ByteArray.toUUID(): UUID {
-        assert(this.size <= 16) { "Byte array must not contain more than 16 bytes" }
+        require(this.size <= 16) { "Byte array must not contain more than 16 bytes" }
         return ByteArray(16)
             .let { this.copyInto(it, 0) }
             .let(ByteBuffer::wrap)
