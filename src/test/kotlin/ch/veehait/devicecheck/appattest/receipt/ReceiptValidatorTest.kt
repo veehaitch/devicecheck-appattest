@@ -22,6 +22,7 @@ import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.openssl.PEMParser
 import java.security.cert.X509Certificate
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -212,12 +213,13 @@ class ReceiptValidatorTest : StringSpec() {
                 appId.value shouldBe app.appIdentifier
                 attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
                 clientHash.value shouldBe "77+977+9XO+/vVFa0Jfvv71T77+9fRjvv70177+9bdeKFC7vv73vv713Umvvv70Rxr7vv717".fromBase64()
-                creationTime.value shouldBe Instant.parse("2020-10-22T17:21:33.761Z")
+                creationTime.value shouldBe Instant.parse("2020-11-01T21:47:56.516Z")
                 environment?.value shouldBe "sandbox"
-                expirationTime.value shouldBe Instant.parse("2021-01-20T17:21:33.761Z")
-                notBefore?.value shouldBe Instant.parse("2020-10-23T17:21:33.761Z")
-                riskMetric?.value shouldBe 3
-                token.value shouldBe "H8As3LUQ/6QojF8YfuKW0ttzupmEiW77Jr59Fpl266r6i2oxTCkDOzvcdoRBrZ4WWGlvx8t2VXXLd+VBOAqIbw=="
+                expirationTime.value shouldBe creationTime.value.plus(Duration.ofDays(90))
+                // XXX: this doesn't make a lot of sense.
+                notBefore?.value shouldBe creationTime.value.plus(Duration.ofDays(1))
+                riskMetric?.value shouldBe 1
+                token.value shouldBe "xnGQkvBvTHoIRoRkoUKalbb8Z1JPpFWPvKybUVVtZlVs5WPzXboFwN+YBukziJjR4y6d5tqqY/QQV12/j4RgKQ=="
                 type.value shouldBe Receipt.Type.RECEIPT
             }
         }

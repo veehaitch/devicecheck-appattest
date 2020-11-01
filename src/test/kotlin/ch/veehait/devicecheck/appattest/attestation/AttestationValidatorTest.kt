@@ -19,6 +19,7 @@ import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
 import java.security.cert.TrustAnchor
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -188,12 +189,12 @@ class AttestationValidatorTest : StringSpec() {
                 appId.value shouldBe app.appIdentifier
                 attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
                 clientHash.value shouldBe "i+ZcylFa0JfJU5Z9GNY12G3XihQu09B3UmvtEca+xns=".fromBase64()
-                creationTime.value shouldBe Instant.parse("2020-10-22T17:00:35.266Z")
+                creationTime.value shouldBe Instant.parse("2020-11-01T21:42:22.311Z")
                 environment?.value shouldBe "sandbox"
-                expirationTime.value shouldBe Instant.parse("2021-01-20T17:00:35.266Z")
+                expirationTime.value shouldBe creationTime.value.plus(Duration.ofDays(90))
                 notBefore.shouldBeNull()
                 riskMetric.shouldBeNull()
-                token.value shouldBe "H8As3LUQ/6QojF8YfuKW0ttzupmEiW77Jr59Fpl266r6i2oxTCkDOzvcdoRBrZ4WWGlvx8t2VXXLd+VBOAqIbw=="
+                token.value shouldBe "xnGQkvBvTHoIRoRkoUKalbb8Z1JPpFWPvKybUVVtZlVs5WPzXboFwN+YBukziJjR4y6d5tqqY/QQV12/j4RgKQ=="
                 type.value shouldBe Receipt.Type.ATTEST
             }
         }
