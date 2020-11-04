@@ -2,10 +2,13 @@ package ch.veehait.devicecheck.appattest.util
 
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.util.encoders.Base64
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
+import java.security.PublicKey
 import java.security.cert.CertPathValidator
 import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
@@ -15,6 +18,7 @@ import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
+@Suppress("TooManyFunctions")
 internal object Extensions {
 
     fun List<X509Certificate>.verifyChain(
@@ -31,6 +35,11 @@ internal object Extensions {
 
         certPathValidator.validate(certPath, pkixParameters)
     }
+
+    fun SubjectPublicKeyInfo.createAppleKeyId() = publicKeyData.bytes.sha256()
+    fun PublicKey.createAppleKeyId() = SubjectPublicKeyInfo.getInstance(encoded).createAppleKeyId()
+    fun X509CertificateHolder.createAppleKeyId() = subjectPublicKeyInfo.createAppleKeyId()
+    fun X509Certificate.createAppleKeyId() = publicKey.createAppleKeyId()
 
     inline operator fun <reified T : Any> ASN1Sequence.get(index: Int): T = this.getObjectAt(index) as T
     inline fun <reified T : Any> ASN1InputStream.readObjectAs(): T = this.readObject() as T

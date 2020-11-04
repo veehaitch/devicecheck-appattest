@@ -37,6 +37,11 @@ class ReceiptExchangeTest : StringSpec() {
         }
 
         "ReceiptExchange works with MockWebServer" {
+            try {
+                TestUtils.loadValidAttestationSample()
+            } catch (ex: Throwable) {
+                print(ex)
+            }
             val (attestationSample, app, attestationClock) = TestUtils.loadValidAttestationSample()
 
             val appleAppAttest = AppleAppAttest(

@@ -93,6 +93,9 @@ dependencies {
 
     // JWS issuing
     testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.2")
+
+    // WebAuthn data structures
+    testImplementation("com.yubico:webauthn-server-core:1.7.0")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

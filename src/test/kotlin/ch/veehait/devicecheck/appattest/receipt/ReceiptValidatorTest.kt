@@ -5,10 +5,6 @@ import ch.veehait.devicecheck.appattest.TestUtils.loadValidatedAttestationRespon
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Utils
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -24,10 +20,6 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 class ReceiptValidatorTest : StringSpec() {
-    private val jsonObjectMapper = ObjectMapper(JsonFactory())
-        .registerModule(JavaTimeModule())
-        .registerModule(KotlinModule())
-
     private fun equalsVerifierX509Certs(): Pair<X509Certificate, X509Certificate> {
         val red = Utils.readPemX509Certificate(
             """

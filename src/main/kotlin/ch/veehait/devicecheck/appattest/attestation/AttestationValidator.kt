@@ -6,6 +6,7 @@ import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
+import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.get
 import ch.veehait.devicecheck.appattest.util.Extensions.readObjectAs
@@ -222,8 +223,7 @@ internal class AttestationValidatorImpl(
     private fun verifyPublicKey(attestationObject: AttestationObject, keyId: ByteArray): ECPublicKey {
         // 5. Create the SHA256 hash of the public key in credCert, ...
         val credCert = X509CertificateHolder(attestationObject.attStmt.x5c.first())
-        val uncompressedPublicKey = credCert.subjectPublicKeyInfo.publicKeyData.bytes
-        val actualKeyId = uncompressedPublicKey.sha256()
+        val actualKeyId = credCert.createAppleKeyId()
 
         //    ... and verify that it matches the key identifier from your app.
         if (!actualKeyId.contentEquals(keyId)) {

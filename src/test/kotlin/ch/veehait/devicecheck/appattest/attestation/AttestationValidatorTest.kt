@@ -1,13 +1,17 @@
 package ch.veehait.devicecheck.appattest.attestation
 
 import ch.veehait.devicecheck.appattest.AppleAppAttest
+import ch.veehait.devicecheck.appattest.CertUtils
+import ch.veehait.devicecheck.appattest.TestExtensions.encode
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.loadValidAttestationSample
 import ch.veehait.devicecheck.appattest.common.App
 import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
+import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
+import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
@@ -18,7 +22,15 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.DLTaggedObject
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.security.KeyPairGenerator
+import java.security.Security
 import java.security.cert.TrustAnchor
+import java.security.spec.ECGenParameterSpec
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -26,6 +38,8 @@ import java.time.ZoneOffset
 
 class AttestationValidatorTest : StringSpec() {
     init {
+        Security.addProvider(BouncyCastleProvider())
+
         "AttestationStatement: equals/hashCode" {
             EqualsVerifier.forClass(AttestationObject.AttestationStatement::class.java).verify()
         }
@@ -198,6 +212,77 @@ class AttestationValidatorTest : StringSpec() {
                 token.value shouldBe "7URCQP4mKgM9qW9M/zxuPweeyX0tvFfN5xTY4u9JYLPlTTfmL126irzJn0l+i4R7gloRfkoNiNixMAqUwW5jIQ=="
                 type.value shouldBe Receipt.Type.ATTEST
             }
+        }
+
+        "validation works for valid fake attestation object".config(enabled = false) {
+            val credCertKeyPair = KeyPairGenerator.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME).apply {
+                initialize(ECGenParameterSpec("prime256v1"))
+            }.generateKeyPair()
+
+            val (attestationSampleOriginal, _, _) = loadValidAttestationSample()
+            val attestationObject: AttestationObject = cborObjectMapper.readValue(attestationSampleOriginal.attestation)
+
+            val authData: AuthenticatorData = AuthenticatorData.parse(
+                attestationObject.authData,
+                cborObjectMapper.readerForMapOf(Any::class.java)
+            )
+
+            val authDataFake = authData.copy(
+                attestedCredentialData = authData.attestedCredentialData?.copy(
+                    credentialId = credCertKeyPair.public.createAppleKeyId()
+                )
+            ).encode()
+
+            val nonceFake = authDataFake.plus(attestationSampleOriginal.clientData.sha256()).sha256()
+
+            val attCertChain = CertUtils.createCustomAttestationCertificate(
+                x5c = attestationObject.attStmt.x5c,
+                credCertKeyPair = credCertKeyPair,
+                mutatorCredCert = { builder ->
+                    val fakeNonceEncoded = DLSequence(
+                        DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                    ).encoded
+                    builder.replaceExtension(
+                        ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                        false,
+                        fakeNonceEncoded
+                    )
+                }
+            )
+
+            val attestationObjectFake = attestationObject.copy(
+                attStmt = attestationObject.attStmt.copy(
+                    listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded)
+                ),
+                authData = authDataFake,
+            )
+
+            // ----------
+
+            val attestationSample = attestationSampleOriginal.copy(
+                attestation = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
+                keyId = attCertChain.credCert.createAppleKeyId(),
+            )
+
+            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
+            val clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
+            val appleAppAttest = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = clock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = clock
+                ),
+                trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+            )
+
+            attestationValidator.validate(
+                attestationObject = attestationSample.attestation,
+                keyIdBase64 = attestationSample.keyId.toBase64(),
+                serverChallenge = attestationSample.clientData,
+            )
         }
     }
 }
