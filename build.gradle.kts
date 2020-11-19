@@ -2,11 +2,11 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.20-M1"
+    id("org.jetbrains.kotlin.jvm") version "1.4.20-M2"
     id("io.gitlab.arturbosch.detekt") version "1.14.2"
     id("org.jmailen.kotlinter") version "3.2.0"
     id("jacoco")
-    id("com.github.ben-manes.versions") version "0.33.0"
+    id("com.github.ben-manes.versions") version "0.36.0"
     id("org.jetbrains.dokka") version "1.4.10.2"
 
     // Apply the java-library plugin for API and implementation separation.
@@ -66,7 +66,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 
     // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
 
     // CBOR
     val jacksonVersion = "2.11.3"
