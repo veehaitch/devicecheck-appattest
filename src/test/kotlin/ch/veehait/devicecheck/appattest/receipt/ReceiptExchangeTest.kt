@@ -133,6 +133,91 @@ class ReceiptExchangeTest : StringSpec() {
             }
         }
 
+        "ReceiptExchange returns same receipt for too early request with MockWebServer" {
+            val (attestationSample, app, attestationClock) = TestUtils.loadValidAttestationSample()
+
+            val appleAppAttest = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidator = appleAppAttest.createAttestationValidator(
+                clock = attestationClock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = attestationClock
+                )
+            )
+            val attestationResponse = attestationValidator.validate(
+                attestationObject = attestationSample.attestation,
+                keyIdBase64 = attestationSample.keyId.toBase64(),
+                serverChallenge = attestationSample.clientData
+            )
+
+            val serverResponseClock = Clock.fixed(Instant.parse("2020-11-21T22:32:39.000Z"), ZoneOffset.UTC)
+            val date = DateTimeFormatter
+                .RFC_1123_DATE_TIME
+                .withZone(serverResponseClock.zone)
+                .format(serverResponseClock.instant())
+
+            val receiptP7s = javaClass
+                .readTextResource("/iOS14-attestation-receipt-response-base64.p7s")
+                .toByteArray()
+                .inputStream()
+                .reader()
+                .let(::PEMParser)
+                .readObject() as ContentInfo
+
+            val mockResponse = MockResponse().apply {
+                setHeader("Server", "Apple")
+                setHeader("Date", date)
+                setHeader("Content-Length", 0)
+                setHeader("Connection", "keep-alive")
+                setHeader("X-B3-TraceId", "ae2f84c23e116eb5")
+                setHeader("Strict-Transport-Security", "max-age=31536000; includeSubdomains")
+                setHeader("X-Frame-Options", "SAMEORIGIN")
+                setHeader("X-Content-Type-Options", "nosniff")
+                setHeader("X-XSS-Protection", "1; mode=block")
+
+                setResponseCode(304)
+            }
+
+            val mockWebServer = MockWebServer().apply {
+                enqueue(mockResponse)
+            }
+
+            mockWebServer.start()
+            val mockWebServerUri = mockWebServer.url("/v1/attestationData").toUri()
+
+            // Actual test
+            val receiptExchange = appleAppAttest.createReceiptExchange(
+                appleJwsGenerator = AppleJwsGeneratorImpl(
+                    teamIdentifier = attestationSample.teamIdentifier,
+                    keyIdentifier = "WURZELPFRO",
+                    privateKeyPem =
+                        """
+                        -----BEGIN PRIVATE KEY-----
+                        MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgWv4sxtqGFHysyUui
+                        /vqP5WnExt9LGlh+4+Gb1YGqSz6hRANCAATeCV67+77uQmkBx13ATcE45v+CM1Wm
+                        qrZEaNW3gX1JVxnJpOEaSwdvGr6moRGwq+7MrhI9Mlmx4uI+S2A0oR9B
+                        -----END PRIVATE KEY-----
+                        """.trimIndent(),
+                    clock = serverResponseClock,
+                ),
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = serverResponseClock,
+                ),
+                appleDeviceCheckUrl = mockWebServerUri,
+            )
+
+            val receipt = receiptExchange.trade(
+                receiptP7 = receiptP7s.encoded,
+                attestationPublicKey = attestationResponse.publicKey
+            )
+
+            mockWebServer.shutdown()
+
+            receipt.p7 shouldBe receiptP7s.encoded
+        }
+
         val appleDeviceCheckKid = "94M3Z58NQ7"
         val appleDeviceCheckPrivateKeyPem = System.getenv("APPLE_KEY_P8_$appleDeviceCheckKid")
 

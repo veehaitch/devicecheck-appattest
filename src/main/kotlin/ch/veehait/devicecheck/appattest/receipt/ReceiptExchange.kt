@@ -5,6 +5,7 @@ import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import java.net.HttpURLConnection
 import java.net.URI
 import java.security.interfaces.ECPublicKey
 import java.time.Instant
@@ -55,13 +56,18 @@ interface ReceiptExchange {
             receipt.await().p7.toBase64().toByteArray(),
         )
 
-        @Suppress("MagicNumber")
-        if (response.statusCode != 200) {
-            handleErrorResponse(response)
-            throw ReceiptExchangeException.HttpError("Caught an error in Apple's response: $response")
+        when (response.statusCode) {
+            HttpURLConnection.HTTP_OK -> receiptValidator.validateReceipt(
+                receiptP7 = response.body.fromBase64(),
+                publicKey = attestationPublicKey
+            )
+            // Apple docs: "You made the request before the previous receipt’s “Not Before” date."
+            HttpURLConnection.HTTP_NOT_MODIFIED -> receipt.await()
+            else -> {
+                handleErrorResponse(response)
+                throw ReceiptExchangeException.HttpError("Caught an error in Apple's response: $response")
+            }
         }
-
-        receiptValidator.validateReceipt(response.body.fromBase64(), attestationPublicKey)
     }
 
     /**
