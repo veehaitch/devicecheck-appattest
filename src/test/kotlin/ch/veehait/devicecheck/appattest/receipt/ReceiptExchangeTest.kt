@@ -169,7 +169,7 @@ class ReceiptExchangeTest : StringSpec() {
             )
 
             receipt.p7 shouldBe mockResponse.getBody()!!.readByteArray().fromBase64()
-            receipt.payload.riskMetric shouldBe 3
+            receipt.payload.riskMetric?.value shouldBe 3
 
             mockWebServer.shutdown()
         }

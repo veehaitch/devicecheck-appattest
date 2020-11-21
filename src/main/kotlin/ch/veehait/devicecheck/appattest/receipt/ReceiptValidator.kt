@@ -167,19 +167,19 @@ internal class ReceiptValidatorImpl(
 
         // 4. Verify that the receipt contains the App ID of your app in field 2.
         //    Your app’s App ID is the concatenation of your 10-digit Team ID, a period, and the app’s bundle ID.
-        if (receiptPayload.appId != app.appIdentifier) {
+        if (receiptPayload.appId.value != app.appIdentifier) {
             throw ReceiptException.InvalidPayload("Unexpected App ID: ${receiptPayload.appId}")
         }
 
         // 5. Verify that the receipt’s creation time, given in field 12, is no more than five minutes old.
         //    This helps to thwart replay attacks.
-        if (notAfter.isAfter(receiptPayload.creationTime)) {
+        if (notAfter.isAfter(receiptPayload.creationTime.value)) {
             throw ReceiptException.InvalidPayload("Receipt's creation time is after $notAfter")
         }
 
         // 6. Verify that the attested public key in field 3, encoded as a DER ASN.1 object,
         //    matches the one you stored after initial attestation.
-        if (receiptPayload.attestationCertificate.publicKey != publicKey) {
+        if (receiptPayload.attestationCertificate.value.publicKey != publicKey) {
             throw ReceiptException.InvalidPayload("Public key from receipt and attestation statement do not match")
         }
 

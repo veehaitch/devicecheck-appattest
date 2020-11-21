@@ -5,6 +5,7 @@ import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.core.JsonFactory
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.asn1.cms.ContentInfo
@@ -185,7 +187,7 @@ class ReceiptValidatorTest : StringSpec() {
             )
 
             // Actual test
-            val receipt = javaClass
+            val receiptP7s = javaClass
                 .readTextResource("/iOS14-attestation-receipt-response-base64.p7s")
                 .toByteArray()
                 .inputStream()
@@ -200,10 +202,24 @@ class ReceiptValidatorTest : StringSpec() {
             val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
                 clock = assertionSampleCreationTimeClock
             )
-            receiptValidator.validateReceipt(
-                receiptP7 = receipt.encoded,
+
+            val receipt = receiptValidator.validateReceipt(
+                receiptP7 = receiptP7s.encoded,
                 publicKey = attestationResponse.publicKey
             )
+
+            with(receipt.payload) {
+                appId.value shouldBe app.appIdentifier
+                attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
+                clientHash.value shouldBe "77+977+9XO+/vVFa0Jfvv71T77+9fRjvv70177+9bdeKFC7vv73vv713Umvvv70Rxr7vv717".fromBase64()
+                creationTime.value shouldBe Instant.parse("2020-10-22T17:21:33.761Z")
+                environment?.value shouldBe "sandbox"
+                expirationTime.value shouldBe Instant.parse("2021-01-20T17:21:33.761Z")
+                notBefore?.value shouldBe Instant.parse("2020-10-23T17:21:33.761Z")
+                riskMetric?.value shouldBe 3
+                token.value shouldBe "H8As3LUQ/6QojF8YfuKW0ttzupmEiW77Jr59Fpl266r6i2oxTCkDOzvcdoRBrZ4WWGlvx8t2VXXLd+VBOAqIbw=="
+                type.value shouldBe Receipt.Type.RECEIPT
+            }
         }
     }
 }

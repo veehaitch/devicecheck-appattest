@@ -6,16 +6,20 @@ import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.jsonObjectMapper
 import ch.veehait.devicecheck.appattest.TestUtils.loadValidAttestationSample
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.receipt.Receipt
+import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
 import java.security.cert.TrustAnchor
 import java.time.Clock
+import java.time.Instant
 import java.time.ZoneOffset
 
 class AttestationValidatorTest : StringSpec() {
@@ -174,11 +178,24 @@ class AttestationValidatorTest : StringSpec() {
                 )
             )
 
-            attestationValidator.validate(
+            val attestationResponse = attestationValidator.validate(
                 attestationObject = attestationSample.attestation,
                 keyIdBase64 = attestationSample.keyId.toBase64(),
                 serverChallenge = attestationSample.clientData
             )
+
+            with(attestationResponse.receipt.payload) {
+                appId.value shouldBe app.appIdentifier
+                attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
+                clientHash.value shouldBe "i+ZcylFa0JfJU5Z9GNY12G3XihQu09B3UmvtEca+xns=".fromBase64()
+                creationTime.value shouldBe Instant.parse("2020-10-22T17:00:35.266Z")
+                environment?.value shouldBe "sandbox"
+                expirationTime.value shouldBe Instant.parse("2021-01-20T17:00:35.266Z")
+                notBefore.shouldBeNull()
+                riskMetric.shouldBeNull()
+                token.value shouldBe "H8As3LUQ/6QojF8YfuKW0ttzupmEiW77Jr59Fpl266r6i2oxTCkDOzvcdoRBrZ4WWGlvx8t2VXXLd+VBOAqIbw=="
+                type.value shouldBe Receipt.Type.ATTEST
+            }
         }
     }
 }
