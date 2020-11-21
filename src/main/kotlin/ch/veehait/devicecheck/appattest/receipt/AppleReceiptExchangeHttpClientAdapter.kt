@@ -2,11 +2,12 @@ package ch.veehait.devicecheck.appattest.receipt
 
 import java.net.URI
 import java.net.http.HttpClient
+import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
 interface AppleReceiptExchangeHttpClientAdapter {
-    data class Response(val body: ByteArray, val statusCode: Int) {
+    data class Response(val statusCode: Int, val headers: HttpHeaders, val body: ByteArray) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -15,6 +16,7 @@ interface AppleReceiptExchangeHttpClientAdapter {
 
             if (!body.contentEquals(other.body)) return false
             if (statusCode != other.statusCode) return false
+            if (headers != other.headers) return false
 
             return true
         }
@@ -22,6 +24,7 @@ interface AppleReceiptExchangeHttpClientAdapter {
         override fun hashCode(): Int {
             var result = body.contentHashCode()
             result = 31 * result + statusCode
+            result = 31 * result + headers.hashCode()
             return result
         }
     }
@@ -43,6 +46,10 @@ internal class SimpleAppleReceiptExchangeHttpClientAdapter : AppleReceiptExchang
             .build()
 
         val httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray())
-        return AppleReceiptExchangeHttpClientAdapter.Response(httpResponse.body(), httpResponse.statusCode())
+        return AppleReceiptExchangeHttpClientAdapter.Response(
+            statusCode = httpResponse.statusCode(),
+            headers = httpResponse.headers(),
+            body = httpResponse.body(),
+        )
     }
 }

@@ -9,7 +9,6 @@ import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
-import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
@@ -17,6 +16,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.openssl.PEMParser
+import java.net.http.HttpHeaders
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -28,7 +28,12 @@ class ReceiptExchangeTest : StringSpec() {
     init {
 
         "AppleReceiptHttpClientAdapter.Response: equals/hashCode" {
-            EqualsVerifier.forClass(AppleReceiptExchangeHttpClientAdapter.Response::class.java).verify()
+            val red = HttpHeaders.of(mapOf("Content-Type" to listOf("red"))) { _, _ -> true }
+            val blue = HttpHeaders.of(mapOf("Content-Type" to listOf("blue"))) { _, _ -> true }
+
+            EqualsVerifier.forClass(AppleReceiptExchangeHttpClientAdapter.Response::class.java)
+                .withPrefabValues(HttpHeaders::class.java, red, blue)
+                .verify()
         }
 
         "ReceiptExchange works with MockWebServer" {
