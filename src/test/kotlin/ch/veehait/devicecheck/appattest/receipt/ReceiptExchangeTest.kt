@@ -6,6 +6,10 @@ import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
 import okhttp3.mockwebserver.MockResponse
@@ -221,10 +225,25 @@ class ReceiptExchangeTest : StringSpec() {
                 receiptValidator = appleAppAttest.createReceiptValidator(),
             )
 
-            receiptExchange.trade(
+            val receipt = receiptExchange.trade(
                 receiptP7 = attestationResponse.receipt.p7,
                 attestationPublicKey = attestationResponse.publicKey
             )
+
+            with(receipt.payload) {
+                appId.value shouldBe app.appIdentifier
+                attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
+                clientHash.value shouldBe "77+977+9XO+/vVFa0Jfvv71T77+9fRjvv70177+9bdeKFC7vv73vv713Umvvv70Rxr7vv717".fromBase64()
+                creationTime.value shouldBeGreaterThan Instant.now().minus(Duration.ofMinutes(5))
+                creationTime.value shouldBeLessThan Instant.now().plus(Duration.ofMinutes(5))
+                environment?.value shouldBe "sandbox"
+                expirationTime.value shouldBe creationTime.value.plus(Duration.ofDays(90))
+                // XXX: this doesn't make a lot of sense.
+                notBefore?.value shouldBe creationTime.value.plus(Duration.ofDays(1))
+                riskMetric!!.value shouldBeGreaterThanOrEqual 1
+                token.value shouldBe "xnGQkvBvTHoIRoRkoUKalbb8Z1JPpFWPvKybUVVtZlVs5WPzXboFwN+YBukziJjR4y6d5tqqY/QQV12/j4RgKQ=="
+                type.value shouldBe Receipt.Type.RECEIPT
+            }
         }
     }
 }
