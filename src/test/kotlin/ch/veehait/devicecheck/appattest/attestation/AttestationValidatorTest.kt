@@ -189,12 +189,12 @@ class AttestationValidatorTest : StringSpec() {
                 appId.value shouldBe app.appIdentifier
                 attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
                 clientHash.value shouldBe "i+ZcylFa0JfJU5Z9GNY12G3XihQu09B3UmvtEca+xns=".fromBase64()
-                creationTime.value shouldBe Instant.parse("2020-11-01T21:42:22.311Z")
+                creationTime.value shouldBe Instant.parse("2020-11-21T22:13:02.796Z")
                 environment?.value shouldBe "sandbox"
                 expirationTime.value shouldBe creationTime.value.plus(Duration.ofDays(90))
                 notBefore.shouldBeNull()
                 riskMetric.shouldBeNull()
-                token.value shouldBe "xnGQkvBvTHoIRoRkoUKalbb8Z1JPpFWPvKybUVVtZlVs5WPzXboFwN+YBukziJjR4y6d5tqqY/QQV12/j4RgKQ=="
+                token.value shouldBe "7URCQP4mKgM9qW9M/zxuPweeyX0tvFfN5xTY4u9JYLPlTTfmL126irzJn0l+i4R7gloRfkoNiNixMAqUwW5jIQ=="
                 type.value shouldBe Receipt.Type.ATTEST
             }
         }

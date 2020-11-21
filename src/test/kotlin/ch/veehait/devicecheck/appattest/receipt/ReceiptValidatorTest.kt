@@ -213,13 +213,12 @@ class ReceiptValidatorTest : StringSpec() {
                 appId.value shouldBe app.appIdentifier
                 attestationCertificate.value.publicKey shouldBe attestationResponse.publicKey
                 clientHash.value shouldBe "77+977+9XO+/vVFa0Jfvv71T77+9fRjvv70177+9bdeKFC7vv73vv713Umvvv70Rxr7vv717".fromBase64()
-                creationTime.value shouldBe Instant.parse("2020-11-01T21:47:56.516Z")
+                creationTime.value shouldBe Instant.parse("2020-11-21T22:16:05.466Z")
                 environment?.value shouldBe "sandbox"
                 expirationTime.value shouldBe creationTime.value.plus(Duration.ofDays(90))
-                // XXX: this doesn't make a lot of sense.
                 notBefore?.value shouldBe creationTime.value.plus(Duration.ofDays(1))
-                riskMetric?.value shouldBe 1
-                token.value shouldBe "xnGQkvBvTHoIRoRkoUKalbb8Z1JPpFWPvKybUVVtZlVs5WPzXboFwN+YBukziJjR4y6d5tqqY/QQV12/j4RgKQ=="
+                riskMetric?.value shouldBe 2
+                token.value shouldBe "7URCQP4mKgM9qW9M/zxuPweeyX0tvFfN5xTY4u9JYLPlTTfmL126irzJn0l+i4R7gloRfkoNiNixMAqUwW5jIQ=="
                 type.value shouldBe Receipt.Type.RECEIPT
             }
         }
