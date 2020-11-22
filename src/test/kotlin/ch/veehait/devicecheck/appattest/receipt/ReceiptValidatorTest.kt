@@ -29,7 +29,7 @@ class ReceiptValidatorTest : StringSpec() {
         .registerModule(KotlinModule())
 
     private fun equalsVerifierX509Certs(): Pair<X509Certificate, X509Certificate> {
-        val red = Utils.readPemX590Certificate(
+        val red = Utils.readPemX509Certificate(
             """
                 -----BEGIN CERTIFICATE-----
                 MIIEqDCCA5CgAwIBAgISA1J1Te/uw+/K5zE/oUxjF5k1MA0GCSqGSIb3DQEBCwUA
@@ -61,7 +61,7 @@ class ReceiptValidatorTest : StringSpec() {
             """.trimIndent()
         )
 
-        val blue = Utils.readPemX590Certificate(
+        val blue = Utils.readPemX509Certificate(
             """
                 -----BEGIN CERTIFICATE-----
                 MIIEkzCCA3ugAwIBAgISA+711xJ31t0DAluoWPd4x1ljMA0GCSqGSIb3DQEBCwUA

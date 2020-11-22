@@ -55,7 +55,7 @@ interface AttestationValidator {
 
         /** The root certificate authority of the attestation certificate */
         val APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR = TrustAnchor(
-            Utils.readPemX590Certificate(
+            Utils.readPemX509Certificate(
                 """
                 -----BEGIN CERTIFICATE-----
                 MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYw

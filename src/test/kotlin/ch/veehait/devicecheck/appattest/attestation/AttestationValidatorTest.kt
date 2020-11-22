@@ -145,7 +145,7 @@ class AttestationValidatorTest : StringSpec() {
                 wDB5y0USicV3YgYGmi+NZfhA4URSh77Yd6uuJOJENRaNVTzk
                 -----END CERTIFICATE-----
                 """.trimIndent()
-            val wrongTrustAnchor = TrustAnchor(Utils.readPemX590Certificate(wrongCa), null)
+            val wrongTrustAnchor = TrustAnchor(Utils.readPemX509Certificate(wrongCa), null)
 
             val (attestationSample, app, clock) = loadValidAttestationSample()
             val attestationValidator = AppleAppAttest(

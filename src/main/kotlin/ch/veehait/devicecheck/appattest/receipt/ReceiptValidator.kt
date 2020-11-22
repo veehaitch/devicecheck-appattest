@@ -37,7 +37,7 @@ interface ReceiptValidator {
 
         /** The root certificate authority of the signer of the receipt */
         val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR = TrustAnchor(
-            Utils.readPemX590Certificate(
+            Utils.readPemX509Certificate(
                 """
                 -----BEGIN CERTIFICATE-----
                 MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9v
