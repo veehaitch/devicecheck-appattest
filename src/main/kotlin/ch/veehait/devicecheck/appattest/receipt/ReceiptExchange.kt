@@ -47,7 +47,7 @@ interface ReceiptExchange {
         // Validate the receipt before sending it to Apple. We cannot validate the creation time as we do not know when
         // it should have been issued at latest. Therefore, we use an epoch instant which de facto skips this check. As
         // we also validate the new receipt on return, this should be acceptable.
-        val receipt = async { receiptValidator.validateReceipt(receiptP7, attestationPublicKey, Instant.EPOCH) }
+        val receipt = async { receiptValidator.validateReceiptAsync(receiptP7, attestationPublicKey, Instant.EPOCH) }
         val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
 
         val response = appleReceiptExchangeHttpClientAdapter.post(
@@ -57,7 +57,7 @@ interface ReceiptExchange {
         )
 
         when (response.statusCode) {
-            HttpURLConnection.HTTP_OK -> receiptValidator.validateReceipt(
+            HttpURLConnection.HTTP_OK -> receiptValidator.validateReceiptAsync(
                 receiptP7 = response.body.fromBase64(),
                 publicKey = attestationPublicKey
             )
@@ -77,7 +77,8 @@ interface ReceiptExchange {
      *
      * @param receiptP7 A PKCS#7 receipt obtained in a previous remote call to Apple or from an attestation statement
      * @param attestationPublicKey The public key of the initial attestation statement
-     * @return A new receipt superseding the old one
+     * @return A new receipt superseding the old one. The returned receipt may be equal to the parsed [receiptP7] if
+     *   [Receipt.Payload.notBefore] has not yet passed.
      */
     fun trade(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = runBlocking {
         tradeAsync(receiptP7, attestationPublicKey)
