@@ -1,23 +1,31 @@
 package ch.veehait.devicecheck.appattest.receipt
 
+import ch.veehait.devicecheck.appattest.AppleAppAttest
+import ch.veehait.devicecheck.appattest.CertUtils
+import ch.veehait.devicecheck.appattest.TestExtensions.encode
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils.loadValidatedAttestationResponse
+import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Utils
+import com.google.common.primitives.Bytes
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.throwable.shouldHaveMessage
 import nl.jqno.equalsverifier.EqualsVerifier
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.openssl.PEMParser
 import java.security.cert.X509Certificate
+import java.security.interfaces.ECPublicKey
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlin.experimental.xor
 
 class ReceiptValidatorTest : StringSpec() {
     private fun equalsVerifierX509Certs(): Pair<X509Certificate, X509Certificate> {
@@ -86,6 +94,36 @@ class ReceiptValidatorTest : StringSpec() {
         )
 
         return Pair(red, blue)
+    }
+
+    private data class ReceiptSample(
+        val receipt: Receipt,
+        val appAttest: AppleAppAttest,
+        val clock: Clock,
+        val attestationResponse: AppleAppAttestValidationResponse,
+    )
+
+    private fun loadValidatedReceiptResonse(): ReceiptSample {
+        val (attestationResponse, appleAppAttest, attestationSampleCreationTimeClock) = loadValidatedAttestationResponse()
+
+        val receiptP7s = javaClass
+            .readTextResource("/iOS14-attestation-receipt-response-base64.p7s")
+            .toByteArray()
+            .inputStream()
+            .reader()
+            .let(::PEMParser)
+            .readObject() as ContentInfo
+
+        val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
+            clock = attestationSampleCreationTimeClock
+        )
+
+        val receipt = receiptValidator.validateReceipt(
+            receiptP7 = receiptP7s.encoded,
+            publicKey = attestationResponse.publicKey
+        )
+
+        return ReceiptSample(receipt, appleAppAttest, attestationSampleCreationTimeClock, attestationResponse)
     }
 
     init {
@@ -194,17 +232,25 @@ class ReceiptValidatorTest : StringSpec() {
             exception shouldHaveMessage "The receipt object does not contain a valid certificate chain"
         }
 
-        "Throws InvalidSignature for invalid signature".config(enabled = false) {
+        "Throws InvalidSignature for invalid signature" {
             // Test setup
             val (attestationResponse, appleAppAttest, assertionSampleCreationTimeClock) =
                 loadValidatedAttestationResponse()
+
             val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
-                clock = assertionSampleCreationTimeClock
+                clock = assertionSampleCreationTimeClock,
             )
 
-            // Actual test
-            val receiptP7InvalidSignature = attestationResponse.receipt.p7.apply {
-                this[3700] = (this[3700] + 0x41).toByte()
+            // Actual Test
+
+            // Search for the position of the "client hash" field and negate the last byte of the value
+            // to invalidate the signature for this payload
+            val clientHashAsn1 = attestationResponse.receipt.payload.token.encode().encoded
+            val clientHashAsn1StartIndex = Bytes.indexOf(attestationResponse.receipt.p7, clientHashAsn1)
+            val receiptP7InvalidSignature = attestationResponse.receipt.p7.let {
+                val i = clientHashAsn1StartIndex + clientHashAsn1.size - 1
+                it[i] = it[i].xor(1)
+                it
             }
 
             val exception = shouldThrow<ReceiptException.InvalidSignature> {
@@ -218,7 +264,7 @@ class ReceiptValidatorTest : StringSpec() {
 
         "validation succeeds for valid receipt" {
             // Test setup
-            val (attestationResponse, appleAppAttest, _) = loadValidatedAttestationResponse()
+            val (attestationResponse, appleAppAttest, attestationSampleCreationTimeClock) = loadValidatedAttestationResponse()
 
             // Actual test
             val receiptP7s = javaClass
@@ -228,13 +274,9 @@ class ReceiptValidatorTest : StringSpec() {
                 .reader()
                 .let(::PEMParser)
                 .readObject() as ContentInfo
-            val assertionSampleCreationTimeClock = Clock.fixed(
-                Instant.parse("2020-10-22T17:21:33.761Z").plusSeconds(5),
-                ZoneOffset.UTC
-            )
 
             val receiptValidator: ReceiptValidator = appleAppAttest.createReceiptValidator(
-                clock = assertionSampleCreationTimeClock
+                clock = attestationSampleCreationTimeClock
             )
 
             val receipt = receiptValidator.validateReceipt(
@@ -254,6 +296,26 @@ class ReceiptValidatorTest : StringSpec() {
                 token.value shouldBe "7URCQP4mKgM9qW9M/zxuPweeyX0tvFfN5xTY4u9JYLPlTTfmL126irzJn0l+i4R7gloRfkoNiNixMAqUwW5jIQ=="
                 type.value shouldBe Receipt.Type.RECEIPT
             }
+        }
+
+        "Accepts valid fake receipt" {
+            // Test setup
+            val receiptSample = loadValidatedReceiptResonse()
+
+            // Actual test
+            val fakeReceiptBundle = CertUtils.resignReceipt(receiptSample.receipt)
+
+            val fakeReceiptValidator = receiptSample.appAttest.createReceiptValidator(
+                trustAnchor = fakeReceiptBundle.trustAnchor,
+                clock = receiptSample.clock
+            )
+
+            val fakeReceipt = fakeReceiptValidator.validateReceipt(
+                receiptP7 = fakeReceiptBundle.receipt.p7,
+                publicKey = fakeReceiptBundle.leadCertificate.publicKey as ECPublicKey,
+            )
+
+            fakeReceipt shouldNotBe receiptSample.receipt
         }
     }
 }

@@ -2,8 +2,11 @@ package ch.veehait.devicecheck.appattest.util
 
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.util.encoders.Base64
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -78,5 +81,16 @@ internal object Extensions {
             .let { this.copyInto(it, 0) }
             .let(ByteBuffer::wrap)
             .let { UUID(it.long, it.long) }
+    }
+
+    object Pkcs7 {
+        fun ByteArray.readAsSignedData(): CMSSignedData = ASN1InputStream(this).use {
+            it.readObject().let(ContentInfo::getInstance).let(::CMSSignedData)
+        }
+
+        fun CMSSignedData.readCertificateChain(): List<X509Certificate> =
+            this.certificates.getMatches(null).map {
+                JcaX509CertificateConverter().getCertificate(it)
+            }
     }
 }

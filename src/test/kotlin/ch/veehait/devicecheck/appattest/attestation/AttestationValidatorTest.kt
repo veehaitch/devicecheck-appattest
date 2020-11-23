@@ -214,12 +214,28 @@ class AttestationValidatorTest : StringSpec() {
             }
         }
 
-        "validation works for valid fake attestation object".config(enabled = false) {
+        "validation works for valid fake attestation object".config(enabled = true) {
             val credCertKeyPair = KeyPairGenerator.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME).apply {
                 initialize(ECGenParameterSpec("prime256v1"))
             }.generateKeyPair()
 
-            val (attestationSampleOriginal, _, _) = loadValidAttestationSample()
+            val (attestationSampleOriginal, app, clock) = loadValidAttestationSample()
+            val appleAppAttest = AppleAppAttest(
+                app = app,
+                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+            )
+            val attestationValidatorOriginal = appleAppAttest.createAttestationValidator(
+                clock = clock,
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = clock
+                )
+            )
+            val attestationResponse = attestationValidatorOriginal.validate(
+                attestationObject = attestationSampleOriginal.attestation,
+                keyIdBase64 = attestationSampleOriginal.keyId.toBase64(),
+                serverChallenge = attestationSampleOriginal.clientData
+            )
+
             val attestationObject: AttestationObject = cborObjectMapper.readValue(attestationSampleOriginal.attestation)
 
             val authData: AuthenticatorData = AuthenticatorData.parse(
@@ -250,9 +266,23 @@ class AttestationValidatorTest : StringSpec() {
                 }
             )
 
+            val resignedReceiptResponse = CertUtils.resignReceipt(
+                receipt = attestationResponse.receipt,
+                payloadMutator = {
+                    it.copy(
+                        attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
+                            it.attestationCertificate.sequence.copy(
+                                value = attCertChain.credCert.encoded
+                            )
+                        )
+                    )
+                },
+            )
+
             val attestationObjectFake = attestationObject.copy(
                 attStmt = attestationObject.attStmt.copy(
-                    listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded)
+                    x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
+                    receipt = resignedReceiptResponse.receipt.p7,
                 ),
                 authData = authDataFake,
             )
@@ -264,16 +294,11 @@ class AttestationValidatorTest : StringSpec() {
                 keyId = attCertChain.credCert.createAppleKeyId(),
             )
 
-            val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
-            val clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
-            val appleAppAttest = AppleAppAttest(
-                app = app,
-                appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
-            )
             val attestationValidator = appleAppAttest.createAttestationValidator(
                 clock = clock,
                 receiptValidator = appleAppAttest.createReceiptValidator(
-                    clock = clock
+                    clock = clock,
+                    trustAnchor = resignedReceiptResponse.trustAnchor,
                 ),
                 trustAnchor = TrustAnchor(attCertChain.rootCa, null)
             )

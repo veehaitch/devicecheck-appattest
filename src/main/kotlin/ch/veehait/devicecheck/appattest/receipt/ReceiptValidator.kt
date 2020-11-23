@@ -1,14 +1,14 @@
 package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.common.App
+import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator.Companion.APPLE_RECOMMENDED_MAX_AGE
+import ch.veehait.devicecheck.appattest.util.Extensions.Pkcs7.readAsSignedData
+import ch.veehait.devicecheck.appattest.util.Extensions.Pkcs7.readCertificateChain
 import ch.veehait.devicecheck.appattest.util.Extensions.verifyChain
 import ch.veehait.devicecheck.appattest.util.Utils
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.bouncycastle.asn1.ASN1InputStream
-import org.bouncycastle.asn1.cms.ContentInfo
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -111,8 +111,8 @@ internal class ReceiptValidatorImpl(
         publicKey: ECPublicKey,
         notAfter: Instant,
     ): Receipt = coroutineScope {
-        val signedData = readSignedData(receiptP7)
-        val certs = readCertificateChain(signedData)
+        val signedData = receiptP7.readAsSignedData()
+        val certs = signedData.readCertificateChain()
 
         // 1. Verify the signature.
         launch { verifySignature(signedData, certs.first()) }
@@ -126,15 +126,6 @@ internal class ReceiptValidatorImpl(
             p7 = receiptP7,
         )
     }
-
-    private fun readSignedData(data: ByteArray): CMSSignedData = ASN1InputStream(data).use {
-        it.readObject().let(ContentInfo::getInstance).let(::CMSSignedData)
-    }
-
-    private fun readCertificateChain(signedData: CMSSignedData): List<X509Certificate> =
-        signedData.certificates.getMatches(null).map {
-            JcaX509CertificateConverter().getCertificate(it)
-        }
 
     private fun verifyCertificateChain(certs: List<X509Certificate>) {
         try {

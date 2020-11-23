@@ -58,7 +58,7 @@ data class Receipt(
         }
     }
 
-    sealed class ReceiptAttribute<T>(sequence: ReceiptAttributeSequence) {
+    sealed class ReceiptAttribute<T>(internal val sequence: ReceiptAttributeSequence) {
         val type: ReceiptAttributeType = ReceiptAttributeType.fromFieldValue(sequence.type.intValueExact())
         val version: kotlin.Int = sequence.version.intValueExact()
         protected val rawValue = sequence.value

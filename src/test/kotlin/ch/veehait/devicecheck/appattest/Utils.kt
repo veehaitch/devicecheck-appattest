@@ -1,5 +1,6 @@
 package ch.veehait.devicecheck.appattest
 
+import ch.veehait.devicecheck.appattest.TestExtensions.encode
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils.loadValidAttestationSample
 import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
@@ -12,6 +13,9 @@ import ch.veehait.devicecheck.appattest.common.AttestedCredentialData
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.common.AuthenticatorDataFlag
 import ch.veehait.devicecheck.appattest.receipt.Receipt
+import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
+import ch.veehait.devicecheck.appattest.util.Extensions.Pkcs7.readAsSignedData
+import ch.veehait.devicecheck.appattest.util.Extensions.Pkcs7.readCertificateChain
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.core.JsonFactory
@@ -20,13 +24,21 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.asn1.DLSet
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.cms.CMSProcessableByteArray
+import org.bouncycastle.cms.CMSSignedDataGenerator
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder
 import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
@@ -37,11 +49,13 @@ import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PublicKey
 import java.security.Security
+import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
 import java.security.spec.ECGenParameterSpec
 import java.time.Clock
 import java.time.ZoneOffset
 import kotlin.experimental.or
+import kotlin.reflect.full.memberProperties
 
 object TestExtensions {
     fun <T> Class<T>.readTextResource(name: String, commentLinePrefix: String = "#"): String =
@@ -77,6 +91,34 @@ object TestExtensions {
             (attestedCredentialData?.encode() ?: ByteArray(0)) +
             (extensions?.let(cborObjectMapper::writeValueAsBytes) ?: ByteArray(0))
     }
+
+    fun <T> Receipt.ReceiptAttribute<T>?.encodeValue(): ByteArray? = when (this) {
+        is Receipt.ReceiptAttribute.String -> value.toByteArray()
+        is Receipt.ReceiptAttribute.X509Certificate -> value.encoded
+        is Receipt.ReceiptAttribute.ByteArray -> value
+        is Receipt.ReceiptAttribute.Type -> value.name.toByteArray()
+        is Receipt.ReceiptAttribute.Instant -> value.toString().toByteArray()
+        is Receipt.ReceiptAttribute.Int -> value.toString().toByteArray()
+        null -> ByteArray(0)
+    }
+
+    fun <T> Receipt.ReceiptAttribute<T>.encode(): ASN1Sequence = DLSequence(
+        arrayOf(
+            ASN1Integer(type.field.toLong()),
+            ASN1Integer(version.toLong()),
+            DEROctetString(encodeValue()),
+        )
+    )
+
+    fun Receipt.Payload.encode(): ByteArray = Receipt.Payload::class.memberProperties
+        .map { it.get(this) }
+        .filterNotNull()
+        .map { it as Receipt.ReceiptAttribute<*> }
+        .sortedBy { it.type.field }
+        .map { it.encode() }
+        .toTypedArray()
+        .let(::DLSet)
+        .encoded
 }
 
 object TestUtils {
@@ -159,6 +201,12 @@ object CertUtils {
         }.generateKeyPair()
     }
 
+    fun generateP256KeyPair(): KeyPair = KeyPairGenerator
+        .getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
+        .apply {
+            ECGenParameterSpec("prime256v1").let(this::initialize)
+        }.generateKeyPair()
+
     /**
      * Converts a [X509Certificate] instance into a Base-64 encoded string (PEM format).
      *
@@ -172,13 +220,18 @@ object CertUtils {
         return sw.toString()
     }
 
+    data class CertificateWithKeyPair(
+        val certificate: X509Certificate,
+        val keyPair: KeyPair,
+    )
+
     fun createCertificate(
         certTemplate: X509Certificate,
         keyPair: KeyPair = generateEcKeyPair(certTemplate),
         mutator: BuilderMutator = { Unit },
         issuerKeyPair: KeyPair = generateEcKeyPair(certTemplate),
         issuer: X500Name? = null,
-    ): Pair<X509Certificate, KeyPair> {
+    ): CertificateWithKeyPair {
         val holder = X509CertificateHolder(certTemplate.encoded)
 
         val builder = X509v3CertificateBuilder(
@@ -205,7 +258,7 @@ object CertUtils {
             .setProvider(BouncyCastleProvider.PROVIDER_NAME)
             .getCertificate(builder.build(sigGen))
 
-        return Pair(cert, keyPair)
+        return CertificateWithKeyPair(cert, keyPair)
     }
 
     private fun buildAttestationCertificateChain(x5c: List<ByteArray>): AttestationCertificateChain {
@@ -250,11 +303,64 @@ object CertUtils {
         )
     }
 
-    fun createCustomReceipt(
-        receipt: Receipt
-    ): ByteArray {
+    data class ResignedReceiptResponse(
+        val receipt: Receipt,
+        val trustAnchor: TrustAnchor,
+        val leadCertificate: X509Certificate,
+    )
 
-        return ByteArray(0)
+    fun resignReceipt(
+        receipt: Receipt,
+        rootCaBundle: CertificateWithKeyPair = createCertificate(
+            certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert
+        ),
+        payloadMutator: (Receipt.Payload) -> Receipt.Payload = { it }
+    ): ResignedReceiptResponse {
+        val certificateChain = receipt.p7.readAsSignedData().readCertificateChain().asReversed()
+
+        val certChainBundle = certificateChain
+            .runningFold(rootCaBundle) { issuerBundle, template ->
+                createCertificate(
+                    certTemplate = template,
+                    issuerKeyPair = issuerBundle.keyPair,
+                    issuer = X509CertificateHolder(issuerBundle.certificate.encoded).subject,
+                )
+            }.drop(1)
+
+        val credCertBundle = certChainBundle.last()
+
+        val generator = CMSSignedDataGenerator().apply {
+            certChainBundle.asReversed().map { it.certificate }.forEach {
+                addCertificate(X509CertificateHolder(it.encoded))
+            }
+
+            addSignerInfoGenerator(
+                JcaSimpleSignerInfoGeneratorBuilder()
+                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .build("SHA256withECDSA", credCertBundle.keyPair.private, credCertBundle.certificate)
+            )
+        }
+
+        val payloadNewCert = receipt.payload.copy(
+            attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
+                receipt.payload.attestationCertificate.sequence.copy(
+                    value = credCertBundle.certificate.encoded
+                )
+            )
+        ).let(payloadMutator)
+
+        val p7s = payloadNewCert.encode()
+            .let(::CMSProcessableByteArray)
+            .let { generator.generate(it, true) }
+            .encoded
+
+        return ResignedReceiptResponse(
+            receipt = receipt.copy(
+                p7 = p7s
+            ),
+            trustAnchor = TrustAnchor(rootCaBundle.certificate, null),
+            leadCertificate = credCertBundle.certificate,
+        )
     }
 }
 
