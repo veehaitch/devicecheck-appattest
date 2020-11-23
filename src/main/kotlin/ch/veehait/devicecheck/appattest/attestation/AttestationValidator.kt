@@ -4,6 +4,7 @@ import ch.veehait.devicecheck.appattest.common.App
 import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
+import ch.veehait.devicecheck.appattest.receipt.ReceiptException
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
 import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
@@ -275,6 +276,10 @@ internal class AttestationValidatorImpl(
         val attestationCertificate = attestStatement.attStmt.x5c.first().let(Utils::readDerX509Certificate)
         val publicKey = attestationCertificate.publicKey as ECPublicKey
 
-        return receiptValidator.validateReceiptAsync(receiptP7, publicKey)
+        return try {
+            receiptValidator.validateReceiptAsync(receiptP7, publicKey)
+        } catch (ex: ReceiptException) {
+            throw AttestationException.InvalidReceipt(ex)
+        }
     }
 }
