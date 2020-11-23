@@ -1,16 +1,20 @@
 package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.AppleAppAttest
+import ch.veehait.devicecheck.appattest.CertUtils
+import ch.veehait.devicecheck.appattest.CertUtils.toPEM
 import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
 import ch.veehait.devicecheck.appattest.TestUtils
 import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.throwable.shouldHaveMessage
 import nl.jqno.equalsverifier.EqualsVerifier
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -99,14 +103,7 @@ class ReceiptExchangeTest : StringSpec() {
                 appleJwsGenerator = AppleJwsGeneratorImpl(
                     teamIdentifier = attestationSample.teamIdentifier,
                     keyIdentifier = "WURZELPFRO",
-                    privateKeyPem =
-                        """
-                        -----BEGIN PRIVATE KEY-----
-                        MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgWv4sxtqGFHysyUui
-                        /vqP5WnExt9LGlh+4+Gb1YGqSz6hRANCAATeCV67+77uQmkBx13ATcE45v+CM1Wm
-                        qrZEaNW3gX1JVxnJpOEaSwdvGr6moRGwq+7MrhI9Mlmx4uI+S2A0oR9B
-                        -----END PRIVATE KEY-----
-                        """.trimIndent(),
+                    privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
                     clock = serverResponseClock,
                 ),
                 receiptValidator = appleAppAttest.createReceiptValidator(
@@ -197,14 +194,7 @@ class ReceiptExchangeTest : StringSpec() {
                 appleJwsGenerator = AppleJwsGeneratorImpl(
                     teamIdentifier = attestationSample.teamIdentifier,
                     keyIdentifier = "WURZELPFRO",
-                    privateKeyPem =
-                        """
-                        -----BEGIN PRIVATE KEY-----
-                        MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgWv4sxtqGFHysyUui
-                        /vqP5WnExt9LGlh+4+Gb1YGqSz6hRANCAATeCV67+77uQmkBx13ATcE45v+CM1Wm
-                        qrZEaNW3gX1JVxnJpOEaSwdvGr6moRGwq+7MrhI9Mlmx4uI+S2A0oR9B
-                        -----END PRIVATE KEY-----
-                        """.trimIndent(),
+                    privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
                     clock = serverResponseClock,
                 ),
                 receiptValidator = appleAppAttest.createReceiptValidator(
@@ -221,6 +211,43 @@ class ReceiptExchangeTest : StringSpec() {
             mockWebServer.shutdown()
 
             receipt.p7 shouldBe receiptP7s.encoded
+        }
+
+        "ReceiptExchange throws ReceiptExchangeException.HttpError for an unsuccessful call to Apple's servers" {
+            // Test setup
+            val (attestationResponse, appleAppAttest, attestationClock) = TestUtils.loadValidatedAttestationResponse()
+
+            // Actual test
+            val mockWebServer = MockWebServer().apply {
+                enqueue(MockResponse().apply { setResponseCode(403) })
+                start()
+            }
+
+            val receiptExchange = appleAppAttest.createReceiptExchange(
+                appleJwsGenerator = AppleJwsGeneratorImpl(
+                    teamIdentifier = "WURZELPFRO",
+                    keyIdentifier = "WURZELPFRO",
+                    privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
+                    clock = attestationClock,
+                ),
+                receiptValidator = appleAppAttest.createReceiptValidator(
+                    clock = attestationClock,
+                ),
+                appleDeviceCheckUrl = mockWebServer.url("/v1/attestationData").toUri(),
+            )
+
+            val exception = shouldThrow<ReceiptExchangeException.HttpError> {
+                receiptExchange.trade(
+                    receiptP7 = attestationResponse.receipt.p7,
+                    attestationPublicKey = attestationResponse.publicKey
+                )
+            }
+            mockWebServer.shutdown()
+
+            exception.shouldHaveMessage(
+                "Caught an error in Apple's response: Response(statusCode=403, " +
+                    "headers=java.net.http.HttpHeaders@bc7b26f5 { {content-length=[0]} }, body=[])"
+            )
         }
 
         val appleDeviceCheckKid = "94M3Z58NQ7"

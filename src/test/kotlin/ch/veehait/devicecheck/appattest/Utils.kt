@@ -47,6 +47,7 @@ import java.io.StringWriter
 import java.nio.ByteBuffer
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Security
 import java.security.cert.TrustAnchor
@@ -206,6 +207,12 @@ object CertUtils {
         .apply {
             ECGenParameterSpec("prime256v1").let(this::initialize)
         }.generateKeyPair()
+
+    fun PrivateKey.toPEM(): String = listOf(
+        "-----BEGIN PRIVATE KEY-----",
+        encoded.toBase64(),
+        "-----END PRIVATE KEY-----"
+    ).joinToString("\n")
 
     /**
      * Converts a [X509Certificate] instance into a Base-64 encoded string (PEM format).
