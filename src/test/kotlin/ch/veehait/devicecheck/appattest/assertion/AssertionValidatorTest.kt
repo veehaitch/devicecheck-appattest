@@ -10,6 +10,7 @@ import ch.veehait.devicecheck.appattest.common.App
 import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.common.AuthenticatorDataFlag
+import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldThrow
@@ -105,7 +106,11 @@ class AssertionValidatorTest : StringSpec() {
                 challenge = assertionSample.challenge,
             )
 
+            assertion.authenticatorData.rpIdHash shouldBe app.appIdentifier.toByteArray().sha256()
             assertion.authenticatorData.signCount shouldBe 1L
+
+            val decodedAssertion = cborObjectMapper.readValue<LinkedHashMap<Any, Any>>(assertionSample.assertion)
+            assertion.signature shouldBe decodedAssertion["signature"]
         }
 
         "Throws InvalidChallenge for invalid challenge" {
