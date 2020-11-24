@@ -32,14 +32,34 @@ data class Receipt(
      *   }
      *   Payload ::= SET OF ReceiptAttribute
      */
-    data class ReceiptAttributeSequence(
+    data class AttributeSequence(
         val type: BigInteger,
         val version: BigInteger,
         val value: ByteArray,
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as AttributeSequence
+
+            if (type != other.type) return false
+            if (version != other.version) return false
+            if (!value.contentEquals(other.value)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = type.hashCode()
+            result = 31 * result + version.hashCode()
+            result = 31 * result + value.contentHashCode()
+            return result
+        }
+    }
 
     @Suppress("MagicNumber")
-    enum class ReceiptAttributeType(val field: Int) {
+    enum class AttributeType(val field: Int) {
         APP_ID(2),
         ATTESTED_PUBLIC_KEY(3),
         CLIENT_HASH(4),
@@ -58,8 +78,8 @@ data class Receipt(
         }
     }
 
-    sealed class ReceiptAttribute<T>(internal val sequence: ReceiptAttributeSequence) {
-        val type: ReceiptAttributeType = ReceiptAttributeType.fromFieldValue(sequence.type.intValueExact())
+    sealed class ReceiptAttribute<T>(internal val sequence: AttributeSequence) {
+        val type: AttributeType = AttributeType.fromFieldValue(sequence.type.intValueExact())
         val version: kotlin.Int = sequence.version.intValueExact()
         protected val rawValue = sequence.value
 
@@ -67,32 +87,32 @@ data class Receipt(
 
         override fun toString(): kotlin.String = value.toString()
 
-        class String(sequence: ReceiptAttributeSequence) : ReceiptAttribute<kotlin.String>(sequence) {
+        class String(sequence: AttributeSequence) : ReceiptAttribute<kotlin.String>(sequence) {
             override val value: kotlin.String = String(rawValue)
         }
 
         class X509Certificate(
-            sequence: ReceiptAttributeSequence
+            sequence: AttributeSequence
         ) : ReceiptAttribute<java.security.cert.X509Certificate>(sequence) {
             override val value: java.security.cert.X509Certificate = Utils.readDerX509Certificate(rawValue)
             override fun toString(): kotlin.String = SubjectPublicKeyInfo.getInstance(value.publicKey.encoded)
                 .encoded.sha256().toBase64()
         }
 
-        class ByteArray(sequence: ReceiptAttributeSequence) : ReceiptAttribute<kotlin.ByteArray>(sequence) {
+        class ByteArray(sequence: AttributeSequence) : ReceiptAttribute<kotlin.ByteArray>(sequence) {
             override val value: kotlin.ByteArray = rawValue
             override fun toString(): kotlin.String = value.toBase64()
         }
 
-        class Type(sequence: ReceiptAttributeSequence) : ReceiptAttribute<Receipt.Type>(sequence) {
+        class Type(sequence: AttributeSequence) : ReceiptAttribute<Receipt.Type>(sequence) {
             override val value: Receipt.Type = Receipt.Type.valueOf(String(sequence).value)
         }
 
-        class Instant(sequence: ReceiptAttributeSequence) : ReceiptAttribute<java.time.Instant>(sequence) {
+        class Instant(sequence: AttributeSequence) : ReceiptAttribute<java.time.Instant>(sequence) {
             override val value: java.time.Instant = java.time.Instant.parse(String(sequence).value)
         }
 
-        class Int(sequence: ReceiptAttributeSequence) : ReceiptAttribute<kotlin.Int>(sequence) {
+        class Int(sequence: AttributeSequence) : ReceiptAttribute<kotlin.Int>(sequence) {
             override val value: kotlin.Int = java.lang.Integer.parseInt(String(sequence).value)
         }
     }
@@ -116,44 +136,44 @@ data class Receipt(
                     .toList()
                     .map { it as ASN1Sequence }
                     .map {
-                        ReceiptAttributeSequence(
+                        AttributeSequence(
                             type = it.get<ASN1Integer>(0).positiveValue,
                             version = it.get<ASN1Integer>(1).positiveValue,
                             value = it.get<DEROctetString>(2).octets
                         )
                     }.associateBy { it.type.toInt() }
 
-                fun objAt(type: ReceiptAttributeType): ReceiptAttributeSequence = objs[type.field]
+                fun objAt(type: AttributeType): AttributeSequence = objs[type.field]
                     ?: error("Receipt must contain field ${type.name}")
 
-                fun objAtOptional(type: ReceiptAttributeType, required: Boolean = false): ReceiptAttributeSequence? {
+                fun objAtOptional(type: AttributeType, required: Boolean = false): AttributeSequence? {
                     return when (required) {
                         true -> objAt(type)
                         false -> objs[type.field]
                     }
                 }
 
-                val type = ReceiptAttribute.Type(objAt(ReceiptAttributeType.RECEIPT_TYPE))
+                val type = ReceiptAttribute.Type(objAt(AttributeType.RECEIPT_TYPE))
 
                 return Payload(
-                    appId = ReceiptAttribute.String(objAt(ReceiptAttributeType.APP_ID)),
+                    appId = ReceiptAttribute.String(objAt(AttributeType.APP_ID)),
                     attestationCertificate = ReceiptAttribute.X509Certificate(
-                        objAt(ReceiptAttributeType.ATTESTED_PUBLIC_KEY)
+                        objAt(AttributeType.ATTESTED_PUBLIC_KEY)
                     ),
-                    clientHash = ReceiptAttribute.ByteArray(objAt(ReceiptAttributeType.CLIENT_HASH)),
-                    token = ReceiptAttribute.String(objAt(ReceiptAttributeType.TOKEN)),
+                    clientHash = ReceiptAttribute.ByteArray(objAt(AttributeType.CLIENT_HASH)),
+                    token = ReceiptAttribute.String(objAt(AttributeType.TOKEN)),
                     type = type,
-                    environment = objAtOptional(ReceiptAttributeType.ENVIRONMENT)?.let { ReceiptAttribute.String(it) },
-                    creationTime = ReceiptAttribute.Instant(objAt(ReceiptAttributeType.CREATION_TIME)),
+                    environment = objAtOptional(AttributeType.ENVIRONMENT)?.let { ReceiptAttribute.String(it) },
+                    creationTime = ReceiptAttribute.Instant(objAt(AttributeType.CREATION_TIME)),
                     riskMetric = objAtOptional(
-                        ReceiptAttributeType.RISK_METRIC,
+                        AttributeType.RISK_METRIC,
                         required = type.value == Type.RECEIPT
                     )?.let { ReceiptAttribute.Int(it) },
                     notBefore = objAtOptional(
-                        ReceiptAttributeType.NOT_BEFORE,
+                        AttributeType.NOT_BEFORE,
                         required = type.value == Type.RECEIPT
                     )?.let { ReceiptAttribute.Instant(it) },
-                    expirationTime = ReceiptAttribute.Instant(objAt(ReceiptAttributeType.EXPIRATION_TIME)),
+                    expirationTime = ReceiptAttribute.Instant(objAt(AttributeType.EXPIRATION_TIME)),
                 )
             }
         }

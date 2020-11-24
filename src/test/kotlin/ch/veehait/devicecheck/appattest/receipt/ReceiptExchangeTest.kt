@@ -44,7 +44,7 @@ class ReceiptExchangeTest : StringSpec() {
         "Has correct constant for Apple's development server endpoint" {
             // Use the base URL of https://data-development.appattest.apple.com shown in the example above for testing.
             with(ReceiptExchange) {
-                APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL shouldBe "https://data-development.appattest.apple.com"
+                APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL.toString() shouldBe "https://data-development.appattest.apple.com/v1/attestationData"
                 APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL shouldNotBe APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL
             }
         }
@@ -53,7 +53,7 @@ class ReceiptExchangeTest : StringSpec() {
             // To work with apps that you’ve distributed through the App Store, TestFlight, or with an Enterprise
             // Developer certificate, use a base URL of https://data.appattest.apple.com instead.
             with(ReceiptExchange) {
-                APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL shouldBe "https://data.appattest.apple.com"
+                APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL.toString() shouldBe "https://data.appattest.apple.com/v1/attestationData"
                 APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL shouldNotBe APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL
             }
         }
@@ -128,6 +128,7 @@ class ReceiptExchangeTest : StringSpec() {
                     clock = serverResponseClock,
                 ),
                 appleDeviceCheckUrl = mockWebServerUri,
+                appleReceiptExchangeHttpClientAdapter = SimpleAppleReceiptExchangeHttpClientAdapter(),
             )
 
             val receipt = receiptExchange.trade(

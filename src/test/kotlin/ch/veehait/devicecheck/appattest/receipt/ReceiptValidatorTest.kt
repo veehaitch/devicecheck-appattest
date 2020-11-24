@@ -134,11 +134,23 @@ class ReceiptValidatorTest : StringSpec() {
                 .verify()
         }
 
-        "ReceiptPayload: equals/hashCode" {
+        "Receipt.Payload: equals/hashCode" {
             val (red, blue) = equalsVerifierX509Certs()
             EqualsVerifier.forClass(Receipt.Payload::class.java)
                 .withPrefabValues(X509Certificate::class.java, red, blue)
                 .verify()
+        }
+
+        "Receipt.AttributeSequence: equals/hashCode" {
+            EqualsVerifier.forClass(Receipt.AttributeSequence::class.java).verify()
+        }
+
+        "Receipt.AttributeType: equals/hashCode" {
+            EqualsVerifier.forClass(Receipt.AttributeType::class.java).verify()
+        }
+
+        "Receipt.Type: equals/hashCode" {
+            EqualsVerifier.forClass(Receipt.Type::class.java).verify()
         }
 
         "Throws InvalidPayload for too old receipt" {
