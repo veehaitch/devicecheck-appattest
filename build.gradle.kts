@@ -2,7 +2,7 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.20-M2"
+    id("org.jetbrains.kotlin.jvm") version "1.4.20"
     id("io.gitlab.arturbosch.detekt") version "1.14.2"
     id("org.jmailen.kotlinter") version "3.2.0"
     id("jacoco")
