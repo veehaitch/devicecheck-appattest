@@ -92,7 +92,7 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 
     // JWS issuing
-    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.2")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.3")
 
     // Google Guava: Bytes.indexOf
     testImplementation("com.google.guava:guava:30.0-jre")
