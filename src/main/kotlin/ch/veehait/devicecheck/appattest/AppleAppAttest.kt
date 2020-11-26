@@ -28,8 +28,8 @@ import java.time.Clock
  * @property appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
  */
 class AppleAppAttest(
-    private val app: App,
-    private val appleAppAttestEnvironment: AppleAppAttestEnvironment,
+    val app: App,
+    val appleAppAttestEnvironment: AppleAppAttestEnvironment,
 ) {
     init {
         Security.addProvider(BouncyCastleProvider())
