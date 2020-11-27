@@ -95,13 +95,10 @@ data class Receipt(
             sequence: AttributeSequence
         ) : ReceiptAttribute<java.security.cert.X509Certificate>(sequence) {
             override val value: java.security.cert.X509Certificate = Utils.readDerX509Certificate(rawValue)
-            override fun toString(): kotlin.String = SubjectPublicKeyInfo.getInstance(value.publicKey.encoded)
-                .encoded.sha256().toBase64()
         }
 
         class ByteArray(sequence: AttributeSequence) : ReceiptAttribute<kotlin.ByteArray>(sequence) {
             override val value: kotlin.ByteArray = rawValue
-            override fun toString(): kotlin.String = value.toBase64()
         }
 
         class Type(sequence: AttributeSequence) : ReceiptAttribute<Receipt.Type>(sequence) {

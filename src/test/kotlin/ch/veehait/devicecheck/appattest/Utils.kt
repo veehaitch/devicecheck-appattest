@@ -1,14 +1,7 @@
 package ch.veehait.devicecheck.appattest
 
 import ch.veehait.devicecheck.appattest.TestExtensions.encode
-import ch.veehait.devicecheck.appattest.TestExtensions.readTextResource
-import ch.veehait.devicecheck.appattest.TestUtils.loadValidAttestationSample
-import ch.veehait.devicecheck.appattest.attestation.AppleAppAttestValidationResponse
-import ch.veehait.devicecheck.appattest.attestation.AttestationObject
-import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import ch.veehait.devicecheck.appattest.attestation.AttestationValidator
-import ch.veehait.devicecheck.appattest.common.App
-import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.common.AttestedCredentialData
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.common.AuthenticatorDataFlag
@@ -18,11 +11,9 @@ import ch.veehait.devicecheck.appattest.util.Extensions.Pkcs7.readAsSignedData
 import ch.veehait.devicecheck.appattest.util.Extensions.Pkcs7.readCertificateChain
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 import ch.veehait.devicecheck.appattest.util.Utils
-import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -47,6 +38,7 @@ import java.io.StringWriter
 import java.nio.ByteBuffer
 import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Security
@@ -54,6 +46,7 @@ import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
 import java.security.spec.ECGenParameterSpec
 import java.time.Clock
+import java.time.Instant
 import java.time.ZoneOffset
 import kotlin.experimental.or
 import kotlin.reflect.full.memberProperties
@@ -93,13 +86,13 @@ object TestExtensions {
             (extensions?.let(cborObjectMapper::writeValueAsBytes) ?: ByteArray(0))
     }
 
-    fun <T> Receipt.ReceiptAttribute<T>?.encodeValue(): ByteArray? = when (this) {
-        is Receipt.ReceiptAttribute.String -> value.toByteArray()
-        is Receipt.ReceiptAttribute.X509Certificate -> value.encoded
-        is Receipt.ReceiptAttribute.ByteArray -> value
-        is Receipt.ReceiptAttribute.Type -> value.name.toByteArray()
-        is Receipt.ReceiptAttribute.Instant -> value.toString().toByteArray()
-        is Receipt.ReceiptAttribute.Int -> value.toString().toByteArray()
+    fun <T> Receipt.ReceiptAttribute<T>?.encodeValue(value: T? = this?.value): ByteArray? = when (this) {
+        is Receipt.ReceiptAttribute.String -> (value as String).toByteArray()
+        is Receipt.ReceiptAttribute.X509Certificate -> (value as X509Certificate).encoded
+        is Receipt.ReceiptAttribute.ByteArray -> value as ByteArray
+        is Receipt.ReceiptAttribute.Type -> (value as Receipt.Type).name.toByteArray()
+        is Receipt.ReceiptAttribute.Instant -> (value as Instant).toString().toByteArray()
+        is Receipt.ReceiptAttribute.Int -> (value as Int).toString().toByteArray()
         null -> ByteArray(0)
     }
 
@@ -120,43 +113,34 @@ object TestExtensions {
         .toTypedArray()
         .let(::DLSet)
         .encoded
+
+    fun Receipt.ReceiptAttribute.String?.copy(newValue: String): Receipt.ReceiptAttribute.String? =
+        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.String(sequence.copy(value = it)) }
+
+    fun Receipt.ReceiptAttribute.X509Certificate?.copy(newValue: X509Certificate): Receipt.ReceiptAttribute.X509Certificate? =
+        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.X509Certificate(sequence.copy(value = it)) }
+
+    fun Receipt.ReceiptAttribute.ByteArray?.copy(newValue: ByteArray): Receipt.ReceiptAttribute.ByteArray? =
+        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.ByteArray(sequence.copy(value = it)) }
+
+    fun Receipt.ReceiptAttribute.Type?.copy(newValue: Receipt.Type): Receipt.ReceiptAttribute.Type? =
+        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.Type(sequence.copy(value = it)) }
+
+    fun Receipt.ReceiptAttribute.Instant?.copy(newValue: Instant): Receipt.ReceiptAttribute.Instant? =
+        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.Instant(sequence.copy(value = it)) }
+
+    fun Receipt.ReceiptAttribute.Int?.copy(newValue: Int): Receipt.ReceiptAttribute.Int? =
+        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.Int(sequence.copy(value = it)) }
+
+    fun ByteArray.md5(): ByteArray = MessageDigest.getInstance("MD5").digest(this)
+
+    fun Instant.fixedUtcClock() = Clock.fixed(this, ZoneOffset.UTC)
 }
 
 object TestUtils {
-    val jsonObjectMapper: ObjectMapper = ObjectMapper(JsonFactory())
-        .registerModule(JavaTimeModule())
+    val cborObjectMapper: ObjectMapper = ObjectMapper(CBORFactory())
         .registerKotlinModule()
-
-    val cborObjectMapper: ObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
-
-    fun loadValidAttestationSample(): Triple<AttestationSample, App, Clock> {
-        val attestationSampleJson = javaClass.readTextResource("/iOS14-attestation-sample.json")
-        val attestationSample: AttestationSample = jsonObjectMapper.readValue(attestationSampleJson)
-        val app = App(attestationSample.teamIdentifier, attestationSample.bundleIdentifier)
-        val clock = Clock.fixed(attestationSample.timestamp.plusSeconds(5), ZoneOffset.UTC)
-        return Triple(attestationSample, app, clock)
-    }
-
-    fun loadValidatedAttestationResponse(): Triple<AppleAppAttestValidationResponse, AppleAppAttest, Clock> {
-        val (attestationSample, app, clock) = loadValidAttestationSample()
-        val appleAppAttest = AppleAppAttest(
-            app = app,
-            appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
-        )
-        val attestationValidator = appleAppAttest.createAttestationValidator(
-            clock = clock,
-            receiptValidator = appleAppAttest.createReceiptValidator(
-                clock = clock
-            )
-        )
-        val attestationResponse = attestationValidator.validate(
-            attestationObject = attestationSample.attestation,
-            keyIdBase64 = attestationSample.keyId.toBase64(),
-            serverChallenge = attestationSample.clientData
-        )
-
-        return Triple(attestationResponse, appleAppAttest, clock)
-    }
+        .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
 }
 
 object CertUtils {
@@ -169,20 +153,6 @@ object CertUtils {
         val intermediateCa: X509Certificate,
         val credCert: X509Certificate,
     )
-
-    val sampleChain: AttestationCertificateChain
-        get() {
-            val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
-
-            val (attestationSample, _, _) = loadValidAttestationSample()
-            val attestationObject: AttestationObject = cborObjectMapper.readValue(attestationSample.attestation)
-
-            return AttestationCertificateChain(
-                rootCa = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR.trustedCert,
-                intermediateCa = Utils.readDerX509Certificate(attestationObject.attStmt.x5c.last()),
-                credCert = Utils.readDerX509Certificate(attestationObject.attStmt.x5c.first()),
-            )
-        }
 
     private fun PublicKey.getEcCurveName(): String {
         val spki = SubjectPublicKeyInfo.getInstance(this.encoded)
@@ -313,7 +283,7 @@ object CertUtils {
     data class ResignedReceiptResponse(
         val receipt: Receipt,
         val trustAnchor: TrustAnchor,
-        val leadCertificate: X509Certificate,
+        val leafCertificate: X509Certificate,
     )
 
     fun resignReceipt(
@@ -321,7 +291,7 @@ object CertUtils {
         rootCaBundle: CertificateWithKeyPair = createCertificate(
             certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert
         ),
-        payloadMutator: (Receipt.Payload) -> Receipt.Payload = { it }
+        payloadMutator: (Receipt.Payload) -> Receipt.Payload = { it },
     ): ResignedReceiptResponse {
         val certificateChain = receipt.p7.readAsSignedData().readCertificateChain().asReversed()
 
@@ -366,7 +336,7 @@ object CertUtils {
                 p7 = p7s
             ),
             trustAnchor = TrustAnchor(rootCaBundle.certificate, null),
-            leadCertificate = credCertBundle.certificate,
+            leafCertificate = credCertBundle.certificate,
         )
     }
 }
