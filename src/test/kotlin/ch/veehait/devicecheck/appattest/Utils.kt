@@ -292,6 +292,7 @@ object CertUtils {
             certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert
         ),
         payloadMutator: (Receipt.Payload) -> Receipt.Payload = { it },
+        generatorMutator: (CMSSignedDataGenerator) -> Unit = {},
     ): ResignedReceiptResponse {
         val certificateChain = receipt.p7.readAsSignedData().readCertificateChain().asReversed()
 
@@ -316,6 +317,7 @@ object CertUtils {
                     .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                     .build("SHA256withECDSA", credCertBundle.keyPair.private, credCertBundle.certificate)
             )
+            generatorMutator(this)
         }
 
         val payloadNewCert = receipt.payload.copy(

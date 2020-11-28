@@ -18,6 +18,8 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import io.kotest.property.Exhaustive
 import io.kotest.property.checkAll
 import io.kotest.property.exhaustive.longs
+import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.interfaces.ECPublicKey
 import java.time.Clock
 import java.time.Duration
@@ -25,11 +27,10 @@ import java.time.ZoneOffset
 import kotlin.experimental.xor
 
 class ReceiptValidatorTest : FreeSpec() {
-    private val receiptSamples = ReceiptSample.all
 
     init {
         "Accepts valid receipt samples" - {
-            receiptSamples.map(::ReceiptSampleBundle).forEach { bundle ->
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
                 "${bundle.sample.properties.type}/${bundle.sample.id}" {
                     val sample = bundle.sample
                     val validatedReceipt = bundle.validator.validateReceipt(
@@ -59,7 +60,7 @@ class ReceiptValidatorTest : FreeSpec() {
         }
 
         "Accepts resigned valid receipt samples" - {
-            receiptSamples.map(::ReceiptSampleBundle).forEach { bundle ->
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
                 val fakeEnvironmentValue = "wurzelpfropf"
                 "environment=$fakeEnvironmentValue ${bundle.sample.properties.type}/${bundle.sample.id}" {
                     val sample = bundle.sample
@@ -68,10 +69,13 @@ class ReceiptValidatorTest : FreeSpec() {
                         publicKey = sample.publicKey,
                     )
 
-                    val fakeReceiptBundle = CertUtils.resignReceipt(validatedReceipt) {
-                        val fakeEnvironment = it.environment!!.copy(fakeEnvironmentValue)
-                        it.copy(environment = fakeEnvironment)
-                    }
+                    val fakeReceiptBundle = CertUtils.resignReceipt(
+                        validatedReceipt,
+                        payloadMutator = {
+                            val fakeEnvironment = it.environment!!.copy(fakeEnvironmentValue)
+                            it.copy(environment = fakeEnvironment)
+                        }
+                    )
 
                     val fakeReceiptValidator = bundle.appleAppAttest.createReceiptValidator(
                         trustAnchor = fakeReceiptBundle.trustAnchor,
@@ -91,7 +95,7 @@ class ReceiptValidatorTest : FreeSpec() {
         }
 
         "Throws InvalidPayload for too old receipt" - {
-            receiptSamples.map(::ReceiptSampleBundle).forEach { bundle ->
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
                 val sample = bundle.sample
                 "${sample.properties.type}/${sample.id}" - {
                     checkAll(Exhaustive.longs(-1L..1L)) { nanosOffset ->
@@ -127,7 +131,7 @@ class ReceiptValidatorTest : FreeSpec() {
         }
 
         "Throws InvalidPayload for wrong app identifier" - {
-            receiptSamples.forEach { sample ->
+            ReceiptSample.all.forEach { sample ->
                 val app = App("wurzelpfro", "pf")
                 "appId=${app.appIdentifier} ${sample.properties.type}/${sample.id}" - {
                     val receiptValidator = AppleAppAttest(
@@ -150,7 +154,7 @@ class ReceiptValidatorTest : FreeSpec() {
         }
 
         "Throws InvalidPayload for wrong public key" - {
-            receiptSamples.map(::ReceiptSampleBundle).forEach { bundle ->
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
                 val sample = bundle.sample
                 "${sample.properties.type}/${sample.id}" - {
                     val receiptValidator = bundle.appleAppAttest.createReceiptValidator(
@@ -168,7 +172,7 @@ class ReceiptValidatorTest : FreeSpec() {
         }
 
         "Throws InvalidCertificateChain for wrong root CA" - {
-            receiptSamples.map(::ReceiptSampleBundle).forEach { bundle ->
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
                 val sample = bundle.sample
                 "${sample.properties.type}/${sample.id}" - {
                     val receiptValidator = bundle.appleAppAttest.createReceiptValidator(
@@ -188,7 +192,7 @@ class ReceiptValidatorTest : FreeSpec() {
         }
 
         "Throws InvalidSignature for invalid signature" - {
-            receiptSamples.map(::ReceiptSampleBundle).forEach { bundle ->
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
                 val sample = bundle.sample
                 "${sample.properties.type}/${sample.id}" - {
                     // Test setup
@@ -219,6 +223,47 @@ class ReceiptValidatorTest : FreeSpec() {
                         )
                     }
                     exception shouldHaveMessage "The receipt signature is invalid"
+                }
+            }
+        }
+
+        "Throws InvalidSignature for multiple signers" - {
+            ReceiptSample.all.map(::ReceiptSampleBundle).forEach { bundle ->
+                val sample = bundle.sample
+                "${sample.properties.type}/${sample.id}" - {
+                    val validatedReceipt = bundle.validator.validateReceipt(
+                        receiptP7 = sample.receipt,
+                        publicKey = sample.publicKey,
+                    )
+
+                    val fakeReceiptBundle = CertUtils.resignReceipt(
+                        validatedReceipt,
+                        generatorMutator = {
+                            val keyPair = CertUtils.generateP256KeyPair()
+                            val certBundle = CertUtils.createCertificate(
+                                certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert
+                            )
+
+                            it.addSignerInfoGenerator(
+                                JcaSimpleSignerInfoGeneratorBuilder()
+                                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                                    .build("SHA256withECDSA", keyPair.private, certBundle.certificate)
+                            )
+                        }
+                    )
+
+                    val fakeReceiptValidator = bundle.appleAppAttest.createReceiptValidator(
+                        trustAnchor = fakeReceiptBundle.trustAnchor,
+                        clock = Clock.fixed(sample.timestamp, ZoneOffset.UTC)
+                    )
+
+                    val exception = shouldThrow<ReceiptException.InvalidSignature> {
+                        fakeReceiptValidator.validateReceipt(
+                            receiptP7 = fakeReceiptBundle.receipt.p7,
+                            publicKey = fakeReceiptBundle.leafCertificate.publicKey as ECPublicKey,
+                        )
+                    }
+                    exception shouldHaveMessage "The receipt contains more than one signature"
                 }
             }
         }
