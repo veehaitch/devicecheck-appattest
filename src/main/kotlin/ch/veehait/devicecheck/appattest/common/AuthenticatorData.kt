@@ -3,12 +3,15 @@ package ch.veehait.devicecheck.appattest.common
 import ch.veehait.devicecheck.appattest.util.Extensions.readAsUInt16
 import ch.veehait.devicecheck.appattest.util.Extensions.readAsUInt32
 import ch.veehait.devicecheck.appattest.util.Extensions.toUUID
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import java.io.ByteArrayInputStream
 import java.util.UUID
 import kotlin.experimental.and
+
+typealias AuthenticatorDataExtensions = LinkedHashMap<Any, Any>
 
 data class AttestedCredentialData(
     val aaguid: UUID,
@@ -20,16 +23,24 @@ data class AttestedCredentialData(
         fun parse(
             stream: ByteArrayInputStream,
             cborObjectReader: ObjectReader,
-        ): AttestedCredentialData {
+        ): Pair<AttestedCredentialData, AuthenticatorDataExtensions?> {
             val aaguid = stream.readNBytes(16)
             val credentialIdLength = stream.readNBytes(2).readAsUInt16()
             val credentialId = stream.readNBytes(credentialIdLength)
-            val credentialPublicKey = cborObjectReader.readValue<LinkedHashMap<Any, Any>>(stream)
+            val mappingIterator = cborObjectReader.readValues<LinkedHashMap<Any, Any>>(stream)
 
-            return AttestedCredentialData(
-                aaguid = aaguid.toUUID(),
-                credentialId = credentialId,
-                credentialPublicKey = credentialPublicKey,
+            val credentialPublicKey = mappingIterator.nextValue()
+            val extensions: LinkedHashMap<Any, Any>? = if (mappingIterator.hasNextValue()) {
+                mappingIterator.nextValue()
+            } else null
+
+            return Pair(
+                AttestedCredentialData(
+                    aaguid = aaguid.toUUID(),
+                    credentialId = credentialId,
+                    credentialPublicKey = credentialPublicKey,
+                ),
+                extensions
             )
         }
     }
@@ -81,7 +92,9 @@ data class AuthenticatorData(
     companion object {
         const val FLAGS_INDEX: Int = 32
 
-        private val cborObjectReader = ObjectMapper(CBORFactory()).readerForMapOf(Any::class.java)
+        private val cborObjectReader = ObjectMapper(CBORFactory())
+            .disable(JsonParser.Feature.AUTO_CLOSE_SOURCE)
+            .readerForMapOf(Any::class.java)
 
         @Suppress("MagicNumber")
         fun parse(
@@ -93,13 +106,15 @@ data class AuthenticatorData(
             val flags = AuthenticatorDataFlag.values().filter { (flagsByte and it.bitmask).toInt() != 0 }
             val signCount = stream.readNBytes(4).readAsUInt32()
 
-            val attestedCredentialData = if (AuthenticatorDataFlag.AT in flags) {
-                AttestedCredentialData.parse(stream, cborObjectReader)
-            } else null
-
-            val extensions = if (AuthenticatorDataFlag.ED in flags) {
-                cborObjectReader.readValue<LinkedHashMap<Any, Any>>(stream)
-            } else null
+            val (attestedCredentialData, extensions) = when {
+                AuthenticatorDataFlag.AT !in flags && AuthenticatorDataFlag.ED in flags -> {
+                    Pair(null, cborObjectReader.readValue<LinkedHashMap<Any, Any>>(stream))
+                }
+                AuthenticatorDataFlag.AT !in flags && AuthenticatorDataFlag.ED !in flags -> {
+                    Pair(null, null)
+                }
+                else -> AttestedCredentialData.parse(stream, cborObjectReader)
+            }
 
             AuthenticatorData(
                 rpIdHash = rpIdHash,
