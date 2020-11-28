@@ -6,7 +6,6 @@ import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
 import ch.veehait.devicecheck.appattest.receipt.ReceiptException
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
-import ch.veehait.devicecheck.appattest.receipt.ReceiptValidatorImpl
 import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.get

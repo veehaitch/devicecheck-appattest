@@ -93,9 +93,9 @@ interface ReceiptValidator {
 
 internal class ReceiptValidatorImpl(
     override val app: App,
-    override val trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
-    override val maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE,
-    override val clock: Clock = Clock.systemUTC(),
+    override val trustAnchor: TrustAnchor,
+    override val maxAge: Duration,
+    override val clock: Clock,
 ) : ReceiptValidator {
 
     override fun validateReceipt(

@@ -5,7 +5,6 @@ import ch.veehait.devicecheck.appattest.common.App
 import ch.veehait.devicecheck.appattest.common.AppleAppAttestEnvironment
 import ch.veehait.devicecheck.appattest.receipt.AppleJwsGeneratorImpl
 import ch.veehait.devicecheck.appattest.receipt.ReceiptExchange
-import ch.veehait.devicecheck.appattest.receipt.SimpleAppleReceiptExchangeHttpClientAdapter
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 

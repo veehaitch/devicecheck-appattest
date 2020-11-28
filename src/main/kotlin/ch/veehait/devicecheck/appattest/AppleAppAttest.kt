@@ -19,6 +19,7 @@ import java.net.URI
 import java.security.Security
 import java.security.cert.TrustAnchor
 import java.time.Clock
+import java.time.Duration
 
 /**
  * Factory class to create instances to validate attestations ([AttestationValidator]), assertions
@@ -79,15 +80,19 @@ class AppleAppAttest(
      *
      * @property trustAnchor The root of the receipt certificate chain.
      * @property clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
+     * @property maxAge The maximum validity period of a receipt. Defaults to
+     *   [ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE] which reflects the value Apple recommends.
      * @see ReceiptValidator
      */
     fun createReceiptValidator(
         trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
         clock: Clock = Clock.systemUTC(),
+        maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE,
     ): ReceiptValidator = ReceiptValidatorImpl(
         app = app,
         trustAnchor = trustAnchor,
         clock = clock,
+        maxAge = maxAge,
     )
 
     /**
