@@ -119,7 +119,9 @@ internal class AttestationValidatorImpl(
     override val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(app, clock = clock),
     override val trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
 ) : AttestationValidator {
-    private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
+    private val cborObjectReader = ObjectMapper(CBORFactory())
+        .registerKotlinModule()
+        .readerFor(AttestationObject::class.java)
 
     override suspend fun validateAsync(
         attestationObject: ByteArray,
@@ -151,7 +153,7 @@ internal class AttestationValidatorImpl(
     }
 
     private fun parseAttestationObject(attestationObject: ByteArray): AttestationObject {
-        return cborObjectMapper.readValue(attestationObject, AttestationObject::class.java)
+        return cborObjectReader.readValue(attestationObject)
     }
 
     private fun verifyAttestationFormat(attestationObject: AttestationObject) {
