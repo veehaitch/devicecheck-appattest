@@ -6,7 +6,6 @@ import ch.veehait.devicecheck.appattest.common.AuthenticatorDataFlag
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -27,6 +26,11 @@ import kotlin.experimental.xor
 interface AssertionValidator {
     val app: App
     val assertionChallengeValidator: AssertionChallengeValidator
+
+    companion object {
+        /** The signature algorithm used by Apple to create assertions */
+        const val SIGNATURE_ALGORITHM = "SHA256withECDSA"
+    }
 
     /**
      * Validate an assertion object.
@@ -68,8 +72,10 @@ internal class AssertionValidatorImpl(
     override val app: App,
     override val assertionChallengeValidator: AssertionChallengeValidator,
 ) : AssertionValidator {
-    private val cborObjectMapper = ObjectMapper(CBORFactory()).registerKotlinModule()
-    private val signatureInstance = Signature.getInstance("SHA256withECDSA")
+
+    private val cborObjectReader = ObjectMapper(CBORFactory())
+        .registerKotlinModule()
+        .readerFor(AssertionEnvelope::class.java)
 
     private fun verifySignature(
         assertionEnvelope: AssertionEnvelope,
@@ -84,6 +90,7 @@ internal class AssertionValidatorImpl(
 
         // 3. Use the public key that you stored from the attestation object to verify
         //    that the assertion’s signature is valid for nonce.
+        val signatureInstance = Signature.getInstance(AssertionValidator.SIGNATURE_ALGORITHM)
         runCatching {
             signatureInstance.run {
                 initVerify(attestationPublicKey)
@@ -160,7 +167,7 @@ internal class AssertionValidatorImpl(
         lastCounter: Long,
         challenge: ByteArray,
     ): Assertion = coroutineScope {
-        val assertionEnvelope: AssertionEnvelope = cborObjectMapper.readValue(assertionObject)
+        val assertionEnvelope = cborObjectReader.readValue<AssertionEnvelope>(assertionObject)
 
         launch { verifySignature(assertionEnvelope, clientData, attestationPublicKey) }
 
