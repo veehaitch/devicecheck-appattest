@@ -115,9 +115,9 @@ interface AttestationValidator {
 internal class AttestationValidatorImpl(
     override val app: App,
     override val appleAppAttestEnvironment: AppleAppAttestEnvironment,
-    override val clock: Clock = Clock.systemUTC(),
-    override val receiptValidator: ReceiptValidator = ReceiptValidatorImpl(app, clock = clock),
-    override val trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
+    override val clock: Clock,
+    override val receiptValidator: ReceiptValidator,
+    override val trustAnchor: TrustAnchor,
 ) : AttestationValidator {
     private val cborObjectReader = ObjectMapper(CBORFactory())
         .registerKotlinModule()
