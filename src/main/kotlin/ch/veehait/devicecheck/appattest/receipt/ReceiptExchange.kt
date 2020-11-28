@@ -23,8 +23,8 @@ import java.time.Instant
 interface ReceiptExchange {
     val appleJwsGenerator: AppleJwsGenerator
     val receiptValidator: ReceiptValidator
-    val appleDeviceCheckUrl: URI
     val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter
+    val appleDeviceCheckUrl: URI
 
     companion object {
         /** The Apple App Attest receipt endpoint for production use */
@@ -95,7 +95,6 @@ interface ReceiptExchange {
 internal class ReceiptExchangeImpl(
     override val appleJwsGenerator: AppleJwsGenerator,
     override val receiptValidator: ReceiptValidator,
-    override val appleDeviceCheckUrl: URI = ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL,
-    override val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter =
-        SimpleAppleReceiptExchangeHttpClientAdapter(),
+    override val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter,
+    override val appleDeviceCheckUrl: URI,
 ) : ReceiptExchange

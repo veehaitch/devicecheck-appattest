@@ -17,7 +17,6 @@ import java.security.cert.CertificateFactory
 import java.security.cert.PKIXParameters
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
-import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
@@ -26,7 +25,7 @@ internal object Extensions {
 
     fun List<X509Certificate>.verifyChain(
         trustAnchor: TrustAnchor,
-        date: Date = Date.from(Instant.now()),
+        date: Date,
     ) {
         val certFactory = CertificateFactory.getInstance("X509")
         val certPath = certFactory.generateCertPath(this)

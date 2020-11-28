@@ -35,6 +35,11 @@ class AppleAppAttest(
         Security.addProvider(BouncyCastleProvider())
     }
 
+    private val defaultAppleDeviceCheckUrl: URI = when (appleAppAttestEnvironment) {
+        AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL
+        AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL
+    }
+
     /**
      * Create an instance of an [AttestationValidator].
      *
@@ -91,17 +96,18 @@ class AppleAppAttest(
      * @property appleJwsGenerator An [AppleJwsGenerator] instance to issue a signed JWT for authentication to Apple's
      *   App Attest server.
      * @property receiptValidator A [ReceiptValidator] to assert the validity of passed and returned receipts.
-     * @property appleDeviceCheckUrl The endpoint to use for trading a receipt.
      * @property appleReceiptExchangeHttpClientAdapter An HTTP client adapter to execute the call to
      *   [appleDeviceCheckUrl] using [appleJwsGenerator] for authentication.
+     * @property appleDeviceCheckUrl The endpoint to use for trading a receipt. Defaults to the server url given in
+     *   Apple's documentation taking [appleAppAttestEnvironment] into consideration.
      * @see ReceiptExchange
      */
     fun createReceiptExchange(
         appleJwsGenerator: AppleJwsGenerator,
         receiptValidator: ReceiptValidator = createReceiptValidator(),
-        appleDeviceCheckUrl: URI = ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL,
         appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter =
             SimpleAppleReceiptExchangeHttpClientAdapter(),
+        appleDeviceCheckUrl: URI = defaultAppleDeviceCheckUrl,
     ): ReceiptExchange = ReceiptExchangeImpl(
         appleJwsGenerator = appleJwsGenerator,
         receiptValidator = receiptValidator,
