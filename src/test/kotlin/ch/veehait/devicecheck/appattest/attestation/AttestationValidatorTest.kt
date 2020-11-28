@@ -8,6 +8,7 @@ import ch.veehait.devicecheck.appattest.TestUtils.cborObjectMapper
 import ch.veehait.devicecheck.appattest.common.App
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
 import ch.veehait.devicecheck.appattest.receipt.Receipt
+import ch.veehait.devicecheck.appattest.receipt.ReceiptException
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
@@ -25,6 +26,10 @@ import org.bouncycastle.asn1.DLTaggedObject
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.Security
 import java.security.cert.TrustAnchor
+import java.security.interfaces.ECPublicKey
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
 
 class AttestationValidatorTest : FreeSpec() {
 
@@ -145,6 +150,39 @@ class AttestationValidatorTest : FreeSpec() {
                         keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
                         serverChallenge = sample.clientData,
                     )
+                }
+            }
+        }
+
+        "Throw InvalidReceipt for invalid receipt" - {
+            AttestationSample.all.forEach { sample ->
+                "${sample.id}" {
+                    val appleAppAttest = sample.defaultAppleAppAttest()
+                    val attestationValidator = appleAppAttest.createAttestationValidator(
+                        clock = sample.timestamp.fixedUtcClock(),
+                        receiptValidator = object : ReceiptValidator {
+                            override val app: App = appleAppAttest.app
+                            override val trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR
+                            override val maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE
+                            override val clock: Clock = sample.timestamp.fixedUtcClock()
+
+                            override suspend fun validateReceiptAsync(receiptP7: ByteArray, publicKey: ECPublicKey, notAfter: Instant): Receipt {
+                                throw ReceiptException.InvalidPayload("Always rejected")
+                            }
+
+                            override fun validateReceipt(receiptP7: ByteArray, publicKey: ECPublicKey, notAfter: Instant): Receipt {
+                                throw ReceiptException.InvalidPayload("Always rejected")
+                            }
+                        }
+                    )
+
+                    shouldThrow<AttestationException.InvalidReceipt> {
+                        attestationValidator.validateAsync(
+                            attestationObject = sample.attestation,
+                            keyIdBase64 = sample.keyId.toBase64(),
+                            serverChallenge = sample.clientData,
+                        )
+                    }
                 }
             }
         }

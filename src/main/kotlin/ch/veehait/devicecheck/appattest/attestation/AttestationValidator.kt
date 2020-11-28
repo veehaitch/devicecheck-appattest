@@ -135,10 +135,7 @@ internal class AttestationValidatorImpl(
         launch { verifyNonce(attestation, serverChallenge) }
         val publicKey = async { verifyPublicKey(attestation, keyId) }
         launch { verifyAuthenticatorData(attestation, keyId) }
-        val receipt = async {
-            runCatching { validateAttestationReceiptAsync(attestation) }
-                .getOrElse { throw AttestationException.InvalidReceipt(it) }
-        }
+        val receipt = async { validateAttestationReceiptAsync(attestation) }
 
         AppleAppAttestValidationResponse(publicKey.await(), receipt.await())
     }
