@@ -25,12 +25,13 @@ import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.DLTaggedObject
 import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.Arrays.constantTimeAreEqual
 import java.security.GeneralSecurityException
-import java.security.KeyFactory
 import java.security.cert.TrustAnchor
+import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
-import java.security.spec.X509EncodedKeySpec
 import java.time.Clock
 import java.util.Date
 
@@ -90,13 +91,13 @@ interface AttestationValidator {
      *
      * @throws AttestationException If any attestation validation error occurs, an [AttestationException] is thrown.
      *
-     * @return An [AppleAppAttestValidationResponse] object for the given [attestationObject].
+     * @return A [ValidatedAttestation] object for the given [attestationObject].
      */
     fun validate(
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
-    ): AppleAppAttestValidationResponse
+    ): ValidatedAttestation
 
     /**
      * Validate an attestation object. Suspending version of [validate].
@@ -107,7 +108,7 @@ interface AttestationValidator {
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
-    ): AppleAppAttestValidationResponse
+    ): ValidatedAttestation
 }
 
 /**
@@ -131,25 +132,25 @@ internal class AttestationValidatorImpl(
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
-    ): AppleAppAttestValidationResponse = coroutineScope {
+    ): ValidatedAttestation = coroutineScope {
         val attestation = parseAttestationObject(attestationObject)
         val keyId = keyIdBase64.fromBase64()
 
         launch { verifyAttestationFormat(attestation) }
         launch { verifyCertificateChain(attestation) }
         launch { verifyNonce(attestation, serverChallenge) }
-        val publicKey = async { verifyPublicKey(attestation, keyId) }
+        val credCert = async { verifyAttestationCertificate(attestation, keyId) }
         launch { verifyAuthenticatorData(attestation, keyId) }
         val receipt = async { validateAttestationReceiptAsync(attestation) }
 
-        AppleAppAttestValidationResponse(publicKey.await(), receipt.await())
+        ValidatedAttestation(credCert.await(), receipt.await())
     }
 
     override fun validate(
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
-    ): AppleAppAttestValidationResponse = runBlocking {
+    ): ValidatedAttestation = runBlocking {
         validateAsync(attestationObject, keyIdBase64, serverChallenge)
     }
 
@@ -224,19 +225,19 @@ internal class AttestationValidatorImpl(
         }
     }
 
-    private fun verifyPublicKey(attestationObject: AttestationObject, keyId: ByteArray): ECPublicKey {
+    private fun verifyAttestationCertificate(attestationObject: AttestationObject, keyId: ByteArray): X509Certificate {
         // 5. Create the SHA256 hash of the public key in credCert, ...
-        val credCert = X509CertificateHolder(attestationObject.attStmt.x5c.first())
-        val actualKeyId = credCert.createAppleKeyId()
+        val credCertHolder = X509CertificateHolder(attestationObject.attStmt.x5c.first())
+        val actualKeyId = credCertHolder.createAppleKeyId()
 
         //    ... and verify that it matches the key identifier from your app.
         if (!actualKeyId.contentEquals(keyId)) {
             throw AttestationException.InvalidPublicKey(keyId)
         }
 
-        return KeyFactory
-            .getInstance("EC")
-            .generatePublic(X509EncodedKeySpec(credCert.subjectPublicKeyInfo.encoded)) as ECPublicKey
+        return JcaX509CertificateConverter()
+            .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+            .getCertificate(credCertHolder)
     }
 
     @Suppress("ThrowsCount")

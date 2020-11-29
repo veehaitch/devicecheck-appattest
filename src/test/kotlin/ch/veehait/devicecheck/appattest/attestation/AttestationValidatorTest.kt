@@ -73,7 +73,7 @@ class AttestationValidatorTest : FreeSpec() {
                             serverChallenge = sample.clientData
                         )
                     }
-                    response.publicKey shouldBe sample.publicKey
+                    response.certificate.publicKey shouldBe sample.publicKey
                 }
             }
         }

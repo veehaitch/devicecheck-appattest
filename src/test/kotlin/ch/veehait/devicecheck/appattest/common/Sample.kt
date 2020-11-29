@@ -23,6 +23,7 @@ import com.fasterxml.jackson.module.kotlin.readValues
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openssl.PEMParser
 import java.security.KeyFactory
 import java.security.interfaces.ECPublicKey
@@ -106,7 +107,7 @@ class ECPublicKeyDeserializer : JsonDeserializer<ECPublicKey>() {
         val input = p!!.text.toByteArray().inputStream()
         val pemParser = PEMParser(input.reader())
         val keyInfo = SubjectPublicKeyInfo.getInstance(pemParser.readObject())
-        val factory = KeyFactory.getInstance("EC")
+        val factory = KeyFactory.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
         return factory.generatePublic(X509EncodedKeySpec(keyInfo.encoded)) as ECPublicKey
     }
 }
