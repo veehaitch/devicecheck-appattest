@@ -91,6 +91,15 @@ interface ReceiptValidator {
     ): Receipt
 }
 
+/**
+ * Implementation of [ReceiptValidator].
+ *
+ * Please note that this implementation only validates the receipt to the extent Apple describes. That means, the
+ * validation procedure does not reject receipts which are not valid yet, i.e., have a [Receipt.Payload.notBefore] date
+ * in the future (relative to [clock]), or have expired, i.e., have a [Receipt.Payload.expirationTime] which dates back
+ * (again, relative to [clock]). This behavior is acceptable as both properties rather control the processing on Apple's
+ * servers.
+ */
 internal class ReceiptValidatorImpl(
     override val app: App,
     override val trustAnchor: TrustAnchor,

@@ -10,6 +10,7 @@ import ch.veehait.devicecheck.appattest.common.EqualsVerifierPrefabValues
 import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -18,10 +19,14 @@ import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.throwable.shouldHaveMessage
+import io.kotest.property.Exhaustive
+import io.kotest.property.checkAll
+import io.kotest.property.exhaustive.longs
 import nl.jqno.equalsverifier.EqualsVerifier
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.http.HttpHeaders
 import java.time.Clock
 import java.time.Duration
@@ -30,6 +35,13 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class ReceiptExchangeTest : FreeSpec() {
+
+    private val nullAppleJwsGenerator = object : AppleJwsGenerator {
+        override val teamIdentifier = ""
+        override val keyIdentifier = ""
+        override val privateKey = CertUtils.generateP256KeyPair().private
+        override fun issueToken() = ""
+    }
 
     init {
         "AppleReceiptHttpClientAdapter.Response: equals/hashCode" {
@@ -175,17 +187,13 @@ class ReceiptExchangeTest : FreeSpec() {
 
             // Actual test
             val receiptExchange = appleAppAttest.createReceiptExchange(
-                appleJwsGenerator = AppleJwsGeneratorImpl(
-                    teamIdentifier = responseReceipt.teamIdentifier,
-                    keyIdentifier = "WURZELPFRO",
-                    privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
-                    clock = serverResponseClock,
-                ),
+                appleJwsGenerator = nullAppleJwsGenerator,
                 receiptValidator = appleAppAttest.createReceiptValidator(
                     clock = serverResponseClock,
                 ),
                 appleDeviceCheckUrl = mockWebServerUri,
                 appleReceiptExchangeHttpClientAdapter = SimpleAppleReceiptExchangeHttpClientAdapter(),
+                sanityChecks = false,
             )
 
             val receipt = receiptExchange.trade(
@@ -210,16 +218,12 @@ class ReceiptExchangeTest : FreeSpec() {
             }
 
             val receiptExchange = appleAppAttest.createReceiptExchange(
-                appleJwsGenerator = AppleJwsGeneratorImpl(
-                    teamIdentifier = "WURZELPFRO",
-                    keyIdentifier = "WURZELPFRO",
-                    privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
-                    clock = sample.timestamp.fixedUtcClock(),
-                ),
+                appleJwsGenerator = nullAppleJwsGenerator,
                 receiptValidator = appleAppAttest.createReceiptValidator(
                     clock = sample.timestamp.fixedUtcClock(),
                 ),
                 appleDeviceCheckUrl = mockWebServer.url("/v1/attestationData").toUri(),
+                sanityChecks = false,
             )
 
             val exception = shouldThrow<ReceiptExchangeException.HttpError> {
@@ -234,6 +238,108 @@ class ReceiptExchangeTest : FreeSpec() {
                 "Caught an error in Apple's response: Response(statusCode=403, " +
                     "headers=java.net.http.HttpHeaders@bc7b26f5 { {content-length=[0]} }, body=[])"
             )
+        }
+
+        "Throws ReceiptExpired for a receipt which is too old" - {
+            val sample = ReceiptSample.all.random()
+            val appleAppAttest = sample.defaultAppleAppAttest()
+            val receipt = appleAppAttest.createReceiptValidator(
+                clock = sample.timestamp.fixedUtcClock(),
+            ).validateReceipt(
+                receiptP7 = sample.receipt,
+                publicKey = sample.publicKey,
+            )
+
+            checkAll(Exhaustive.longs(-1L..1L)) { nanosOffset ->
+                val receiptExchange = appleAppAttest.createReceiptExchange(
+                    appleJwsGenerator = nullAppleJwsGenerator,
+                    receiptValidator = appleAppAttest.createReceiptValidator(
+                        clock = receipt.payload.expirationTime.value.plusNanos(nanosOffset).fixedUtcClock(),
+                    ),
+                    appleReceiptExchangeHttpClientAdapter = object : AppleReceiptExchangeHttpClientAdapter {
+                        override fun post(uri: URI, authorizationHeader: Map<String, String>, body: ByteArray): AppleReceiptExchangeHttpClientAdapter.Response {
+                            throw IllegalAccessError("wurzelpfropf")
+                        }
+                    },
+                    sanityChecks = true,
+                )
+
+                if (nanosOffset < 0L) {
+                    "Accepts offset of ${nanosOffset}ns to expiry date" {
+                        val exception = shouldThrow<IllegalAccessError> {
+                            receiptExchange.trade(
+                                receiptP7 = sample.receipt,
+                                attestationPublicKey = sample.publicKey,
+                            )
+                        }
+                        exception.shouldHaveMessage("wurzelpfropf")
+                    }
+                } else {
+                    "Rejects offset of ${nanosOffset}ns to expiry date" {
+                        shouldThrow<ReceiptExchangeException.ReceiptExpired> {
+                            receiptExchange.trade(
+                                receiptP7 = sample.receipt,
+                                attestationPublicKey = sample.publicKey,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        "Returns same receipt for too early call" - {
+            ReceiptSample.all.forEach { sample ->
+                val appleAppAttest = sample.defaultAppleAppAttest()
+                val receipt = appleAppAttest.createReceiptValidator(
+                    clock = sample.timestamp.fixedUtcClock(),
+                ).validateReceipt(
+                    receiptP7 = sample.receipt,
+                    publicKey = sample.publicKey,
+                )
+                val receiptType = receipt.payload.type.value
+
+                "$receiptType/${sample.id}" - {
+                    checkAll(Exhaustive.longs(-1L..1L)) { nanosOffset ->
+                        val receiptExchange = appleAppAttest.createReceiptExchange(
+                            appleJwsGenerator = nullAppleJwsGenerator,
+                            receiptValidator = appleAppAttest.createReceiptValidator(
+                                clock = when (receiptType) {
+                                    Receipt.Type.RECEIPT -> receipt.payload.notBefore!!.value.plusNanos(nanosOffset).fixedUtcClock()
+                                    Receipt.Type.ATTEST -> receipt.payload.creationTime.value.fixedUtcClock()
+                                }
+                            ),
+                            appleReceiptExchangeHttpClientAdapter = object : AppleReceiptExchangeHttpClientAdapter {
+                                override fun post(uri: URI, authorizationHeader: Map<String, String>, body: ByteArray): AppleReceiptExchangeHttpClientAdapter.Response {
+                                    throw IllegalAccessError("wurzelpfropf")
+                                }
+                            },
+                            sanityChecks = true,
+                        )
+
+                        if (receiptType == Receipt.Type.RECEIPT && nanosOffset < 0L) {
+                            "validty offset ${nanosOffset}ns: No remote call" {
+                                val receiptNew = shouldNotThrowAny {
+                                    receiptExchange.trade(
+                                        receiptP7 = sample.receipt,
+                                        attestationPublicKey = sample.publicKey,
+                                    )
+                                }
+                                receiptNew.p7 shouldBe sample.receipt
+                            }
+                        } else {
+                            "validty offset ${nanosOffset}ns: Remote call" {
+                                val exception = shouldThrow<IllegalAccessError> {
+                                    receiptExchange.trade(
+                                        receiptP7 = sample.receipt,
+                                        attestationPublicKey = sample.publicKey,
+                                    )
+                                }
+                                exception.shouldHaveMessage("wurzelpfropf")
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         val appleDeviceCheckKid = "94M3Z58NQ7"

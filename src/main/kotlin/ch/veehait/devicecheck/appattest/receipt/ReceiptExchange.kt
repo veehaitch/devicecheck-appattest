@@ -19,12 +19,15 @@ import java.time.Instant
  * @property appleDeviceCheckUrl The endpoint to use for trading a receipt.
  * @property appleReceiptExchangeHttpClientAdapter An HTTP client adapter to execute the call to [appleDeviceCheckUrl]
  *   using [appleJwsGenerator] for authentication.
+ * @property sanityChecks Perform sanity checks on the passed receipt for calls to [trade]/[tradeAsync] to anticipate
+ *   Apple's response.
  */
 interface ReceiptExchange {
     val appleJwsGenerator: AppleJwsGenerator
     val receiptValidator: ReceiptValidator
     val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter
     val appleDeviceCheckUrl: URI
+    val sanityChecks: Boolean
 
     companion object {
         /** The Apple App Attest receipt endpoint for production use */
@@ -43,17 +46,36 @@ interface ReceiptExchange {
      *
      * @see trade
      */
-    suspend fun tradeAsync(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = coroutineScope {
+    suspend fun tradeAsync(
+        receiptP7: ByteArray,
+        attestationPublicKey: ECPublicKey,
+        sanityChecks: Boolean = this.sanityChecks,
+    ): Receipt = coroutineScope {
         // Validate the receipt before sending it to Apple. We cannot validate the creation time as we do not know when
         // it should have been issued at latest. Therefore, we use an epoch instant which de facto skips this check. As
         // we also validate the new receipt on return, this should be acceptable.
-        val receipt = async { receiptValidator.validateReceiptAsync(receiptP7, attestationPublicKey, Instant.EPOCH) }
+        val receipt = receiptValidator.validateReceiptAsync(receiptP7, attestationPublicKey, Instant.EPOCH)
+
+        if (sanityChecks) {
+            val now = receiptValidator.clock.instant()
+            // If the passed receipt's "not before" date has not yet passed, Apple would respond with the same receipt.
+            if (receipt.payload.notBefore != null && now < receipt.payload.notBefore.value) {
+                return@coroutineScope receipt
+            }
+
+            // If the passed receipt's "not after" date has already passed, Apple would not respond with a new receipt.
+            val expirationDate = receipt.payload.expirationTime.value
+            if (now >= expirationDate) {
+                throw ReceiptExchangeException.ReceiptExpired(expirationDate)
+            }
+        }
+
         val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
 
         val response = appleReceiptExchangeHttpClientAdapter.post(
             appleDeviceCheckUrl,
             authorizationHeader.await(),
-            receipt.await().p7.toBase64().toByteArray(),
+            receipt.p7.toBase64().toByteArray(),
         )
 
         when (response.statusCode) {
@@ -62,7 +84,7 @@ interface ReceiptExchange {
                 publicKey = attestationPublicKey
             )
             // Apple docs: "You made the request before the previous receipt’s “Not Before” date."
-            HttpURLConnection.HTTP_NOT_MODIFIED -> receipt.await()
+            HttpURLConnection.HTTP_NOT_MODIFIED -> receipt
             else -> {
                 handleErrorResponse(response)
                 throw ReceiptExchangeException.HttpError("Caught an error in Apple's response: $response")
@@ -77,10 +99,15 @@ interface ReceiptExchange {
      *
      * @param receiptP7 A PKCS#7 receipt obtained in a previous remote call to Apple or from an attestation statement
      * @param attestationPublicKey The public key of the initial attestation statement
+     * @param sanityChecks Allows overriding the value of [ReceiptExchange.sanityChecks] for this call.
      * @return A new receipt superseding the old one. The returned receipt may be equal to the parsed [receiptP7] if
      *   [Receipt.Payload.notBefore] has not yet passed.
      */
-    fun trade(receiptP7: ByteArray, attestationPublicKey: ECPublicKey): Receipt = runBlocking {
+    fun trade(
+        receiptP7: ByteArray,
+        attestationPublicKey: ECPublicKey,
+        sanityChecks: Boolean = this.sanityChecks,
+    ): Receipt = runBlocking {
         tradeAsync(receiptP7, attestationPublicKey)
     }
 
@@ -97,4 +124,5 @@ internal class ReceiptExchangeImpl(
     override val receiptValidator: ReceiptValidator,
     override val appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter,
     override val appleDeviceCheckUrl: URI,
+    override val sanityChecks: Boolean,
 ) : ReceiptExchange

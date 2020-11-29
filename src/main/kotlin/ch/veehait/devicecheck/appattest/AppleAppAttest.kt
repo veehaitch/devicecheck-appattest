@@ -23,7 +23,7 @@ import java.time.Duration
 
 /**
  * Factory class to create instances to validate attestations ([AttestationValidator]), assertions
- * ([AssertionValidator]), receipt ([ReceiptValidator]) and to request a new receipt ([ReceiptExchange]).
+ * ([AssertionValidator]), receipts ([ReceiptValidator]) and to request a new receipt ([ReceiptExchange]).
  *
  * @property app The connecting app.
  * @property appleAppAttestEnvironment The Apple App Attest environment; either "appattestdevelop" or "appattest".
@@ -44,7 +44,7 @@ class AppleAppAttest(
     /**
      * Create an instance of an [AttestationValidator].
      *
-     * @property trustAnchor The root of the App Attest certificate chain.
+     * @property trustAnchor The root certificate which serves as trust anchor for the attestation certificate chain.
      * @property clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
      * @property receiptValidator A [ReceiptValidator] to validate the receipt contained in the attestation statement.
      * @see AttestationValidator
@@ -78,7 +78,7 @@ class AppleAppAttest(
     /**
      * Create an instance of a [ReceiptValidator].
      *
-     * @property trustAnchor The root of the receipt certificate chain.
+     * @property trustAnchor The root certificate which serves as trust anchor for the receipt certificate chain.
      * @property clock A clock instance. Defaults to the system clock. Should be only relevant for testing.
      * @property maxAge The maximum validity period of a receipt. Defaults to
      *   [ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE] which reflects the value Apple recommends.
@@ -104,7 +104,10 @@ class AppleAppAttest(
      * @property appleReceiptExchangeHttpClientAdapter An HTTP client adapter to execute the call to
      *   [appleDeviceCheckUrl] using [appleJwsGenerator] for authentication.
      * @property appleDeviceCheckUrl The endpoint to use for trading a receipt. Defaults to the server url given in
-     *   Apple's documentation taking [appleAppAttestEnvironment] into consideration.
+     *   Apple's documentation while taking [appleAppAttestEnvironment] into consideration.
+     * @property sanityChecks Perform sanity checks on the passed receipt for calls to [ReceiptExchange.trade] and
+     *   [ReceiptExchange.tradeAsync] to anticipate Apple's response. Defaults to true to prevent remote calls when
+     *   possible.
      * @see ReceiptExchange
      */
     fun createReceiptExchange(
@@ -113,10 +116,12 @@ class AppleAppAttest(
         appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter =
             SimpleAppleReceiptExchangeHttpClientAdapter(),
         appleDeviceCheckUrl: URI = defaultAppleDeviceCheckUrl,
+        sanityChecks: Boolean = true,
     ): ReceiptExchange = ReceiptExchangeImpl(
         appleJwsGenerator = appleJwsGenerator,
         receiptValidator = receiptValidator,
         appleDeviceCheckUrl = appleDeviceCheckUrl,
         appleReceiptExchangeHttpClientAdapter = appleReceiptExchangeHttpClientAdapter,
+        sanityChecks = sanityChecks,
     )
 }
