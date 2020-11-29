@@ -99,6 +99,8 @@ interface ReceiptValidator {
  * in the future (relative to [clock]), or have expired, i.e., have a [Receipt.Payload.expirationTime] which dates back
  * (again, relative to [clock]). This behavior is acceptable as both properties rather control the processing on Apple's
  * servers.
+ *
+ * @throws ReceiptException
  */
 internal class ReceiptValidatorImpl(
     override val app: App,

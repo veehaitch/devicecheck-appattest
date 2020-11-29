@@ -11,12 +11,23 @@ import java.io.ByteArrayInputStream
 import java.util.UUID
 import kotlin.experimental.and
 
-typealias AuthenticatorDataExtensions = LinkedHashMap<Any, Any>
+internal typealias AuthenticatorDataExtensions = LinkedHashMap<Any, Any>
+internal typealias CredentialPublicKey = LinkedHashMap<Any, Any>
 
+/**
+ * Attested credential data is a variable-length byte array added to the authenticator data when generating an
+ * attestation object for a given credential.
+ *
+ * @param aaguid The AAGUID of the authenticator.
+ * @param credentialId A probabilistically-unique byte sequence identifying a public key credential source and its
+ *   authentication assertions.
+ * @param credentialPublicKey The credential public key encoded in COSE_Key format.
+ * @see [Web Authentication: Attested Credential Data](https://www.w3.org/TR/webauthn/#attested-credential-data)
+ */
 data class AttestedCredentialData(
     val aaguid: UUID,
     val credentialId: ByteArray,
-    val credentialPublicKey: LinkedHashMap<Any, Any>,
+    val credentialPublicKey: CredentialPublicKey,
 ) {
     companion object {
         @Suppress("MagicNumber")
@@ -68,19 +79,29 @@ data class AttestedCredentialData(
 
 @Suppress("MagicNumber")
 enum class AuthenticatorDataFlag(val bitmask: Byte) {
+    /** Bit 0: User Present (UP) result */
     UP(0x01),
+
+    /** Bit 2: User Verified (UV) result */
     UV(0x04),
+
+    /** Bit 6: Attested credential data included (AT) */
     AT(0x40),
+
+    /** Bit 7: Extension data included (ED) */
     ED(-0x80);
 }
 
 /**
+ * The authenticator data structure encodes contextual bindings made by the authenticator.
+ *
  * @property rpIdHash SHA-256 hash of the RP ID the credential is scoped to.
  * @property flags A list of [AuthenticatorDataFlag]s.
  * @property signCount The signature counter; is incremented for each generated assertion by some positive value.
  * @property attestedCredentialData A variable-length byte array added to the authenticator data when generating an
  *   attestation object.
  * @property extensions WebAuthn Extensions.
+ * @see [Web Authentication: Authenticator Data](https://www.w3.org/TR/webauthn/#sec-authenticator-data)
  */
 data class AuthenticatorData(
     val rpIdHash: ByteArray,

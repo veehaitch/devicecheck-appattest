@@ -43,8 +43,6 @@ interface AssertionValidator {
      * @param challenge The challenge the client included in [clientData] and which is validated
      *   using [assertionChallengeValidator].
      * @return A parsed and validated [Assertion].
-     *
-     * @throws AssertionException
      */
     fun validate(
         assertionObject: ByteArray,
@@ -68,6 +66,11 @@ interface AssertionValidator {
     ): Assertion
 }
 
+/**
+ * Implementation of [AssertionValidator].
+ *
+ * @throws AssertionException
+ */
 internal class AssertionValidatorImpl(
     override val app: App,
     override val assertionChallengeValidator: AssertionChallengeValidator,

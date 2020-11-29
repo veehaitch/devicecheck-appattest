@@ -110,6 +110,11 @@ interface AttestationValidator {
     ): AppleAppAttestValidationResponse
 }
 
+/**
+ * Implementation of [AttestationValidator].
+ *
+ * @throws AttestationException
+ */
 @Suppress("TooManyFunctions")
 internal class AttestationValidatorImpl(
     override val app: App,

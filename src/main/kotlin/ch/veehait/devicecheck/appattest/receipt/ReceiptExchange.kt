@@ -119,6 +119,11 @@ interface ReceiptExchange {
     fun handleErrorResponse(response: AppleReceiptExchangeHttpClientAdapter.Response) {}
 }
 
+/**
+ * Implementation of [ReceiptExchange].
+ *
+ * @throws ReceiptExchangeException
+ */
 internal class ReceiptExchangeImpl(
     override val appleJwsGenerator: AppleJwsGenerator,
     override val receiptValidator: ReceiptValidator,

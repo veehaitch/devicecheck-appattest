@@ -2,7 +2,7 @@ package ch.veehait.devicecheck.appattest.attestation
 
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
 
-sealed class AttestationException(message: String, cause: Throwable?) : RuntimeException(message, cause) {
+internal sealed class AttestationException(message: String, cause: Throwable?) : RuntimeException(message, cause) {
     class InvalidFormatException(message: String, cause: Throwable? = null) : AttestationException(message, cause)
     class InvalidCertificateChain(message: String, cause: Throwable? = null) : AttestationException(message, cause)
     class InvalidNonce(cause: Throwable? = null) : AttestationException("The attestation's nonce is invalid", cause)
