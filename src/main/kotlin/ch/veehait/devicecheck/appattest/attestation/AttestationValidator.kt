@@ -8,7 +8,6 @@ import ch.veehait.devicecheck.appattest.receipt.ReceiptException
 import ch.veehait.devicecheck.appattest.receipt.ReceiptValidator
 import ch.veehait.devicecheck.appattest.util.Extensions.createAppleKeyId
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
-import ch.veehait.devicecheck.appattest.util.Extensions.get
 import ch.veehait.devicecheck.appattest.util.Extensions.readObjectAs
 import ch.veehait.devicecheck.appattest.util.Extensions.sha256
 import ch.veehait.devicecheck.appattest.util.Extensions.verifyChain
@@ -51,10 +50,22 @@ interface AttestationValidator {
     val receiptValidator: ReceiptValidator
     val clock: Clock
 
-    companion object {
-        /** X.509 extension object identifier which contains the nonce the app includes in the attestation call */
-        const val APPLE_CRED_CERT_EXTENSION_OID = "1.2.840.113635.100.8.2"
+    /** Constants for Apple's X.509 extension object identifiers */
+    object AppleCertificateExtensions {
+        /** Identifier for the object which contains the nonce the app includes in the attestation call */
+        const val NONCE_OID = "1.2.840.113635.100.8.2"
 
+        /** The tag number of the nonce parent object */
+        const val NONCE_TAG_NO = 1
+
+        /** Identifier for the object which contains the iOS version the app being attested is running */
+        const val OS_VERSION_OID = "1.2.840.113635.100.8.7"
+
+        /** The tag number of the iOS version parent object */
+        const val OS_VERSION_TAG_NO = 1400
+    }
+
+    companion object {
         /** The root certificate authority of the attestation certificate */
         val APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR = TrustAnchor(
             Utils.readPemX509Certificate(
@@ -142,8 +153,13 @@ internal class AttestationValidatorImpl(
         val credCert = async { verifyAttestationCertificate(attestation, keyId) }
         launch { verifyAuthenticatorData(attestation, keyId) }
         val receipt = async { validateAttestationReceiptAsync(attestation) }
+        val iOSVersion = async { parseIOSVersion(credCert.await()) }
 
-        ValidatedAttestation(credCert.await(), receipt.await())
+        ValidatedAttestation(
+            certificate = credCert.await(),
+            receipt = receipt.await(),
+            iOSVersion = iOSVersion.await()
+        )
     }
 
     override fun validate(
@@ -182,24 +198,14 @@ internal class AttestationValidatorImpl(
         }
     }
 
-    /**
-     * Extracts the nonce from the given [credCertDer] by reading Apple's extension value.
-     *
-     * The extension value is ASN.1 encoded and follows the following format:
-     *
-     *      OCTET STRING (38 byte)
-     *          SEQUENCE (1 elem)
-     *              [1] (1 elem)
-     *                  OCTET STRING (32 byte)
-     */
     private fun extractNonce(credCertDer: ByteArray): ByteArray {
         val credCert = Utils.readDerX509Certificate(credCertDer)
-        val value = credCert.getExtensionValue(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID)
-        val envelope = ASN1InputStream(value).readObjectAs<DEROctetString>()
-        val sequence = ASN1InputStream(envelope.octetStream).readObjectAs<DLSequence>()
-        val sequenceFirstObject = sequence.get<DLTaggedObject>(0)
-        val leafOctetString = sequenceFirstObject.`object` as DEROctetString
-        return leafOctetString.octets
+        val octetString = getTaggedOctetString(
+            credCert = credCert,
+            oid = AttestationValidator.AppleCertificateExtensions.NONCE_OID,
+            tagNo = AttestationValidator.AppleCertificateExtensions.NONCE_TAG_NO,
+        )
+        return octetString.octets
     }
 
     private fun verifyNonce(attestationObject: AttestationObject, serverChallenge: ByteArray) {
@@ -286,4 +292,28 @@ internal class AttestationValidatorImpl(
             throw AttestationException.InvalidReceipt(ex)
         }
     }
+
+    /**
+     * Reads the octet string of an X.509 extension value in the following format:
+     *
+     *      OCTET STRING
+     *          SEQUENCE
+     *              [1] (TAGGED OBJECT)
+     *                  OCTET STRING
+     */
+    private fun getTaggedOctetString(credCert: X509Certificate, oid: String, tagNo: Int): DEROctetString {
+        val value = credCert.getExtensionValue(oid)
+        val envelope = ASN1InputStream(value).readObjectAs<DEROctetString>()
+        val sequence = ASN1InputStream(envelope.octetStream).readObjectAs<DLSequence>()
+        val taggedObject = sequence.first { (it is DLTaggedObject) && it.tagNo == tagNo } as DLTaggedObject
+        return taggedObject.`object` as DEROctetString
+    }
+
+    private fun parseIOSVersion(credCert: X509Certificate): String? = runCatching {
+        getTaggedOctetString(
+            credCert = credCert,
+            oid = AttestationValidator.AppleCertificateExtensions.OS_VERSION_OID,
+            tagNo = AttestationValidator.AppleCertificateExtensions.OS_VERSION_TAG_NO,
+        ).octets.let(::String)
+    }.getOrNull()
 }

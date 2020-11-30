@@ -19,6 +19,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveCauseOfType
 import io.kotest.matchers.throwable.shouldHaveMessage
@@ -74,6 +75,7 @@ class AttestationValidatorTest : FreeSpec() {
                         )
                     }
                     response.certificate.publicKey shouldBe sample.publicKey
+                    response.iOSVersion shouldBe sample.iOSVersion
                 }
             }
         }
@@ -112,7 +114,7 @@ class AttestationValidatorTest : FreeSpec() {
                                 DLTaggedObject(true, 1, DEROctetString(nonceFake))
                             ).encoded
                             builder.replaceExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
                                 fakeNonceEncoded
                             )
@@ -155,6 +157,92 @@ class AttestationValidatorTest : FreeSpec() {
                         keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
                         serverChallenge = sample.clientData,
                     )
+                }
+            }
+        }
+
+        "Accepts valid fake attestation samples with missing iOS version extension" - {
+            AttestationSample.all.forEach { sample ->
+                "${sample.id}" {
+
+                    val attestationValidatorOriginal = sample.defaultValidator()
+                    val attestationResponse = attestationValidatorOriginal.validate(
+                        attestationObject = sample.attestation,
+                        keyIdBase64 = sample.keyId.toBase64(),
+                        serverChallenge = sample.clientData
+                    )
+
+                    val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
+                    val authData: AuthenticatorData = AuthenticatorData.parse(
+                        attestationObject.authData,
+                        cborObjectMapper.readerForMapOf(Any::class.java)
+                    )
+
+                    val credCertKeyPair = CertUtils.generateP256KeyPair()
+
+                    val authDataFake = authData.copy(
+                        attestedCredentialData = authData.attestedCredentialData?.copy(
+                            credentialId = credCertKeyPair.public.createAppleKeyId()
+                        )
+                    ).encode()
+                    val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
+
+                    val attCertChain = CertUtils.createCustomAttestationCertificate(
+                        x5c = attestationObject.attStmt.x5c,
+                        credCertKeyPair = credCertKeyPair,
+                        mutatorCredCert = { builder ->
+                            val fakeNonceEncoded = DLSequence(
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                            ).encoded
+                            builder.replaceExtension(
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
+                                false,
+                                fakeNonceEncoded
+                            )
+                            // Validation should still succeed even if the iOS version cannot be parsed
+                            builder.removeExtension(
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.OS_VERSION_OID),
+                            )
+                        }
+                    )
+
+                    val resignedReceiptResponse = CertUtils.resignReceipt(
+                        receipt = attestationResponse.receipt,
+                        payloadMutator = {
+                            it.copy(
+                                attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
+                                    it.attestationCertificate.sequence.copy(
+                                        value = attCertChain.credCert.encoded
+                                    )
+                                )
+                            )
+                        },
+                    )
+
+                    val attestationObjectFake = attestationObject.copy(
+                        attStmt = attestationObject.attStmt.copy(
+                            x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
+                            receipt = resignedReceiptResponse.receipt.p7,
+                        ),
+                        authData = authDataFake,
+                    )
+
+                    val appleAppAttest = sample.defaultAppleAppAttest()
+                    val attestationValidator = appleAppAttest.createAttestationValidator(
+                        clock = sample.timestamp.fixedUtcClock(),
+                        receiptValidator = appleAppAttest.createReceiptValidator(
+                            clock = sample.timestamp.fixedUtcClock(),
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
+                        ),
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                    )
+
+                    val result = attestationValidator.validate(
+                        attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
+                        keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
+                        serverChallenge = sample.clientData,
+                    )
+                    result.iOSVersion.shouldBeNull()
                 }
             }
         }
@@ -298,7 +386,7 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             builder.removeExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                             )
                         }
                     )
@@ -380,7 +468,7 @@ class AttestationValidatorTest : FreeSpec() {
                                 DLTaggedObject(true, 1, DEROctetString(nonceFake))
                             ).encoded
                             builder.replaceExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
                                 fakeNonceEncoded
                             )
@@ -465,7 +553,7 @@ class AttestationValidatorTest : FreeSpec() {
                                 DLTaggedObject(true, 1, DEROctetString(nonceFake))
                             ).encoded
                             builder.replaceExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
                                 fakeNonceEncoded
                             )
@@ -549,7 +637,7 @@ class AttestationValidatorTest : FreeSpec() {
                                 DLTaggedObject(true, 1, DEROctetString(nonceFake))
                             ).encoded
                             builder.replaceExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
                                 fakeNonceEncoded
                             )
@@ -635,7 +723,7 @@ class AttestationValidatorTest : FreeSpec() {
                                 DLTaggedObject(true, 1, DEROctetString(nonceFake))
                             ).encoded
                             builder.replaceExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.APPLE_CRED_CERT_EXTENSION_OID),
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
                                 fakeNonceEncoded
                             )

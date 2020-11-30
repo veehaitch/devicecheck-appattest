@@ -6,6 +6,7 @@ bundleIdentifier: de.vincent-haupert.apple-appattest-poc
 clientDataBase64: d3VyemVscGZyb3Bm
 clientDataHashSha256Base64: i+ZcylFa0JfJU5Z9GNY12G3XihQu09B3UmvtEca+xns=
 environment: development
+iOSVersion: 14.2
 keyIdBase64: 2o0syRGn1HDKDv85d522XBC9nLqrHWHGnt/mJ5hWMQM=
 publicKey: |
   -----BEGIN PUBLIC KEY-----

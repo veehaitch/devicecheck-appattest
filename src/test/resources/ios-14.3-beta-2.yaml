@@ -5,6 +5,7 @@ clientDataBase64: d3VyemVscGZyb3Bm
 clientDataHashSha256Base64: i+ZcylFa0JfJU5Z9GNY12G3XihQu09B3UmvtEca+xns=
 environment: development
 id: 5a3b2868-80ef-79b3-4a20-dad85854a7cb
+iOSVersion: 14.3
 keyIdBase64: dIiQDBwg0ofvtSqBRH9XTRtm+D8YVZ1kPgBR9ahzxws=
 publicKey: |
   -----BEGIN PUBLIC KEY-----
