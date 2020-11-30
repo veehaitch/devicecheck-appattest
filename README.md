@@ -52,15 +52,15 @@ val appleAppAttest = AppleAppAttest(
 val attestationValidator = appleAppAttest.createAttestationValidator()
 
 // Validate a single attestation object. Throws an AttestationException if a validation error occurs.
-val result: AppleAppAttestValidationResponse = attestationValidator.validate(
+val result: ValidatedAttestation = attestationValidator.validate(
     attestationObject = Base64.getDecoder().decode("o2NmbXRvYXBwbGUtYXBwYXR0ZXN0Z2F0dFN0bXSiY3g1Y4JZAvYwggLyM ..."),
     keyIdBase64 = "XGr5wqmUab/9M4b5vxa6KkPOigfeEWDaw7tuK02aJ6c=",
     serverChallenge = "wurzelpfropf".toByteArray()
 )
 
 // If the method call returns, the validation has passed and you can now trust the returned result which contains
-// references to the attested public key and the verified receipt. You use the public key for the verification
-// of assertions and the receipt for obtaining a fraud risk metric.
+// references to the attestation certificate and the verified receipt. You use the public key of the attestation
+// certificate for the verification of assertions and the receipt for obtaining a fraud risk metric.
 ```
 
 Also refer to [AttestationValidatorTest](src/test/kotlin/ch/veehait/devicecheck/appattest/attestation/AttestationValidatorTest.kt).
