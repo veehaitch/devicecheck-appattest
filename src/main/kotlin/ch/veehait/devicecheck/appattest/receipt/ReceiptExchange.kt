@@ -30,13 +30,15 @@ interface ReceiptExchange {
     val sanityChecks: Boolean
 
     companion object {
+        @JvmStatic
         /** The Apple App Attest receipt endpoint for production use */
-        val APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL: URI = URI.create(
+        val APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL: URI = URI.create(
             "https://data.appattest.apple.com/v1/attestationData"
         )
 
+        @JvmStatic
         /** The Apple App Attest receipt endpoint for development use */
-        val APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL: URI = URI.create(
+        val APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL: URI = URI.create(
             "https://data-development.appattest.apple.com/v1/attestationData"
         )
     }

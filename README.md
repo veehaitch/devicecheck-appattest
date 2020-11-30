@@ -1,9 +1,10 @@
 # Apple App Attest Validation
 
+![JVM version required](https://img.shields.io/badge/JVM-11-blueviolet)
 ![Build status](https://github.com/veehaitch/devicecheck-appattest/workflows/Build%2C%20test%20%26%20publish/badge.svg)
 ![Code coverage](https://codecov.io/gh/veehaitch/devicecheck-appattest/branch/main/graphs/badge.svg?branch=main)
 
-Proof of concept, server-side library for validating the authenticity of Apple App Attest artifacts, including 
+Server-side Kotlin/Java library for validating the authenticity of Apple App Attest artifacts, including 
 1. attestation statements,
 2. assertions, and
 3. receipts.
@@ -12,6 +13,8 @@ The implementation follows the steps outlined in the articles ["Validating Apps 
 and ["Assessing Fraud Risk"](https://developer.apple.com/documentation/devicecheck/assessing_fraud_risk) at Apple Developer. 
 
 ## Usage
+
+The project requires at least Java 11.
 
 ### Verify the Attestation
 

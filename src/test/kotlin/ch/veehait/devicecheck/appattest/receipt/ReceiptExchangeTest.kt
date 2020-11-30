@@ -57,9 +57,9 @@ class ReceiptExchangeTest : FreeSpec() {
         "Has correct constant for Apple's development server endpoint" {
             // Use the base URL of https://data-development.appattest.apple.com shown in the example above for testing.
             with(ReceiptExchange) {
-                APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL.toString() shouldBe
+                APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL.toString() shouldBe
                     "https://data-development.appattest.apple.com/v1/attestationData"
-                APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL shouldNotBe APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL
+                APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL shouldNotBe APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL
             }
         }
 
@@ -67,9 +67,9 @@ class ReceiptExchangeTest : FreeSpec() {
             // To work with apps that you’ve distributed through the App Store, TestFlight, or with an Enterprise
             // Developer certificate, use a base URL of https://data.appattest.apple.com instead.
             with(ReceiptExchange) {
-                APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL.toString() shouldBe
+                APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL.toString() shouldBe
                     "https://data.appattest.apple.com/v1/attestationData"
-                APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL shouldNotBe APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL
+                APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL shouldNotBe APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL
             }
         }
 
@@ -114,8 +114,8 @@ class ReceiptExchangeTest : FreeSpec() {
             }
 
             val appleServerUrl = when (attestationReceipt.environment) {
-                AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL
-                AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL
+                AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL
+                AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL
             }
             val mockWebServerUri = mockWebServer.url(appleServerUrl.path).toUri()
 
@@ -180,8 +180,8 @@ class ReceiptExchangeTest : FreeSpec() {
             }
 
             val appleServerUrl = when (responseReceipt.environment) {
-                AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL
-                AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL
+                AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL
+                AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL
             }
             val mockWebServerUri = mockWebServer.url(appleServerUrl.path).toUri()
 

@@ -24,7 +24,7 @@ java {
 
 allprojects {
     group = "ch.veehaitch.devicecheck"
-    version = "0.7-SNAPSHOT"
+    version = "0.8-SNAPSHOT"
 
     publishing {
         publications {
@@ -101,7 +101,10 @@ dependencies {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
+
+        // For creation of default methods in interfaces
+        freeCompilerArgs = listOf("-Xjvm-default=all")
     }
 }
 

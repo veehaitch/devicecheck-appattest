@@ -33,9 +33,11 @@ import java.util.Date
 interface ReceiptValidator {
     companion object {
         /** The maximum validity period of a receipt after issuing */
+        @JvmField
         val APPLE_RECOMMENDED_MAX_AGE: Duration = Duration.ofMinutes(5)
 
         /** The root certificate authority of the signer of the receipt */
+        @JvmField
         val APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR = TrustAnchor(
             Utils.readPemX509Certificate(
                 """

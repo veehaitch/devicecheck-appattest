@@ -56,7 +56,6 @@ class AssertionValidatorTest : FreeSpec() {
                 val decodedAssertion = objectReader.readValue<LinkedHashMap<Any, Any>>(sample.assertion)
                 "${sample.id}" {
                     val appleAppAttest = sample.defaultAppleAppAttest()
-
                     val assertionChallengeValidator = object : AssertionChallengeValidator {
                         override fun validate(
                             assertionObj: Assertion,

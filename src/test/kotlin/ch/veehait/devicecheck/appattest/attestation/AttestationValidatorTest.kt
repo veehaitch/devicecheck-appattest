@@ -164,7 +164,6 @@ class AttestationValidatorTest : FreeSpec() {
         "Accepts valid fake attestation samples with missing iOS version extension" - {
             AttestationSample.all.forEach { sample ->
                 "${sample.id}" {
-
                     val attestationValidatorOriginal = sample.defaultValidator()
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,

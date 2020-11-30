@@ -30,6 +30,7 @@ data class AttestedCredentialData(
     val credentialPublicKey: CredentialPublicKey,
 ) {
     companion object {
+        @JvmStatic
         @Suppress("MagicNumber")
         fun parse(
             stream: ByteArrayInputStream,
@@ -117,6 +118,7 @@ data class AuthenticatorData(
             .disable(JsonParser.Feature.AUTO_CLOSE_SOURCE)
             .readerForMapOf(Any::class.java)
 
+        @JvmStatic
         @Suppress("MagicNumber")
         fun parse(
             data: ByteArray,

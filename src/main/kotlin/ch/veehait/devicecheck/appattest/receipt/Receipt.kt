@@ -124,6 +124,7 @@ data class Receipt(
         val expirationTime: ReceiptAttribute.Instant,
     ) {
         companion object {
+            @JvmStatic
             fun parse(signedData: CMSSignedData): Payload {
                 val set = ASN1InputStream(signedData.signedContent.content as ByteArray).readObject() as DLSet
                 val objs = set.objects

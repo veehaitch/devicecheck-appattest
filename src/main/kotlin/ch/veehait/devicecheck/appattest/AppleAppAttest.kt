@@ -37,8 +37,8 @@ class AppleAppAttest(
     }
 
     private val defaultAppleDeviceCheckUrl: URI = when (appleAppAttestEnvironment) {
-        AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_DEVELOPMENT_BASE_URL
-        AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_PRODUCTION_BASE_URL
+        AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL
+        AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL
     }
 
     /**
@@ -49,6 +49,7 @@ class AppleAppAttest(
      * @property receiptValidator A [ReceiptValidator] to validate the receipt contained in the attestation statement.
      * @see AttestationValidator
      */
+    @JvmOverloads
     fun createAttestationValidator(
         trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
         clock: Clock = Clock.systemUTC(),
@@ -84,6 +85,7 @@ class AppleAppAttest(
      *   [ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE] which reflects the value Apple recommends.
      * @see ReceiptValidator
      */
+    @JvmOverloads
     fun createReceiptValidator(
         trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
         clock: Clock = Clock.systemUTC(),
@@ -110,6 +112,7 @@ class AppleAppAttest(
      *   possible.
      * @see ReceiptExchange
      */
+    @JvmOverloads
     fun createReceiptExchange(
         appleJwsGenerator: AppleJwsGenerator,
         receiptValidator: ReceiptValidator = createReceiptValidator(),

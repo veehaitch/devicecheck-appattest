@@ -67,6 +67,7 @@ interface AttestationValidator {
 
     companion object {
         /** The root certificate authority of the attestation certificate */
+        @JvmField
         val APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR = TrustAnchor(
             Utils.readPemX509Certificate(
                 """
