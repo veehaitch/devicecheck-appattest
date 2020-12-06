@@ -7,7 +7,7 @@ plugins {
     id("org.jmailen.kotlinter") version "3.2.0"
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.36.0"
-    id("org.jetbrains.dokka") version "1.4.10.2"
+    id("org.jetbrains.dokka") version "1.4.20"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -93,7 +93,7 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 
     // JWS issuing
-    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.3")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.4")
 
     // Google Guava: Bytes.indexOf
     testImplementation("com.google.guava:guava:30.0-jre")
