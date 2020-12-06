@@ -5,9 +5,11 @@ import java.net.http.HttpClient
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import javax.annotation.processing.Generated
 
 interface AppleReceiptExchangeHttpClientAdapter {
     data class Response(val statusCode: Int, val headers: HttpHeaders, val body: ByteArray) {
+        @Generated
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -21,6 +23,7 @@ interface AppleReceiptExchangeHttpClientAdapter {
             return true
         }
 
+        @Generated
         override fun hashCode(): Int {
             var result = body.contentHashCode()
             result = 31 * result + statusCode

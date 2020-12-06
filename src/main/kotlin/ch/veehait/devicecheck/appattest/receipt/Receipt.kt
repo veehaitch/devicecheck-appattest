@@ -9,6 +9,7 @@ import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DLSet
 import org.bouncycastle.cms.CMSSignedData
 import java.math.BigInteger
+import javax.annotation.processing.Generated
 
 data class Receipt(
     val payload: Payload,
@@ -34,6 +35,7 @@ data class Receipt(
         val version: BigInteger,
         val value: ByteArray,
     ) {
+        @Generated
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -47,6 +49,7 @@ data class Receipt(
             return true
         }
 
+        @Generated
         override fun hashCode(): Int {
             var result = type.hashCode()
             result = 31 * result + version.hashCode()
@@ -174,6 +177,7 @@ data class Receipt(
         }
     }
 
+    @Generated
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -186,6 +190,7 @@ data class Receipt(
         return true
     }
 
+    @Generated
     override fun hashCode(): Int {
         var result = payload.hashCode()
         result = 31 * result + p7.contentHashCode()

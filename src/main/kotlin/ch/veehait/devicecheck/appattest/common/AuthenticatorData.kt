@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import java.io.ByteArrayInputStream
 import java.util.UUID
+import javax.annotation.processing.Generated
 import kotlin.experimental.and
 
 internal typealias AuthenticatorDataExtensions = LinkedHashMap<Any, Any>
@@ -57,6 +58,7 @@ data class AttestedCredentialData(
         }
     }
 
+    @Generated
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -70,6 +72,7 @@ data class AttestedCredentialData(
         return true
     }
 
+    @Generated
     override fun hashCode(): Int {
         var result = aaguid.hashCode()
         result = 31 * result + credentialId.contentHashCode()
@@ -149,6 +152,7 @@ data class AuthenticatorData(
         }
     }
 
+    @Generated
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -164,6 +168,7 @@ data class AuthenticatorData(
         return true
     }
 
+    @Generated
     override fun hashCode(): Int {
         var result = rpIdHash.contentHashCode()
         result = 31 * result + flags.hashCode()

@@ -1,11 +1,13 @@
 package ch.veehait.devicecheck.appattest.assertion
 
 import ch.veehait.devicecheck.appattest.common.AuthenticatorData
+import javax.annotation.processing.Generated
 
 data class Assertion(
     val signature: ByteArray,
     val authenticatorData: AuthenticatorData,
 ) {
+    @Generated
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -18,6 +20,7 @@ data class Assertion(
         return true
     }
 
+    @Generated
     override fun hashCode(): Int {
         var result = signature.contentHashCode()
         result = 31 * result + authenticatorData.hashCode()
@@ -29,6 +32,7 @@ internal data class AssertionEnvelope(
     val signature: ByteArray,
     val authenticatorData: ByteArray,
 ) {
+    @Generated
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -41,6 +45,7 @@ internal data class AssertionEnvelope(
         return true
     }
 
+    @Generated
     override fun hashCode(): Int {
         var result = signature.contentHashCode()
         result = 31 * result + authenticatorData.contentHashCode()
