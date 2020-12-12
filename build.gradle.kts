@@ -2,9 +2,9 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.20"
-    id("io.gitlab.arturbosch.detekt") version "1.14.2"
-    id("org.jmailen.kotlinter") version "3.2.0"
+    id("org.jetbrains.kotlin.jvm") version "1.4.21"
+    id("io.gitlab.arturbosch.detekt") version "1.15.0"
+    id("org.jmailen.kotlinter") version "3.3.0"
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.36.0"
     id("org.jetbrains.dokka") version "1.4.20"
@@ -81,7 +81,7 @@ dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
 
     // Kotest
-    val kotestVersion = "4.3.1"
+    val kotestVersion = "4.3.2"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
@@ -93,7 +93,7 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 
     // JWS issuing
-    testImplementation("com.nimbusds:nimbus-jose-jwt:9.1.4")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.2")
 
     // Google Guava: Bytes.indexOf
     testImplementation("com.google.guava:guava:30.0-jre")
