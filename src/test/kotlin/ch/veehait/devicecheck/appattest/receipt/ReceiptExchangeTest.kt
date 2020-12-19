@@ -347,7 +347,10 @@ class ReceiptExchangeTest : FreeSpec() {
 
         "receipt exchange works".config(enabled = appleDeviceCheckPrivateKeyPem != null) {
             // Test setup
-            val sample = ReceiptSample.all.maxByOrNull { it.timestamp }!!
+            val now = Instant.now()
+            val sample = ReceiptSample.all.filter {
+                (it.properties.notBefore ?: Instant.EPOCH) < now && it.properties.expirationTime > now
+            }.maxByOrNull { it.timestamp } ?: throw RuntimeException("No suitable sample to trade found")
             val appleAppAttest = sample.defaultAppleAppAttest()
 
             // Actual test
@@ -370,7 +373,9 @@ class ReceiptExchangeTest : FreeSpec() {
                     appId.value shouldBe appleAppAttest.app.appIdentifier
                     attestationCertificate.value.publicKey shouldBe sample.publicKey
                     attestationCertificate.value.publicKey.createAppleKeyId() shouldBe sample.keyId
-                    clientHash.value shouldBe sample.properties.clientHash
+                    if (sample.properties.type == Receipt.Type.RECEIPT) {
+                        clientHash.value shouldBe sample.properties.clientHash
+                    }
                     creationTime.value shouldBeGreaterThan Instant.now().minus(Duration.ofMinutes(5))
                     creationTime.value shouldBeLessThan Instant.now().plus(Duration.ofMinutes(5))
                     environment?.value shouldBe sample.properties.environment
