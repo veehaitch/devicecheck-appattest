@@ -2,9 +2,11 @@ package ch.veehait.devicecheck.appattest.receipt
 
 import ch.veehait.devicecheck.appattest.util.Extensions.fromBase64
 import ch.veehait.devicecheck.appattest.util.Extensions.toBase64
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URI
 import java.security.interfaces.ECPublicKey
@@ -74,11 +76,13 @@ interface ReceiptExchange {
 
         val authorizationHeader = async { mapOf("Authorization" to appleJwsGenerator.issueToken()) }
 
-        val response = appleReceiptExchangeHttpClientAdapter.post(
-            appleDeviceCheckUrl,
-            authorizationHeader.await(),
-            receipt.p7.toBase64().toByteArray(),
-        )
+        val response = withContext(Dispatchers.IO) {
+            appleReceiptExchangeHttpClientAdapter.post(
+                appleDeviceCheckUrl,
+                authorizationHeader.await(),
+                receipt.p7.toBase64().toByteArray(),
+            )
+        }
 
         when (response.statusCode) {
             HttpURLConnection.HTTP_OK -> receiptValidator.validateReceiptAsync(
