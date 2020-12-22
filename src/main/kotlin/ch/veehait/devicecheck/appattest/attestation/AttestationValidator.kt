@@ -109,7 +109,9 @@ interface AttestationValidator {
         attestationObject: ByteArray,
         keyIdBase64: String,
         serverChallenge: ByteArray,
-    ): ValidatedAttestation
+    ): ValidatedAttestation = runBlocking {
+        validateAsync(attestationObject, keyIdBase64, serverChallenge)
+    }
 
     /**
      * Validate an attestation object. Suspending version of [validate].
@@ -161,14 +163,6 @@ internal class AttestationValidatorImpl(
             receipt = receipt.await(),
             iOSVersion = iOSVersion.await()
         )
-    }
-
-    override fun validate(
-        attestationObject: ByteArray,
-        keyIdBase64: String,
-        serverChallenge: ByteArray,
-    ): ValidatedAttestation = runBlocking {
-        validateAsync(attestationObject, keyIdBase64, serverChallenge)
     }
 
     private fun parseAttestationObject(attestationObject: ByteArray): AttestationObject {

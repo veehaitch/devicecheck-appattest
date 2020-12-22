@@ -90,7 +90,9 @@ interface ReceiptValidator {
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
         notAfter: Instant = clock.instant().minus(maxAge),
-    ): Receipt
+    ): Receipt = runBlocking {
+        validateReceiptAsync(receiptP7, publicKey, notAfter)
+    }
 }
 
 /**
@@ -110,14 +112,6 @@ internal class ReceiptValidatorImpl(
     override val maxAge: Duration,
     override val clock: Clock,
 ) : ReceiptValidator {
-
-    override fun validateReceipt(
-        receiptP7: ByteArray,
-        publicKey: ECPublicKey,
-        notAfter: Instant,
-    ): Receipt = runBlocking {
-        validateReceiptAsync(receiptP7, publicKey, notAfter)
-    }
 
     override suspend fun validateReceiptAsync(
         receiptP7: ByteArray,

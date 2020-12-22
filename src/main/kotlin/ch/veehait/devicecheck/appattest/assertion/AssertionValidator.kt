@@ -50,7 +50,9 @@ interface AssertionValidator {
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
         challenge: ByteArray,
-    ): Assertion
+    ): Assertion = runBlocking {
+        validateAsync(assertionObject, clientData, attestationPublicKey, lastCounter, challenge)
+    }
 
     /**
      * Validate an assertion object. Suspending version of [validate].
@@ -183,15 +185,5 @@ internal class AssertionValidatorImpl(
         launch { verifyChallenge(challenge, assertion, clientData, attestationPublicKey) }
 
         assertion
-    }
-
-    override fun validate(
-        assertionObject: ByteArray,
-        clientData: ByteArray,
-        attestationPublicKey: ECPublicKey,
-        lastCounter: Long,
-        challenge: ByteArray,
-    ): Assertion = runBlocking {
-        validateAsync(assertionObject, clientData, attestationPublicKey, lastCounter, challenge)
     }
 }
