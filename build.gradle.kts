@@ -69,7 +69,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
     // CBOR
-    val jacksonVersion = "2.12.0"
+    val jacksonVersion = "2.12.1"
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion")
     testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
@@ -87,16 +87,16 @@ dependencies {
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
 
     // Testing of equals / hashcode
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.5")
+    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.5.1")
 
     // MockWebServer
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 
     // JWS issuing
-    testImplementation("com.nimbusds:nimbus-jose-jwt:9.2")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.4.1")
 
     // Google Guava: Bytes.indexOf
-    testImplementation("com.google.guava:guava:30.0-jre")
+    testImplementation("com.google.guava:guava:30.1-jre")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
