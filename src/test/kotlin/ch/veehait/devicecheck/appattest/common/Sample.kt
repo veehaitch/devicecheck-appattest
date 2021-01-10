@@ -96,7 +96,13 @@ open class Sample(
         }
 
         val all: List<Sample>
-            get() = listOf("/ios-14.2.yaml", "/ios-14.3-beta-2.yaml", "/ios-14.3-beta-3.yaml", "/ios-14.3.yaml")
+            get() = listOf(
+                "/ios-14.2.yaml",
+                "/ios-14.3-beta-2.yaml",
+                "/ios-14.3-beta-3.yaml",
+                "/ios-14.3.yaml",
+                "/ios-14.4-beta-1.yaml"
+            )
                 .map(this::loadSample)
                 .flatten()
     }
