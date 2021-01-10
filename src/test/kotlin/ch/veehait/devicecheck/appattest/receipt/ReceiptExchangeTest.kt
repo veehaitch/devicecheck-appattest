@@ -383,7 +383,17 @@ class ReceiptExchangeTest : FreeSpec() {
                     if (notBefore != null) {
                         notBefore!!.value shouldBe creationTime.value.plus(Duration.ofDays(1))
                     }
-                    riskMetric!!.value shouldBeGreaterThanOrEqual (sample.properties.riskMetric ?: 0)
+                    when (sample.environment) {
+                        AppleAppAttestEnvironment.DEVELOPMENT -> {
+                            // In a development environment, Apple seems to clear the stored risk metric every
+                            // now and then
+                            riskMetric!!.value shouldBeGreaterThanOrEqual 1
+                        }
+                        AppleAppAttestEnvironment.PRODUCTION -> {
+                            riskMetric!!.value shouldBeGreaterThanOrEqual (sample.properties.riskMetric ?: 0)
+                        }
+                    }
+
                     type.value shouldBe Receipt.Type.RECEIPT
                 }
             }
