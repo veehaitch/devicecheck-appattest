@@ -101,7 +101,8 @@ open class Sample(
                 "/ios-14.3-beta-2.yaml",
                 "/ios-14.3-beta-3.yaml",
                 "/ios-14.3.yaml",
-                "/ios-14.4-beta-1.yaml"
+                "/ios-14.4-beta-1.yaml",
+                "/ios-14.4-beta-2.yaml",
             )
                 .map(this::loadSample)
                 .flatten()
