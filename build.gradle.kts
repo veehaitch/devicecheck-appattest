@@ -87,7 +87,7 @@ dependencies {
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
 
     // Testing of equals / hashcode
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.5.1")
+    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.5.2")
 
     // MockWebServer
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
