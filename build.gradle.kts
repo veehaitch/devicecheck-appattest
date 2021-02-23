@@ -99,6 +99,11 @@ dependencies {
     testImplementation("com.google.guava:guava:30.1-jre")
 }
 
+dependencyLocking {
+    lockMode.set(LockMode.STRICT)
+    lockAllConfigurations()
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "11"
