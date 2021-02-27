@@ -24,7 +24,7 @@ java {
 
 allprojects {
     group = "ch.veehaitch.devicecheck"
-    version = "0.8-SNAPSHOT"
+    version = "0.9-SNAPSHOT"
 
     publishing {
         publications {
