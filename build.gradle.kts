@@ -2,12 +2,12 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.4.31"
-    id("io.gitlab.arturbosch.detekt") version "1.15.0"
-    id("org.jmailen.kotlinter") version "3.3.0"
+    id("org.jetbrains.kotlin.jvm") version "1.4.32"
+    id("io.gitlab.arturbosch.detekt") version "1.16.0"
+    id("org.jmailen.kotlinter") version "3.4.0"
     id("jacoco")
-    id("com.github.ben-manes.versions") version "0.36.0"
-    id("org.jetbrains.dokka") version "1.4.20"
+    id("com.github.ben-manes.versions") version "0.38.0"
+    id("org.jetbrains.dokka") version "1.4.30"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
