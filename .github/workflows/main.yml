@@ -1,6 +1,12 @@
 name: CI Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
 
 jobs:
   validation:
@@ -30,10 +36,10 @@ jobs:
           arguments: build
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
-          dependencies-cache-key: gradle/dependency-locks/**
+          dependencies-cache-key: gradle.lockfile
           dependencies-cache-exact: true
           configuration-cache-enabled: true
-          configuration-cache-key: gradle/dependency-locks/**
+          configuration-cache-key: gradle.lockfile
           configuration-cache-exact: true
   codecov:
     name: Publish coverage to Codecov
@@ -52,10 +58,10 @@ jobs:
           arguments: jacocoTestReport
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
-          dependencies-cache-key: gradle/dependency-locks/**
+          dependencies-cache-key: gradle.lockfile
           dependencies-cache-exact: true
           configuration-cache-enabled: true
-          configuration-cache-key: gradle/dependency-locks/**
+          configuration-cache-key: gradle.lockfile
           configuration-cache-exact: true
       - name: Codecov
         uses: codecov/codecov-action@v1.0.13
@@ -78,10 +84,10 @@ jobs:
           arguments: jar javadocJar sourcesJar
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
-          dependencies-cache-key: gradle/dependency-locks/**
+          dependencies-cache-key: gradle.lockfile
           dependencies-cache-exact: true
           configuration-cache-enabled: true
-          configuration-cache-key: gradle/dependency-locks/**
+          configuration-cache-key: gradle.lockfile
           configuration-cache-exact: true
       - name: Upload JAR, Javadoc, and source artifact
         uses: actions/upload-artifact@v2.2.1
@@ -106,10 +112,10 @@ jobs:
           arguments: publish
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
-          dependencies-cache-key: gradle/dependency-locks/**
+          dependencies-cache-key: gradle.lockfile
           dependencies-cache-exact: true
           configuration-cache-enabled: true
-          configuration-cache-key: gradle/dependency-locks/**
+          configuration-cache-key: gradle.lockfile
           configuration-cache-exact: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
