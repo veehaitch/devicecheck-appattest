@@ -801,5 +801,24 @@ class AttestationValidatorTest : FreeSpec() {
                 }
             }
         }
+
+        "Rejects expired attestation" - {
+            AttestationSample.all
+                .filter { it.timestamp.plus(Duration.ofDays(90)) < Instant.now() }
+                .forEach { sample ->
+                    "${sample.id}" {
+                        val appleAppAttest = sample.defaultAppleAppAttest()
+                        val attestationValidator = appleAppAttest.createAttestationValidator()
+
+                        shouldThrow<AttestationException.InvalidCertificateChain> {
+                            attestationValidator.validate(
+                                attestationObject = sample.attestation,
+                                keyIdBase64 = sample.keyId.toBase64(),
+                                serverChallenge = sample.clientData
+                            )
+                        }
+                    }
+                }
+        }
     }
 }

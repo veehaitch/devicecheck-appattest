@@ -13,7 +13,7 @@ internal sealed class ReceiptExchangeException(
     cause: Throwable? = null,
 ) : RuntimeException(message, cause) {
     class ReceiptExpired(expiredAt: Instant) :
-        ReceiptExchangeException("The passed receipt has expired on $expiredAt", null)
+        ReceiptExchangeException("The passed receipt has expired on $expiredAt")
 
     class HttpError(message: String, cause: Throwable? = null) : ReceiptExchangeException(message, cause)
 }
