@@ -3,7 +3,7 @@
 [![Build status](https://img.shields.io/github/workflow/status/veehaitch/devicecheck-appattest/CI%20Build)](https://github.com/veehaitch/devicecheck-appattest/actions?query=workflow%3A%22CI+Build%22)
 [![Code coverage](https://img.shields.io/codecov/c/github/veehaitch/devicecheck-appattest)](https://app.codecov.io/gh/veehaitch/devicecheck-appattest/branch/main)
 [![License](https://img.shields.io/github/license/veehaitch/devicecheck-appattest)](http://www.apache.org/licenses/LICENSE-2.0.html)
-[![Written in Kotlin](https://img.shields.io/badge/code-kotlin-F8873C)](https://kotlinlang.org/)
+[![Written in Kotlin](https://img.shields.io/badge/code-kotlin-A97BFF)](https://kotlinlang.org/)
 ![JVM 11 required](https://img.shields.io/badge/jvm-11-blue)
 
 Server-side library to validate the authenticity of Apple App Attest artifacts, including 
