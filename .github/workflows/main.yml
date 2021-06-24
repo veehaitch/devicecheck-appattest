@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: gradle/wrapper-validation-action@v1.0.3
+      - uses: gradle/wrapper-validation-action@v1
   build:
     strategy:
       fail-fast: false
@@ -31,7 +31,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: ./gradlew build
-        uses: eskatos/gradle-command-action@v1.3.3
+        uses: eskatos/gradle-command-action@v1
         with:
           arguments: build
           wrapper-cache-enabled: true
@@ -53,7 +53,7 @@ jobs:
         with:
           java-version: 11
       - name: ./gradlew jacocoTestReport
-        uses: eskatos/gradle-command-action@v1.3.3
+        uses: eskatos/gradle-command-action@v1
         with:
           arguments: jacocoTestReport
           wrapper-cache-enabled: true
@@ -79,7 +79,7 @@ jobs:
         with:
           java-version: 11
       - name: ./gradlew jar javadocJar sourcesJar
-        uses: eskatos/gradle-command-action@v1.3.3
+        uses: eskatos/gradle-command-action@v1
         with:
           arguments: jar javadocJar sourcesJar
           wrapper-cache-enabled: true
@@ -107,7 +107,7 @@ jobs:
         with:
           java-version: 11
       - name: ./gradlew publish
-        uses: eskatos/gradle-command-action@v1.3.3
+        uses: eskatos/gradle-command-action@v1
         with:
           arguments: publish
           wrapper-cache-enabled: true
