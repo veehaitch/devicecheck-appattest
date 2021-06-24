@@ -68,7 +68,7 @@ class AssertionValidatorTest : FreeSpec() {
                     }
                     val assertionValidator = appleAppAttest.createAssertionValidator(assertionChallengeValidator)
 
-                    val assertion = assertionValidator.validateAsync(
+                    val assertion = assertionValidator.validate(
                         assertionObject = sample.assertion,
                         clientData = sample.clientData,
                         attestationPublicKey = sample.publicKey,
