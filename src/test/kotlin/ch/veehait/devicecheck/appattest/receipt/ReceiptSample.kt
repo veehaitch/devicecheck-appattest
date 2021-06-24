@@ -16,6 +16,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 
+@Suppress("LongParameterList")
 class ReceiptSample(
     id: UUID,
     type: SampleType,

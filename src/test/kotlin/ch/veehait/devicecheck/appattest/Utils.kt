@@ -117,8 +117,10 @@ object TestExtensions {
     fun Receipt.ReceiptAttribute.String?.copy(newValue: String): Receipt.ReceiptAttribute.String? =
         this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.String(sequence.copy(value = it)) }
 
-    fun Receipt.ReceiptAttribute.X509Certificate?.copy(newValue: X509Certificate): Receipt.ReceiptAttribute.X509Certificate? =
-        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.X509Certificate(sequence.copy(value = it)) }
+    fun Receipt.ReceiptAttribute.X509Certificate?.copy(newValue: X509Certificate):
+        Receipt.ReceiptAttribute.X509Certificate? = this?.encodeValue(newValue)?.let {
+        Receipt.ReceiptAttribute.X509Certificate(sequence.copy(value = it))
+    }
 
     fun Receipt.ReceiptAttribute.ByteArray?.copy(newValue: ByteArray): Receipt.ReceiptAttribute.ByteArray? =
         this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.ByteArray(sequence.copy(value = it)) }

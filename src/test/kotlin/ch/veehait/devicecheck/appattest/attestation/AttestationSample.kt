@@ -11,6 +11,7 @@ import java.security.interfaces.ECPublicKey
 import java.time.Instant
 import java.util.UUID
 
+@Suppress("LongParameterList")
 class AttestationSample(
     id: UUID,
     type: SampleType,

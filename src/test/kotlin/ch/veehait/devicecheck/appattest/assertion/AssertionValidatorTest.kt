@@ -76,7 +76,8 @@ class AssertionValidatorTest : FreeSpec() {
                         challenge = sample.challenge,
                     )
 
-                    assertion.authenticatorData.rpIdHash shouldBe appleAppAttest.app.appIdentifier.toByteArray().sha256()
+                    assertion.authenticatorData.rpIdHash shouldBe appleAppAttest.app.appIdentifier.toByteArray()
+                        .sha256()
                     assertion.authenticatorData.signCount shouldBe 1L
 
                     assertion.signature shouldBe decodedAssertion["signature"]

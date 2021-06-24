@@ -37,6 +37,7 @@ enum class SampleType {
     Receipt,
 }
 
+@Suppress("LongParameterList")
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class Sample(
     val id: UUID,
@@ -76,10 +77,12 @@ open class Sample(
                         SampleType.Receipt -> ReceiptSample::class.java
                     }
                     yamlObjectMapper.treeToValue(it, clazz).apply {
+                        @Suppress("TooGenericExceptionThrown")
                         val payload = when (this) {
                             is AttestationSample -> attestation
                             is AssertionSample -> assertion
                             is ReceiptSample -> receipt
+
                             else -> throw RuntimeException("Should never occur")
                         }
                         assert(payload.md5().toUUID() == this.id) {

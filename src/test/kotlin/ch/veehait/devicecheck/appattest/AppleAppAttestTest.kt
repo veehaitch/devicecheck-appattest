@@ -25,8 +25,12 @@ class AppleAppAttestTest : FreeSpec() {
                     )
 
                     val expectedUrl = when (env) {
-                        AppleAppAttestEnvironment.DEVELOPMENT -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL
-                        AppleAppAttestEnvironment.PRODUCTION -> ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL
+                        AppleAppAttestEnvironment.DEVELOPMENT -> {
+                            ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_DEVELOPMENT_URL
+                        }
+                        AppleAppAttestEnvironment.PRODUCTION -> {
+                            ReceiptExchange.APPLE_DEVICE_CHECK_APP_ATTEST_PRODUCTION_URL
+                        }
                     }
 
                     receiptExchange.appleDeviceCheckUrl shouldBe expectedUrl

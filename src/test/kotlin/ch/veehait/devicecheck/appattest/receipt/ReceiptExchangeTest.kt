@@ -257,7 +257,11 @@ class ReceiptExchangeTest : FreeSpec() {
                         clock = receipt.payload.expirationTime.value.plusNanos(nanosOffset).fixedUtcClock(),
                     ),
                     appleReceiptExchangeHttpClientAdapter = object : AppleReceiptExchangeHttpClientAdapter {
-                        override fun post(uri: URI, authorizationHeader: Map<String, String>, body: ByteArray): AppleReceiptExchangeHttpClientAdapter.Response {
+                        override fun post(
+                            uri: URI,
+                            authorizationHeader: Map<String, String>,
+                            body: ByteArray
+                        ): AppleReceiptExchangeHttpClientAdapter.Response {
                             throw IllegalAccessError("wurzelpfropf")
                         }
                     },
@@ -304,12 +308,17 @@ class ReceiptExchangeTest : FreeSpec() {
                             appleJwsGenerator = nullAppleJwsGenerator,
                             receiptValidator = appleAppAttest.createReceiptValidator(
                                 clock = when (receiptType) {
-                                    Receipt.Type.RECEIPT -> receipt.payload.notBefore!!.value.plusNanos(nanosOffset).fixedUtcClock()
+                                    Receipt.Type.RECEIPT -> receipt.payload.notBefore!!.value.plusNanos(nanosOffset)
+                                        .fixedUtcClock()
                                     Receipt.Type.ATTEST -> receipt.payload.creationTime.value.fixedUtcClock()
                                 }
                             ),
                             appleReceiptExchangeHttpClientAdapter = object : AppleReceiptExchangeHttpClientAdapter {
-                                override fun post(uri: URI, authorizationHeader: Map<String, String>, body: ByteArray): AppleReceiptExchangeHttpClientAdapter.Response {
+                                override fun post(
+                                    uri: URI,
+                                    authorizationHeader: Map<String, String>,
+                                    body: ByteArray
+                                ): AppleReceiptExchangeHttpClientAdapter.Response {
                                     throw IllegalAccessError("wurzelpfropf")
                                 }
                             },
@@ -345,6 +354,7 @@ class ReceiptExchangeTest : FreeSpec() {
         val appleDeviceCheckKid = "94M3Z58NQ7"
         val appleDeviceCheckPrivateKeyPem = System.getenv("APPLE_KEY_P8_$appleDeviceCheckKid")
 
+        @Suppress("TooGenericExceptionThrown")
         "receipt exchange works".config(enabled = appleDeviceCheckPrivateKeyPem != null) {
             // Test setup
             val now = Instant.now()
