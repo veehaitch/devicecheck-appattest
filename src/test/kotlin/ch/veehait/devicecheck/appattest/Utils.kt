@@ -15,12 +15,18 @@ import com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUM
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.asn1.DLSet
+import org.bouncycastle.asn1.cms.Attribute
+import org.bouncycastle.asn1.cms.AttributeTable
+import org.bouncycastle.asn1.cms.CMSAttributes
+import org.bouncycastle.asn1.cms.Time
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers
@@ -29,6 +35,7 @@ import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedDataGenerator
+import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder
 import org.bouncycastle.jcajce.provider.asymmetric.util.ECUtil
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -48,6 +55,7 @@ import java.security.spec.ECGenParameterSpec
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.Date
 import kotlin.experimental.or
 import kotlin.reflect.full.memberProperties
 
@@ -117,8 +125,10 @@ object TestExtensions {
     fun Receipt.ReceiptAttribute.String?.copy(newValue: String): Receipt.ReceiptAttribute.String? =
         this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.String(sequence.copy(value = it)) }
 
-    fun Receipt.ReceiptAttribute.X509Certificate?.copy(newValue: X509Certificate): Receipt.ReceiptAttribute.X509Certificate? =
-        this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.X509Certificate(sequence.copy(value = it)) }
+    fun Receipt.ReceiptAttribute.X509Certificate?.copy(newValue: X509Certificate):
+        Receipt.ReceiptAttribute.X509Certificate? = this?.encodeValue(newValue)?.let {
+        Receipt.ReceiptAttribute.X509Certificate(sequence.copy(value = it))
+    }
 
     fun Receipt.ReceiptAttribute.ByteArray?.copy(newValue: ByteArray): Receipt.ReceiptAttribute.ByteArray? =
         this?.encodeValue(newValue)?.let { Receipt.ReceiptAttribute.ByteArray(sequence.copy(value = it)) }
@@ -307,6 +317,15 @@ object CertUtils {
 
         val credCertBundle = certChainBundle.last()
 
+        // Set the `signing-time` explicitly to the creation time. Otherwise, it will be set to the current time.
+        val creationTime = Time(Date.from(receipt.payload.creationTime.value))
+        val signedTime = Attribute(CMSAttributes.signingTime, DERSet(creationTime))
+        val signedAttributes = ASN1EncodableVector().apply {
+            add(signedTime)
+        }
+        val signedAttributesTable = AttributeTable(signedAttributes)
+        val signedAttributeGenerator = DefaultSignedAttributeTableGenerator(signedAttributesTable)
+
         val generator = CMSSignedDataGenerator().apply {
             certChainBundle.asReversed().map { it.certificate }.forEach {
                 addCertificate(X509CertificateHolder(it.encoded))
@@ -315,6 +334,7 @@ object CertUtils {
             addSignerInfoGenerator(
                 JcaSimpleSignerInfoGeneratorBuilder()
                     .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                    .setSignedAttributeGenerator(signedAttributeGenerator)
                     .build("SHA256withECDSA", credCertBundle.keyPair.private, credCertBundle.certificate)
             )
             generatorMutator(this)

@@ -37,6 +37,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
+@Suppress("LargeClass")
 class AttestationValidatorTest : FreeSpec() {
 
     private fun AttestationSample.defaultValidator(): AttestationValidator {
@@ -254,15 +255,24 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = object : ReceiptValidator {
                             override val app: App = appleAppAttest.app
-                            override val trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR
+                            override val trustAnchor: TrustAnchor =
+                                ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR
                             override val maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE
                             override val clock: Clock = sample.timestamp.fixedUtcClock()
 
-                            override suspend fun validateReceiptAsync(receiptP7: ByteArray, publicKey: ECPublicKey, notAfter: Instant): Receipt {
+                            override suspend fun validateReceiptAsync(
+                                receiptP7: ByteArray,
+                                publicKey: ECPublicKey,
+                                notAfter: Instant
+                            ): Receipt {
                                 throw ReceiptException.InvalidPayload("Always rejected")
                             }
 
-                            override fun validateReceipt(receiptP7: ByteArray, publicKey: ECPublicKey, notAfter: Instant): Receipt {
+                            override fun validateReceipt(
+                                receiptP7: ByteArray,
+                                publicKey: ECPublicKey,
+                                notAfter: Instant
+                            ): Receipt {
                                 throw ReceiptException.InvalidPayload("Always rejected")
                             }
                         }
@@ -286,7 +296,8 @@ class AttestationValidatorTest : FreeSpec() {
 
                     shouldThrow<AttestationException.InvalidFormatException> {
                         with(sample) {
-                            val attestationStatement = cborObjectMapper.readValue(attestation, AttestationObject::class.java)
+                            val attestationStatement =
+                                cborObjectMapper.readValue(attestation, AttestationObject::class.java)
                             val attestationStatementWrong = attestationStatement.copy(fmt = "wurzelpfropf")
                             val attestationWrongFormat = cborObjectMapper.writeValueAsBytes(attestationStatementWrong)
                             attestationValidator.validate(
