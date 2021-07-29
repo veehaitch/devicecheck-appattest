@@ -53,7 +53,7 @@ class AppleAppAttest(
     fun createAttestationValidator(
         trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
         clock: Clock = Clock.systemUTC(),
-        receiptValidator: ReceiptValidator = createReceiptValidator(trustAnchor, clock),
+        receiptValidator: ReceiptValidator = createReceiptValidator(clock = clock),
     ): AttestationValidator = AttestationValidatorImpl(
         app = app,
         appleAppAttestEnvironment = appleAppAttestEnvironment,
