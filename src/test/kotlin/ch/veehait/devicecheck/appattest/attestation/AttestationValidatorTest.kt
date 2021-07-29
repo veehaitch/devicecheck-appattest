@@ -44,9 +44,6 @@ class AttestationValidatorTest : FreeSpec() {
         val appleAppAttest = this.defaultAppleAppAttest()
         return appleAppAttest.createAttestationValidator(
             clock = timestamp.fixedUtcClock(),
-            receiptValidator = appleAppAttest.createReceiptValidator(
-                clock = timestamp.fixedUtcClock(),
-            )
         )
     }
 
