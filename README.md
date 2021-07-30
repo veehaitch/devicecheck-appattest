@@ -1,5 +1,6 @@
 # Apple App Attest Validation
 
+[![Maven central](https://img.shields.io/maven-central/v/ch.veehait/devicecheck-appattest.svg)](https://search.maven.org/search?q=devicecheck-appattest)
 [![Build status](https://img.shields.io/github/workflow/status/veehaitch/devicecheck-appattest/CI%20Build)](https://github.com/veehaitch/devicecheck-appattest/actions?query=workflow%3A%22CI+Build%22)
 [![Code coverage](https://img.shields.io/codecov/c/github/veehaitch/devicecheck-appattest)](https://app.codecov.io/gh/veehaitch/devicecheck-appattest/branch/main)
 [![License](https://img.shields.io/github/license/veehaitch/devicecheck-appattest)](http://www.apache.org/licenses/LICENSE-2.0.html)
@@ -19,6 +20,40 @@ circumstances.
 
 The implementation follows the steps outlined in the articles ["Validating Apps That Connect to Your Server"](https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server)
 and ["Assessing Fraud Risk"](https://developer.apple.com/documentation/devicecheck/assessing_fraud_risk) at Apple Developer.
+
+## Getting Started
+
+The library is published to [Maven Central](https://search.maven.org/search?q=devicecheck-appattest).
+
+#### Gradle (Kotlin)
+
+```kotlin
+dependencies {
+    implementation("ch.veehait.devicecheck:devicecheck-appattest:$latestVersion")
+}
+```
+
+#### Gradle (Groovy)
+
+```groovy
+dependencies {
+    implementation "ch.veehait.devicecheck:devicecheck-appattest:$latestVersion"
+}
+```
+
+#### Maven
+
+```xml
+<dependencies>
+  <!-- ... -->
+  <dependency>
+    <groupId>ch.veehait</groupId>
+    <artifactId>devicecheck-appattest</artifactId>
+    <version>${latestVersion}</version>
+  </dependency>
+  <!-- ... -->
+</dependencies>
+```
 
 ## Usage
 
