@@ -3,12 +3,17 @@ name: CI Build
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
   schedule:
     - cron: '0 5 * * *'
+  release:
+    branches:
+      - main
+    types:
+      - published
 
 jobs:
   validation:
