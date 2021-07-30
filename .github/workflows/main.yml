@@ -104,7 +104,7 @@ jobs:
           if-no-files-found: error
   publish:
     name: Publish Maven package to Sonatype
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'release' }}
     needs: build
     runs-on: ubuntu-latest
     steps:
