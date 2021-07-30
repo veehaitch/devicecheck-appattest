@@ -1,6 +1,6 @@
 # Apple App Attest Validation
 
-[![Maven central](https://img.shields.io/maven-central/v/ch.veehait/devicecheck-appattest.svg)](https://search.maven.org/search?q=devicecheck-appattest)
+[![Maven central](https://img.shields.io/maven-central/v/ch.veehait.devicecheck/devicecheck-appattest.svg)](https://search.maven.org/search?q=devicecheck-appattest)
 [![Build status](https://img.shields.io/github/workflow/status/veehaitch/devicecheck-appattest/CI%20Build)](https://github.com/veehaitch/devicecheck-appattest/actions?query=workflow%3A%22CI+Build%22)
 [![Code coverage](https://img.shields.io/codecov/c/github/veehaitch/devicecheck-appattest)](https://app.codecov.io/gh/veehaitch/devicecheck-appattest/branch/main)
 [![License](https://img.shields.io/github/license/veehaitch/devicecheck-appattest)](http://www.apache.org/licenses/LICENSE-2.0.html)
