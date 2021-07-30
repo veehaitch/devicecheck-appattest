@@ -98,7 +98,7 @@ jobs:
           path: build/libs/
           if-no-files-found: error
   publish:
-    name: Publish Maven package
+    name: Publish Maven package to Sonatype
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: build
     runs-on: ubuntu-latest
@@ -108,10 +108,10 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
-      - name: ./gradlew publish
+      - name: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
         uses: eskatos/gradle-command-action@v1
         with:
-          arguments: publish
+          arguments: publishToSonatype closeAndReleaseSonatypeStagingRepository
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
           dependencies-cache-key: gradle.lockfile
@@ -120,5 +120,11 @@ jobs:
           configuration-cache-key: gradle.lockfile
           configuration-cache-exact: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GPG signing <3
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEYID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+          # Sonatype / Maven Central
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
 

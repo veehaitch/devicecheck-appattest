@@ -67,17 +67,6 @@ allprojects {
                 }
             }
         }
-
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/veehaitch/devicecheck-appattest")
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
-                }
-            }
-        }
     }
 }
 
