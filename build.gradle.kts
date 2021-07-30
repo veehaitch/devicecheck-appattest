@@ -14,6 +14,9 @@ plugins {
 
     // Publish build artifacts to an Apache Maven repository
     `maven-publish`
+
+    // Sign artifacts
+    signing
 }
 
 java {
@@ -34,7 +37,7 @@ allprojects {
 
     publishing {
         publications {
-            create<MavenPublication>("default") {
+            create<MavenPublication>("mavenJava") {
                 from(components["java"])
 
                 pom {
@@ -79,6 +82,18 @@ allprojects {
 
 repositories {
     mavenCentral()
+}
+
+signing {
+    // Env: ORG_GRADLE_PROJECT_signingKeyId
+    val signingKeyId: String? by project
+    // Env: ORG_GRADLE_PROJECT_signingKey
+    // XXX: only the last 8 characters of the (sub)key ID!
+    val signingKey: String? by project
+    // Env: ORG_GRADLE_PROJECT_signingPassword
+    val signingPassword: String? by project
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    sign(publishing.publications["mavenJava"])
 }
 
 dependencies {
