@@ -26,7 +26,7 @@ java {
 }
 
 allprojects {
-    group = "ch.veehaitch.devicecheck"
+    group = "ch.veehait.devicecheck"
     val baseVersion = "0.9.1"
 
     // Add the "-SNAPSHOT" suffix if the CI wasn't triggered by a new release
