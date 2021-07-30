@@ -8,12 +8,16 @@ plugins {
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.39.0"
     id("org.jetbrains.dokka") version "1.4.32"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
 
     // Publish build artifacts to an Apache Maven repository
     `maven-publish`
+
+    // Sign artifacts
+    signing
 }
 
 java {
@@ -23,23 +27,43 @@ java {
 }
 
 allprojects {
-    group = "ch.veehaitch.devicecheck"
-    version = "0.9-SNAPSHOT"
+    group = "ch.veehait.devicecheck"
+    val baseVersion = "0.9.1"
+
+    // Add the "-SNAPSHOT" suffix if the CI wasn't triggered by a new release
+    version = when {
+        System.getenv("GITHUB_EVENT_NAME") != "release" -> "$baseVersion-SNAPSHOT"
+        else -> baseVersion
+    }
 
     publishing {
         publications {
-            create<MavenPublication>("default") {
+            create<MavenPublication>("mavenJava") {
                 from(components["java"])
-            }
-        }
 
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/veehaitch/devicecheck-appattest")
-                credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
+                pom {
+                    name.set(project.name)
+                    description.set("Server-side library to validate the authenticity of Apple App Attest artifacts," +
+                            " written in Kotlin")
+                    url.set("https://github.com/veehaitch/devicecheck-appattest")
+                    licenses {
+                        license {
+                            name.set("The Apache Software License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("veehaitch")
+                            name.set("Vincent Haupert")
+                            email.set("mail@vincent-haupert.de")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:git@github.com:veehaitch/devicecheck-appattest.git")
+                        developerConnection.set("scm:git:git@github.com:veehaitch/devicecheck-appattest.git")
+                        url.set("https://github.com/veehaitch/devicecheck-appattest")
+                    }
                 }
             }
         }
@@ -48,6 +72,34 @@ allprojects {
 
 repositories {
     mavenCentral()
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+
+            // env: ORG_GRADLE_PROJECT_sonatypeUsername
+            val sonatypeUsername: String? by project
+            username.set(sonatypeUsername)
+            // env: ORG_GRADLE_PROJECT_sonatypePassword
+            val sonatypePassword: String? by project
+            password.set(sonatypePassword)
+        }
+    }
+}
+
+signing {
+    // Env: ORG_GRADLE_PROJECT_signingKeyId
+    val signingKeyId: String? by project
+    // Env: ORG_GRADLE_PROJECT_signingKey
+    // XXX: only the last 8 characters of the (sub)key ID!
+    val signingKey: String? by project
+    // Env: ORG_GRADLE_PROJECT_signingPassword
+    val signingPassword: String? by project
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+    sign(publishing.publications["mavenJava"])
 }
 
 dependencies {
