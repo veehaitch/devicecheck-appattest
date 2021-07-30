@@ -24,7 +24,13 @@ java {
 
 allprojects {
     group = "ch.veehaitch.devicecheck"
-    version = "0.9-SNAPSHOT"
+    val baseVersion = "0.9.1"
+
+    // Add the "-SNAPSHOT" suffix if the CI wasn't triggered by a new release
+    version = when {
+        System.getenv("GITHUB_EVENT_NAME") != "release" -> "$baseVersion-SNAPSHOT"
+        else -> baseVersion
+    }
 
     publishing {
         publications {
