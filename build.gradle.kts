@@ -8,6 +8,7 @@ plugins {
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.39.0"
     id("org.jetbrains.dokka") version "1.4.32"
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -82,6 +83,22 @@ allprojects {
 
 repositories {
     mavenCentral()
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+
+            // env: ORG_GRADLE_PROJECT_sonatypeUsername
+            val sonatypeUsername: String? by project
+            username.set(sonatypeUsername)
+            // env: ORG_GRADLE_PROJECT_sonatypePassword
+            val sonatypePassword: String? by project
+            password.set(sonatypePassword)
+        }
+    }
 }
 
 signing {
