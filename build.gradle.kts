@@ -36,6 +36,31 @@ allprojects {
         publications {
             create<MavenPublication>("default") {
                 from(components["java"])
+
+                pom {
+                    name.set(project.name)
+                    description.set("Server-side library to validate the authenticity of Apple App Attest artifacts," +
+                            " written in Kotlin")
+                    url.set("https://github.com/veehaitch/devicecheck-appattest")
+                    licenses {
+                        license {
+                            name.set("The Apache Software License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("veehaitch")
+                            name.set("Vincent Haupert")
+                            email.set("mail@vincent-haupert.de")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:git@github.com:veehaitch/devicecheck-appattest.git")
+                        developerConnection.set("scm:git:git@github.com:veehaitch/devicecheck-appattest.git")
+                        url.set("https://github.com/veehaitch/devicecheck-appattest")
+                    }
+                }
             }
         }
 
