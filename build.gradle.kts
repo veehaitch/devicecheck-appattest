@@ -2,12 +2,12 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.5.21"
-    id("io.gitlab.arturbosch.detekt") version "1.17.1"
-    id("org.jmailen.kotlinter") version "3.4.5"
+    id("org.jetbrains.kotlin.jvm") version "1.5.31"
+    id("io.gitlab.arturbosch.detekt") version "1.18.1"
+    id("org.jmailen.kotlinter") version "3.6.0"
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.39.0"
-    id("org.jetbrains.dokka") version "1.5.0"
+    id("org.jetbrains.dokka") version "1.5.30"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
     // Apply the java-library plugin for API and implementation separation.
@@ -28,7 +28,7 @@ java {
 
 allprojects {
     group = "ch.veehait.devicecheck"
-    val baseVersion = "0.9.1"
+    val baseVersion = "0.9.2"
 
     // Add the "-SNAPSHOT" suffix if the CI wasn't triggered by a new release
     version = when {
