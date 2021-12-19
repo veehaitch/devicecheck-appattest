@@ -2,12 +2,12 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.5.31"
-    id("io.gitlab.arturbosch.detekt") version "1.18.1"
-    id("org.jmailen.kotlinter") version "3.6.0"
+    id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    id("io.gitlab.arturbosch.detekt") version "1.19.0"
+    id("org.jmailen.kotlinter") version "3.7.0"
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.39.0"
-    id("org.jetbrains.dokka") version "1.5.30"
+    id("org.jetbrains.dokka") version "1.6.0"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
     // Apply the java-library plugin for API and implementation separation.
@@ -116,37 +116,37 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 
     // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
     // CBOR
-    val jacksonVersion = "2.12.3"
+    val jacksonVersion = "2.13.0"
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion")
     testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Bouncy Castle
-    val bouncyCastleVersion = "1.69"
+    val bouncyCastleVersion = "1.70"
     implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion")
     implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
 
     // Kotest
-    val kotestVersion = "4.6.0"
+    val kotestVersion = "5.0.3"
     testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
 
     // Testing of equals / hashcode
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.6.1")
+    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.8.1")
 
     // MockWebServer
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
 
     // JWS issuing
-    testImplementation("com.nimbusds:nimbus-jose-jwt:9.10")
+    testImplementation("com.nimbusds:nimbus-jose-jwt:9.15.2")
 
     // Google Guava: Bytes.indexOf
-    testImplementation("com.google.guava:guava:30.1.1-jre")
+    testImplementation("com.google.guava:guava:31.0.1-jre")
 }
 
 dependencyLocking {
