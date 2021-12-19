@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.readValues
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -59,10 +60,12 @@ open class Sample(
 
     companion object {
         private fun loadSample(name: String): List<Sample> {
-            val yamlObjectMapper: ObjectMapper = ObjectMapper(YAMLFactory())
+            val yamlObjectMapper: ObjectMapper = YAMLMapper
+                .builder()
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .build()
                 .registerModule(JavaTimeModule())
                 .registerKotlinModule()
-                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
 
             val url = this::class.java.getResource(name)
             val yamlParser = YAMLFactory().createParser(url)
@@ -71,7 +74,7 @@ open class Sample(
                 .readAll()
                 .map {
                     val obj = yamlObjectMapper.treeToValue<Sample>(it)
-                    val clazz = when (obj!!.type) {
+                    val clazz = when (obj.type) {
                         SampleType.Attestation -> AttestationSample::class.java
                         SampleType.Assertion -> AssertionSample::class.java
                         SampleType.Receipt -> ReceiptSample::class.java

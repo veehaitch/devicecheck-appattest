@@ -32,22 +32,16 @@ jobs:
     name: Build with JDK ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - name: Clone repository
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
+          distribution: adopt
       - name: ./gradlew build
-        uses: eskatos/gradle-command-action@v1
+        uses: eskatos/gradle-command-action@v2
         with:
           arguments: build
-          wrapper-cache-enabled: true
-          dependencies-cache-enabled: true
-          dependencies-cache-key: gradle.lockfile
-          dependencies-cache-exact: true
-          configuration-cache-enabled: true
-          configuration-cache-key: gradle.lockfile
-          configuration-cache-exact: true
   codecov:
     name: Publish coverage to Codecov
     needs: build
@@ -56,22 +50,16 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
       - name: Set up JDK 11
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: 11
+          distribution: adopt
       - name: ./gradlew jacocoTestReport
-        uses: eskatos/gradle-command-action@v1
+        uses: eskatos/gradle-command-action@v2
         with:
           arguments: jacocoTestReport
-          wrapper-cache-enabled: true
-          dependencies-cache-enabled: true
-          dependencies-cache-key: gradle.lockfile
-          dependencies-cache-exact: true
-          configuration-cache-enabled: true
-          configuration-cache-key: gradle.lockfile
-          configuration-cache-exact: true
       - name: Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           file: build/reports/jacoco/test/jacocoTestReport.xml
   artifacts:
@@ -82,22 +70,16 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v2
       - name: Set up JDK 11
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: 11
+          distribution: adopt
       - name: ./gradlew jar javadocJar sourcesJar
-        uses: eskatos/gradle-command-action@v1
+        uses: eskatos/gradle-command-action@v2
         with:
           arguments: jar javadocJar sourcesJar
-          wrapper-cache-enabled: true
-          dependencies-cache-enabled: true
-          dependencies-cache-key: gradle.lockfile
-          dependencies-cache-exact: true
-          configuration-cache-enabled: true
-          configuration-cache-key: gradle.lockfile
-          configuration-cache-exact: true
       - name: Upload JAR, Javadoc, and source artifact
-        uses: actions/upload-artifact@v2.2.1
+        uses: actions/upload-artifact@v2
         with:
           name: artifacts-jar-javadoc-sources
           path: build/libs/
@@ -110,20 +92,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 11
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: 11
+          distribution: adopt
       - name: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-        uses: eskatos/gradle-command-action@v1
+        uses: eskatos/gradle-command-action@v2
         with:
           arguments: publishToSonatype closeAndReleaseSonatypeStagingRepository
-          wrapper-cache-enabled: true
-          dependencies-cache-enabled: true
-          dependencies-cache-key: gradle.lockfile
-          dependencies-cache-exact: true
-          configuration-cache-enabled: true
-          configuration-cache-key: gradle.lockfile
-          configuration-cache-exact: true
         env:
           # GPG signing <3
           ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEYID }}

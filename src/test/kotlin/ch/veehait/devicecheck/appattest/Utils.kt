@@ -14,6 +14,7 @@ import ch.veehait.devicecheck.appattest.util.Utils
 import com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
+import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Integer
@@ -148,9 +149,11 @@ object TestExtensions {
 }
 
 object TestUtils {
-    val cborObjectMapper: ObjectMapper = ObjectMapper(CBORFactory())
-        .registerKotlinModule()
+    val cborObjectMapper = CBORMapper
+        .builder()
         .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
+        .build()
+        .registerKotlinModule()
 }
 
 object CertUtils {

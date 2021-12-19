@@ -301,7 +301,7 @@ internal class AttestationValidatorImpl(
         val envelope = ASN1InputStream(value).readObjectAs<DEROctetString>()
         val sequence = ASN1InputStream(envelope.octetStream).readObjectAs<DLSequence>()
         val taggedObject = sequence.first { (it is DLTaggedObject) && it.tagNo == tagNo } as DLTaggedObject
-        return taggedObject.`object` as DEROctetString
+        return taggedObject.baseObject as DEROctetString
     }
 
     private fun parseIOSVersion(credCert: X509Certificate): String? = runCatching {
