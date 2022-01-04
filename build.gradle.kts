@@ -7,7 +7,7 @@ plugins {
     id("org.jmailen.kotlinter") version "3.7.0"
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.39.0"
-    id("org.jetbrains.dokka") version "1.6.0"
+    id("org.jetbrains.dokka") version "1.6.10"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
     // Apply the java-library plugin for API and implementation separation.
