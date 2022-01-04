@@ -6,7 +6,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version "1.19.0"
     id("org.jmailen.kotlinter") version "3.7.0"
     id("jacoco")
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.github.ben-manes.versions") version "0.40.0"
     id("org.jetbrains.dokka") version "1.6.0"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
