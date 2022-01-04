@@ -4,10 +4,10 @@ plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
     id("io.gitlab.arturbosch.detekt") version "1.19.0"
-    id("org.jmailen.kotlinter") version "3.7.0"
+    id("org.jmailen.kotlinter") version "3.8.0"
     id("jacoco")
-    id("com.github.ben-manes.versions") version "0.39.0"
-    id("org.jetbrains.dokka") version "1.6.0"
+    id("com.github.ben-manes.versions") version "0.40.0"
+    id("org.jetbrains.dokka") version "1.6.10"
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 
     // Apply the java-library plugin for API and implementation separation.
@@ -116,10 +116,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 
     // Kotlin coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
     // CBOR
-    val jacksonVersion = "2.13.0"
+    val jacksonVersion = "2.13.1"
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:$jacksonVersion")
     testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
@@ -137,7 +137,7 @@ dependencies {
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
 
     // Testing of equals / hashcode
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.8.1")
+    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.8.2")
 
     // MockWebServer
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
