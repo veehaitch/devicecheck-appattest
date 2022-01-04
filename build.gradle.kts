@@ -4,7 +4,7 @@ plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
     id("io.gitlab.arturbosch.detekt") version "1.19.0"
-    id("org.jmailen.kotlinter") version "3.7.0"
+    id("org.jmailen.kotlinter") version "3.8.0"
     id("jacoco")
     id("com.github.ben-manes.versions") version "0.39.0"
     id("org.jetbrains.dokka") version "1.6.0"
