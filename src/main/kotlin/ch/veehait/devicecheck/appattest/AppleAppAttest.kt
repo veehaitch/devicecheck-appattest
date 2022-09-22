@@ -30,7 +30,7 @@ import java.time.Duration
  */
 class AppleAppAttest(
     val app: App,
-    val appleAppAttestEnvironment: AppleAppAttestEnvironment,
+    val appleAppAttestEnvironment: AppleAppAttestEnvironment
 ) {
     init {
         Security.addProvider(BouncyCastleProvider())
@@ -53,13 +53,13 @@ class AppleAppAttest(
     fun createAttestationValidator(
         trustAnchor: TrustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
         clock: Clock = Clock.systemUTC(),
-        receiptValidator: ReceiptValidator = createReceiptValidator(clock = clock),
+        receiptValidator: ReceiptValidator = createReceiptValidator(clock = clock)
     ): AttestationValidator = AttestationValidatorImpl(
         app = app,
         appleAppAttestEnvironment = appleAppAttestEnvironment,
         clock = clock,
         receiptValidator = receiptValidator,
-        trustAnchor = trustAnchor,
+        trustAnchor = trustAnchor
     )
 
     /**
@@ -70,10 +70,10 @@ class AppleAppAttest(
      * @see AssertionValidator
      */
     fun createAssertionValidator(
-        assertionChallengeValidator: AssertionChallengeValidator,
+        assertionChallengeValidator: AssertionChallengeValidator
     ): AssertionValidator = AssertionValidatorImpl(
         app = app,
-        assertionChallengeValidator = assertionChallengeValidator,
+        assertionChallengeValidator = assertionChallengeValidator
     )
 
     /**
@@ -89,12 +89,12 @@ class AppleAppAttest(
     fun createReceiptValidator(
         trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
         clock: Clock = Clock.systemUTC(),
-        maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE,
+        maxAge: Duration = ReceiptValidator.APPLE_RECOMMENDED_MAX_AGE
     ): ReceiptValidator = ReceiptValidatorImpl(
         app = app,
         trustAnchor = trustAnchor,
         clock = clock,
-        maxAge = maxAge,
+        maxAge = maxAge
     )
 
     /**
@@ -119,12 +119,12 @@ class AppleAppAttest(
         appleReceiptExchangeHttpClientAdapter: AppleReceiptExchangeHttpClientAdapter =
             SimpleAppleReceiptExchangeHttpClientAdapter(),
         appleDeviceCheckUrl: URI = defaultAppleDeviceCheckUrl,
-        sanityChecks: Boolean = true,
+        sanityChecks: Boolean = true
     ): ReceiptExchange = ReceiptExchangeImpl(
         appleJwsGenerator = appleJwsGenerator,
         receiptValidator = receiptValidator,
         appleDeviceCheckUrl = appleDeviceCheckUrl,
         appleReceiptExchangeHttpClientAdapter = appleReceiptExchangeHttpClientAdapter,
-        sanityChecks = sanityChecks,
+        sanityChecks = sanityChecks
     )
 }

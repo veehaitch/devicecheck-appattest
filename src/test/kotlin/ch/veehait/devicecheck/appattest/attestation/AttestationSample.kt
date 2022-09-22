@@ -30,7 +30,7 @@ class AttestationSample(
     val attestation: ByteArray,
     @JsonDeserialize(using = ECPublicKeyDeserializer::class)
     publicKey: ECPublicKey,
-    val iOSVersion: String,
+    val iOSVersion: String
 ) : Sample(id, type, bundleIdentifier, environment, keyId, teamIdentifier, timestamp, publicKey) {
     companion object {
         val all: List<AttestationSample>

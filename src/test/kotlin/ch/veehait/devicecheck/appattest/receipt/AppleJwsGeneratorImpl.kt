@@ -17,7 +17,7 @@ class AppleJwsGeneratorImpl(
     override val teamIdentifier: String,
     override val keyIdentifier: String,
     privateKeyPem: String,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock = Clock.systemUTC()
 ) : AppleJwsGenerator {
     private fun parsePrivateKey(pem: String): PrivateKey = pem
         .replace(Regex("-----(BEGIN|END) PRIVATE KEY-----"), "")

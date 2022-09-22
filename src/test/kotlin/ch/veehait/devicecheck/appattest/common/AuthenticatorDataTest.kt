@@ -32,7 +32,7 @@ class AuthenticatorDataTest : FreeSpec() {
                 flags = authenticatorData.flags.plus(AuthenticatorDataFlag.ED),
                 extensions = linkedMapOf(
                     "wurzel" to "pfropf"
-                ),
+                )
             ).encode()
 
             val authenticatorDataWithExtensions = shouldNotThrowAny {
@@ -56,7 +56,7 @@ class AuthenticatorDataTest : FreeSpec() {
                 attestedCredentialData = null,
                 extensions = linkedMapOf(
                     "wurzel" to "pfropf"
-                ),
+                )
             ).encode()
 
             val authenticatorDataWithExtensions = shouldNotThrowAny {

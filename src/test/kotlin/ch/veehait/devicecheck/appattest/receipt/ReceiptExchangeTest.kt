@@ -49,7 +49,7 @@ class ReceiptExchangeTest : FreeSpec() {
                 .withPrefabValues(
                     HttpHeaders::class.java,
                     EqualsVerifierPrefabValues.HttpHeaders.red,
-                    EqualsVerifierPrefabValues.HttpHeaders.blue,
+                    EqualsVerifierPrefabValues.HttpHeaders.blue
                 )
                 .verify()
         }
@@ -81,7 +81,7 @@ class ReceiptExchangeTest : FreeSpec() {
 
             val appleAppAttest = AppleAppAttest(
                 app = App(attestationReceipt.teamIdentifier, attestationReceipt.bundleIdentifier),
-                appleAppAttestEnvironment = attestationReceipt.environment,
+                appleAppAttestEnvironment = attestationReceipt.environment
             )
 
             val serverResponseClock = Clock.fixed(responseReceipt.timestamp, ZoneOffset.UTC)
@@ -125,13 +125,13 @@ class ReceiptExchangeTest : FreeSpec() {
                     teamIdentifier = attestationReceipt.teamIdentifier,
                     keyIdentifier = "WURZELPFRO",
                     privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
-                    clock = serverResponseClock,
+                    clock = serverResponseClock
                 ),
                 receiptValidator = appleAppAttest.createReceiptValidator(
-                    clock = serverResponseClock,
+                    clock = serverResponseClock
                 ),
                 appleDeviceCheckUrl = mockWebServerUri,
-                appleReceiptExchangeHttpClientAdapter = SimpleAppleReceiptExchangeHttpClientAdapter(),
+                appleReceiptExchangeHttpClientAdapter = SimpleAppleReceiptExchangeHttpClientAdapter()
             )
 
             val receipt = receiptExchange.trade(
@@ -151,7 +151,7 @@ class ReceiptExchangeTest : FreeSpec() {
 
             val appleAppAttest = AppleAppAttest(
                 app = App(responseReceipt.teamIdentifier, responseReceipt.bundleIdentifier),
-                appleAppAttestEnvironment = responseReceipt.environment,
+                appleAppAttestEnvironment = responseReceipt.environment
             )
 
             val serverResponseClock = Clock.fixed(responseReceipt.timestamp, ZoneOffset.UTC)
@@ -189,11 +189,11 @@ class ReceiptExchangeTest : FreeSpec() {
             val receiptExchange = appleAppAttest.createReceiptExchange(
                 appleJwsGenerator = nullAppleJwsGenerator,
                 receiptValidator = appleAppAttest.createReceiptValidator(
-                    clock = serverResponseClock,
+                    clock = serverResponseClock
                 ),
                 appleDeviceCheckUrl = mockWebServerUri,
                 appleReceiptExchangeHttpClientAdapter = SimpleAppleReceiptExchangeHttpClientAdapter(),
-                sanityChecks = false,
+                sanityChecks = false
             )
 
             val receipt = receiptExchange.trade(
@@ -220,10 +220,10 @@ class ReceiptExchangeTest : FreeSpec() {
             val receiptExchange = appleAppAttest.createReceiptExchange(
                 appleJwsGenerator = nullAppleJwsGenerator,
                 receiptValidator = appleAppAttest.createReceiptValidator(
-                    clock = sample.timestamp.fixedUtcClock(),
+                    clock = sample.timestamp.fixedUtcClock()
                 ),
                 appleDeviceCheckUrl = mockWebServer.url("/v1/attestationData").toUri(),
-                sanityChecks = false,
+                sanityChecks = false
             )
 
             val exception = shouldThrow<ReceiptExchangeException.HttpError> {
@@ -244,17 +244,17 @@ class ReceiptExchangeTest : FreeSpec() {
             val sample = ReceiptSample.all.random()
             val appleAppAttest = sample.defaultAppleAppAttest()
             val receipt = appleAppAttest.createReceiptValidator(
-                clock = sample.timestamp.fixedUtcClock(),
+                clock = sample.timestamp.fixedUtcClock()
             ).validateReceipt(
                 receiptP7 = sample.receipt,
-                publicKey = sample.publicKey,
+                publicKey = sample.publicKey
             )
 
             checkAll(Exhaustive.longs(-1L..1L)) { nanosOffset ->
                 val receiptExchange = appleAppAttest.createReceiptExchange(
                     appleJwsGenerator = nullAppleJwsGenerator,
                     receiptValidator = appleAppAttest.createReceiptValidator(
-                        clock = receipt.payload.expirationTime.value.plusNanos(nanosOffset).fixedUtcClock(),
+                        clock = receipt.payload.expirationTime.value.plusNanos(nanosOffset).fixedUtcClock()
                     ),
                     appleReceiptExchangeHttpClientAdapter = object : AppleReceiptExchangeHttpClientAdapter {
                         override fun post(
@@ -265,7 +265,7 @@ class ReceiptExchangeTest : FreeSpec() {
                             throw IllegalAccessError("wurzelpfropf")
                         }
                     },
-                    sanityChecks = true,
+                    sanityChecks = true
                 )
 
                 if (nanosOffset < 0L) {
@@ -273,7 +273,7 @@ class ReceiptExchangeTest : FreeSpec() {
                         val exception = shouldThrow<IllegalAccessError> {
                             receiptExchange.trade(
                                 receiptP7 = sample.receipt,
-                                attestationPublicKey = sample.publicKey,
+                                attestationPublicKey = sample.publicKey
                             )
                         }
                         exception.shouldHaveMessage("wurzelpfropf")
@@ -283,7 +283,7 @@ class ReceiptExchangeTest : FreeSpec() {
                         shouldThrow<ReceiptExchangeException.ReceiptExpired> {
                             receiptExchange.trade(
                                 receiptP7 = sample.receipt,
-                                attestationPublicKey = sample.publicKey,
+                                attestationPublicKey = sample.publicKey
                             )
                         }
                     }
@@ -295,10 +295,10 @@ class ReceiptExchangeTest : FreeSpec() {
             ReceiptSample.all.forEach { sample ->
                 val appleAppAttest = sample.defaultAppleAppAttest()
                 val receipt = appleAppAttest.createReceiptValidator(
-                    clock = sample.timestamp.fixedUtcClock(),
+                    clock = sample.timestamp.fixedUtcClock()
                 ).validateReceipt(
                     receiptP7 = sample.receipt,
-                    publicKey = sample.publicKey,
+                    publicKey = sample.publicKey
                 )
                 val receiptType = receipt.payload.type.value
 
@@ -322,7 +322,7 @@ class ReceiptExchangeTest : FreeSpec() {
                                     throw IllegalAccessError("wurzelpfropf")
                                 }
                             },
-                            sanityChecks = true,
+                            sanityChecks = true
                         )
 
                         if (receiptType == Receipt.Type.RECEIPT && nanosOffset < 0L) {
@@ -330,7 +330,7 @@ class ReceiptExchangeTest : FreeSpec() {
                                 val receiptNew = shouldNotThrowAny {
                                     receiptExchange.trade(
                                         receiptP7 = sample.receipt,
-                                        attestationPublicKey = sample.publicKey,
+                                        attestationPublicKey = sample.publicKey
                                     )
                                 }
                                 receiptNew.p7 shouldBe sample.receipt
@@ -340,7 +340,7 @@ class ReceiptExchangeTest : FreeSpec() {
                                 val exception = shouldThrow<IllegalAccessError> {
                                     receiptExchange.trade(
                                         receiptP7 = sample.receipt,
-                                        attestationPublicKey = sample.publicKey,
+                                        attestationPublicKey = sample.publicKey
                                     )
                                 }
                                 exception.shouldHaveMessage("wurzelpfropf")
@@ -370,7 +370,7 @@ class ReceiptExchangeTest : FreeSpec() {
                     keyIdentifier = appleDeviceCheckKid,
                     privateKeyPem = appleDeviceCheckPrivateKeyPem
                 ),
-                receiptValidator = appleAppAttest.createReceiptValidator(),
+                receiptValidator = appleAppAttest.createReceiptValidator()
             )
 
             val receipt = receiptExchange.trade(

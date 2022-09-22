@@ -31,7 +31,7 @@ class ReceiptSample(
     publicKey: ECPublicKey,
     @JsonProperty("receiptBase64")
     val receipt: ByteArray,
-    val properties: Properties,
+    val properties: Properties
 ) : Sample(id, type, bundleIdentifier, environment, keyId, teamIdentifier, timestamp, publicKey) {
     @Suppress("ArrayInDataClass")
     data class Properties(
@@ -46,7 +46,7 @@ class ReceiptSample(
         val notBefore: Instant?,
         val riskMetric: Int?,
         val token: String,
-        val type: Receipt.Type,
+        val type: Receipt.Type
     )
 
     companion object {
@@ -58,14 +58,14 @@ class ReceiptSample(
 class ReceiptSampleBundle(
     val sample: ReceiptSample,
     clock: Clock = Clock.fixed(sample.timestamp, ZoneOffset.UTC),
-    trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
+    trustAnchor: TrustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR
 ) {
     val appleAppAttest = AppleAppAttest(
         app = App(teamIdentifier = sample.teamIdentifier, bundleIdentifier = sample.bundleIdentifier),
-        appleAppAttestEnvironment = sample.environment,
+        appleAppAttestEnvironment = sample.environment
     )
     val validator = appleAppAttest.createReceiptValidator(
         trustAnchor = trustAnchor,
-        clock = clock,
+        clock = clock
     )
 }

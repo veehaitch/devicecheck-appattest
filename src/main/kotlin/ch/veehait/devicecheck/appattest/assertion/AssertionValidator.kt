@@ -49,7 +49,7 @@ interface AssertionValidator {
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
-        challenge: ByteArray,
+        challenge: ByteArray
     ): Assertion = runBlocking {
         validateAsync(assertionObject, clientData, attestationPublicKey, lastCounter, challenge)
     }
@@ -64,7 +64,7 @@ interface AssertionValidator {
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
-        challenge: ByteArray,
+        challenge: ByteArray
     ): Assertion
 }
 
@@ -75,7 +75,7 @@ interface AssertionValidator {
  */
 internal class AssertionValidatorImpl(
     override val app: App,
-    override val assertionChallengeValidator: AssertionChallengeValidator,
+    override val assertionChallengeValidator: AssertionChallengeValidator
 ) : AssertionValidator {
 
     private val cborObjectReader = ObjectMapper(CBORFactory())
@@ -85,7 +85,7 @@ internal class AssertionValidatorImpl(
     private fun verifySignature(
         assertionEnvelope: AssertionEnvelope,
         clientData: ByteArray,
-        attestationPublicKey: ECPublicKey,
+        attestationPublicKey: ECPublicKey
     ) {
         // 1. Compute clientDataHash as the SHA256 hash of clientData.
         val clientDataHash = clientData.sha256()
@@ -114,7 +114,7 @@ internal class AssertionValidatorImpl(
     @Suppress("ThrowsCount")
     private fun verifyAuthenticatorData(
         authenticatorDataBlob: ByteArray,
-        lastCounter: Long,
+        lastCounter: Long
     ): AuthenticatorData {
         // XXX: Due to an Apple bug, the flags byte of the authenticatorData claims to contain attestedCredentialsData
         //      although Apple's documentation explicitly states that it does not. Until this is fixed (I have reported
@@ -150,14 +150,14 @@ internal class AssertionValidatorImpl(
         challenge: ByteArray,
         assertionObj: Assertion,
         clientData: ByteArray,
-        attestationPublicKey: ECPublicKey,
+        attestationPublicKey: ECPublicKey
     ) {
         // 6. Verify that the challenge embedded in the client data matches the earlier challenge to the client.
         val challengeIsValid = assertionChallengeValidator.validate(
             assertionObj = assertionObj,
             clientData = clientData,
             attestationPublicKey = attestationPublicKey,
-            challenge = challenge,
+            challenge = challenge
         )
 
         if (!challengeIsValid) {
@@ -170,7 +170,7 @@ internal class AssertionValidatorImpl(
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
         lastCounter: Long,
-        challenge: ByteArray,
+        challenge: ByteArray
     ): Assertion = coroutineScope {
         val assertionEnvelope = cborObjectReader.readValue<AssertionEnvelope>(assertionObject)
 

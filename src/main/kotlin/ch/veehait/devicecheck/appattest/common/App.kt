@@ -9,7 +9,7 @@ package ch.veehait.devicecheck.appattest.common
  */
 data class App(
     val teamIdentifier: String,
-    val bundleIdentifier: String,
+    val bundleIdentifier: String
 ) {
     companion object {
         const val APPLE_TEAM_IDENTIFIER_LENGTH = 10

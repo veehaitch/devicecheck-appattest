@@ -54,7 +54,7 @@ interface ReceiptValidator {
                 eoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkL
                 F1vLUagM6BgD56KyKA==
                 -----END CERTIFICATE-----
-                """.trimIndent(),
+                """.trimIndent()
             ),
             null
         )
@@ -73,7 +73,7 @@ interface ReceiptValidator {
     suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant = clock.instant().minus(maxAge),
+        notAfter: Instant = clock.instant().minus(maxAge)
     ): Receipt
 
     /**
@@ -89,7 +89,7 @@ interface ReceiptValidator {
     fun validateReceipt(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant = clock.instant().minus(maxAge),
+        notAfter: Instant = clock.instant().minus(maxAge)
     ): Receipt = runBlocking {
         validateReceiptAsync(receiptP7, publicKey, notAfter)
     }
@@ -110,13 +110,13 @@ internal class ReceiptValidatorImpl(
     override val app: App,
     override val trustAnchor: TrustAnchor,
     override val maxAge: Duration,
-    override val clock: Clock,
+    override val clock: Clock
 ) : ReceiptValidator {
 
     override suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant,
+        notAfter: Instant
     ): Receipt = coroutineScope {
         val signedData = receiptP7.readAsSignedData()
         val certs = signedData.readCertificateChain()
@@ -130,7 +130,7 @@ internal class ReceiptValidatorImpl(
 
         Receipt(
             payload = verifyPayload(signedData, publicKey, notAfter),
-            p7 = receiptP7,
+            p7 = receiptP7
         )
     }
 

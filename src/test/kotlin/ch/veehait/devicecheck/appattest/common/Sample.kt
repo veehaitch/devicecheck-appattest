@@ -35,7 +35,7 @@ import java.util.UUID
 enum class SampleType {
     Attestation,
     Assertion,
-    Receipt,
+    Receipt
 }
 
 @Suppress("LongParameterList")
@@ -51,7 +51,7 @@ open class Sample(
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     val timestamp: Instant,
     @JsonDeserialize(using = ECPublicKeyDeserializer::class)
-    val publicKey: ECPublicKey,
+    val publicKey: ECPublicKey
 ) {
     fun defaultAppleAppAttest() = AppleAppAttest(
         app = App(teamIdentifier, bundleIdentifier),
@@ -109,7 +109,7 @@ open class Sample(
                 "/ios-14.3.yaml",
                 "/ios-14.4-beta-1.yaml",
                 "/ios-14.4-beta-2.yaml",
-                "/ios-14.4.yaml",
+                "/ios-14.4.yaml"
             )
                 .map(this::loadSample)
                 .flatten()

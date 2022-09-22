@@ -5,11 +5,11 @@ import javax.annotation.processing.Generated
 internal data class AttestationObject(
     val fmt: String,
     val attStmt: AttestationStatement,
-    val authData: ByteArray,
+    val authData: ByteArray
 ) {
     data class AttestationStatement(
         val x5c: List<ByteArray>,
-        val receipt: ByteArray,
+        val receipt: ByteArray
     ) {
         @Generated
         override fun equals(other: Any?): Boolean {
