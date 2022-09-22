@@ -7,6 +7,6 @@ interface AssertionChallengeValidator {
         assertionObj: Assertion,
         clientData: ByteArray,
         attestationPublicKey: ECPublicKey,
-        challenge: ByteArray,
+        challenge: ByteArray
     ): Boolean
 }

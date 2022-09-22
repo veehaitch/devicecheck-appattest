@@ -5,7 +5,7 @@ import java.security.cert.X509Certificate
 
 sealed class EqualsVerifierPrefabValues<T>(
     val red: T,
-    val blue: T,
+    val blue: T
 ) {
     object HttpHeaders : EqualsVerifierPrefabValues<java.net.http.HttpHeaders>(
         red = java.net.http.HttpHeaders.of(mapOf("Content-Type" to listOf("red"))) { _, _ -> true },

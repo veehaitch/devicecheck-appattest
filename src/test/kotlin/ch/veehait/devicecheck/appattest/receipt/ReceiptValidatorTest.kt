@@ -35,7 +35,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val sample = bundle.sample
                     val validatedReceipt = bundle.validator.validateReceipt(
                         receiptP7 = sample.receipt,
-                        publicKey = sample.publicKey,
+                        publicKey = sample.publicKey
                     )
 
                     with(validatedReceipt.payload) {
@@ -66,7 +66,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val sample = bundle.sample
                     val validatedReceipt = bundle.validator.validateReceipt(
                         receiptP7 = sample.receipt,
-                        publicKey = sample.publicKey,
+                        publicKey = sample.publicKey
                     )
 
                     val fakeReceiptBundle = CertUtils.resignReceipt(
@@ -85,7 +85,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val fakeReceipt = shouldNotThrowAny {
                         fakeReceiptValidator.validateReceipt(
                             receiptP7 = fakeReceiptBundle.receipt.p7,
-                            publicKey = fakeReceiptBundle.leafCertificate.publicKey as ECPublicKey,
+                            publicKey = fakeReceiptBundle.leafCertificate.publicKey as ECPublicKey
                         )
                     }
 
@@ -109,7 +109,7 @@ class ReceiptValidatorTest : FreeSpec() {
                                 shouldNotThrowAnyUnit {
                                     receiptValidator.validateReceiptAsync(
                                         receiptP7 = sample.receipt,
-                                        publicKey = sample.publicKey,
+                                        publicKey = sample.publicKey
                                     )
                                 }
                             }
@@ -118,7 +118,7 @@ class ReceiptValidatorTest : FreeSpec() {
                                 val exception = shouldThrow<ReceiptException.InvalidPayload> {
                                     receiptValidator.validateReceiptAsync(
                                         receiptP7 = sample.receipt,
-                                        publicKey = sample.publicKey,
+                                        publicKey = sample.publicKey
                                     )
                                 }
                                 val expectedTime = sample.properties.creationTime.plusNanos(nanosOffset)
@@ -136,7 +136,7 @@ class ReceiptValidatorTest : FreeSpec() {
                 "appId=${app.appIdentifier} ${sample.properties.type}/${sample.id}" - {
                     val receiptValidator = AppleAppAttest(
                         app = app,
-                        appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
+                        appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
                     ).createReceiptValidator(
                         clock = Clock.fixed(sample.timestamp, ZoneOffset.UTC)
                     )
@@ -144,7 +144,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val exception = shouldThrow<ReceiptException.InvalidPayload> {
                         receiptValidator.validateReceiptAsync(
                             receiptP7 = sample.receipt,
-                            publicKey = sample.publicKey,
+                            publicKey = sample.publicKey
                         )
                     }
                     val unexcptedAppId = App(sample.teamIdentifier, sample.bundleIdentifier).appIdentifier
@@ -163,7 +163,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val exception = shouldThrow<ReceiptException.InvalidPayload> {
                         receiptValidator.validateReceiptAsync(
                             receiptP7 = sample.receipt,
-                            publicKey = CertUtils.generateP256KeyPair().public as ECPublicKey,
+                            publicKey = CertUtils.generateP256KeyPair().public as ECPublicKey
                         )
                     }
                     exception shouldHaveMessage "Public key from receipt and attestation statement do not match"
@@ -178,12 +178,12 @@ class ReceiptValidatorTest : FreeSpec() {
                     val receiptValidator = bundle.appleAppAttest.createReceiptValidator(
                         clock = Clock.fixed(sample.timestamp, ZoneOffset.UTC),
                         // Wrong trust anchor
-                        trustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR,
+                        trustAnchor = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR
                     )
                     val exception = shouldThrow<ReceiptException.InvalidCertificateChain> {
                         receiptValidator.validateReceiptAsync(
                             receiptP7 = sample.receipt,
-                            publicKey = sample.publicKey,
+                            publicKey = sample.publicKey
                         )
                     }
                     exception shouldHaveMessage "The receipt object does not contain a valid certificate chain"
@@ -197,11 +197,11 @@ class ReceiptValidatorTest : FreeSpec() {
                 "${sample.properties.type}/${sample.id}" - {
                     // Test setup
                     val receiptValidator = bundle.appleAppAttest.createReceiptValidator(
-                        clock = Clock.fixed(sample.timestamp, ZoneOffset.UTC),
+                        clock = Clock.fixed(sample.timestamp, ZoneOffset.UTC)
                     )
                     val receipt = receiptValidator.validateReceiptAsync(
                         receiptP7 = sample.receipt,
-                        publicKey = sample.publicKey,
+                        publicKey = sample.publicKey
                     )
 
                     // Actual test
@@ -219,7 +219,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val exception = shouldThrow<ReceiptException.InvalidSignature> {
                         receiptValidator.validateReceiptAsync(
                             receiptP7 = receiptP7InvalidSignature,
-                            publicKey = sample.publicKey,
+                            publicKey = sample.publicKey
                         )
                     }
                     exception shouldHaveMessage "The receipt signature is invalid"
@@ -233,7 +233,7 @@ class ReceiptValidatorTest : FreeSpec() {
                 "${sample.properties.type}/${sample.id}" - {
                     val validatedReceipt = bundle.validator.validateReceipt(
                         receiptP7 = sample.receipt,
-                        publicKey = sample.publicKey,
+                        publicKey = sample.publicKey
                     )
 
                     val fakeReceiptBundle = CertUtils.resignReceipt(
@@ -260,7 +260,7 @@ class ReceiptValidatorTest : FreeSpec() {
                     val exception = shouldThrow<ReceiptException.InvalidSignature> {
                         fakeReceiptValidator.validateReceipt(
                             receiptP7 = fakeReceiptBundle.receipt.p7,
-                            publicKey = fakeReceiptBundle.leafCertificate.publicKey as ECPublicKey,
+                            publicKey = fakeReceiptBundle.leafCertificate.publicKey as ECPublicKey
                         )
                     }
                     exception shouldHaveMessage "The receipt contains more than one signature"

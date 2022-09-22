@@ -108,7 +108,7 @@ interface AttestationValidator {
     fun validate(
         attestationObject: ByteArray,
         keyIdBase64: String,
-        serverChallenge: ByteArray,
+        serverChallenge: ByteArray
     ): ValidatedAttestation = runBlocking {
         validateAsync(attestationObject, keyIdBase64, serverChallenge)
     }
@@ -121,7 +121,7 @@ interface AttestationValidator {
     suspend fun validateAsync(
         attestationObject: ByteArray,
         keyIdBase64: String,
-        serverChallenge: ByteArray,
+        serverChallenge: ByteArray
     ): ValidatedAttestation
 }
 
@@ -136,7 +136,7 @@ internal class AttestationValidatorImpl(
     override val appleAppAttestEnvironment: AppleAppAttestEnvironment,
     override val clock: Clock,
     override val receiptValidator: ReceiptValidator,
-    override val trustAnchor: TrustAnchor,
+    override val trustAnchor: TrustAnchor
 ) : AttestationValidator {
     private val cborObjectReader = ObjectMapper(CBORFactory())
         .registerKotlinModule()
@@ -145,7 +145,7 @@ internal class AttestationValidatorImpl(
     override suspend fun validateAsync(
         attestationObject: ByteArray,
         keyIdBase64: String,
-        serverChallenge: ByteArray,
+        serverChallenge: ByteArray
     ): ValidatedAttestation = coroutineScope {
         val attestation = parseAttestationObject(attestationObject)
         val keyId = keyIdBase64.fromBase64()
@@ -198,7 +198,7 @@ internal class AttestationValidatorImpl(
         val octetString = getTaggedOctetString(
             credCert = credCert,
             oid = AttestationValidator.AppleCertificateExtensions.NONCE_OID,
-            tagNo = AttestationValidator.AppleCertificateExtensions.NONCE_TAG_NO,
+            tagNo = AttestationValidator.AppleCertificateExtensions.NONCE_TAG_NO
         )
         return octetString.octets
     }
@@ -308,7 +308,7 @@ internal class AttestationValidatorImpl(
         getTaggedOctetString(
             credCert = credCert,
             oid = AttestationValidator.AppleCertificateExtensions.OS_VERSION_OID,
-            tagNo = AttestationValidator.AppleCertificateExtensions.OS_VERSION_TAG_NO,
+            tagNo = AttestationValidator.AppleCertificateExtensions.OS_VERSION_TAG_NO
         ).octets.let(::String)
     }.getOrNull()
 }

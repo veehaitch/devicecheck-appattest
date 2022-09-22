@@ -13,7 +13,7 @@ import javax.annotation.processing.Generated
 
 data class Receipt(
     val payload: Payload,
-    val p7: ByteArray,
+    val p7: ByteArray
 ) {
     enum class Type {
         ATTEST, RECEIPT
@@ -33,7 +33,7 @@ data class Receipt(
     data class AttributeSequence(
         val type: BigInteger,
         val version: BigInteger,
-        val value: ByteArray,
+        val value: ByteArray
     ) {
         @Generated
         override fun equals(other: Any?): Boolean {
@@ -124,7 +124,7 @@ data class Receipt(
         val creationTime: ReceiptAttribute.Instant,
         val riskMetric: ReceiptAttribute.Int?,
         val notBefore: ReceiptAttribute.Instant?,
-        val expirationTime: ReceiptAttribute.Instant,
+        val expirationTime: ReceiptAttribute.Instant
     ) {
         companion object {
             @JvmStatic
@@ -171,7 +171,7 @@ data class Receipt(
                         AttributeType.NOT_BEFORE,
                         required = type.value == Type.RECEIPT
                     )?.let { ReceiptAttribute.Instant(it) },
-                    expirationTime = ReceiptAttribute.Instant(objAt(AttributeType.EXPIRATION_TIME)),
+                    expirationTime = ReceiptAttribute.Instant(objAt(AttributeType.EXPIRATION_TIME))
                 )
             }
         }

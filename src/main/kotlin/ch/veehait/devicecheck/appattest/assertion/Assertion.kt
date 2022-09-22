@@ -5,7 +5,7 @@ import javax.annotation.processing.Generated
 
 data class Assertion(
     val signature: ByteArray,
-    val authenticatorData: AuthenticatorData,
+    val authenticatorData: AuthenticatorData
 ) {
     @Generated
     override fun equals(other: Any?): Boolean {
@@ -30,7 +30,7 @@ data class Assertion(
 
 internal data class AssertionEnvelope(
     val signature: ByteArray,
-    val authenticatorData: ByteArray,
+    val authenticatorData: ByteArray
 ) {
     @Generated
     override fun equals(other: Any?): Boolean {

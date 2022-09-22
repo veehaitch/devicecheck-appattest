@@ -15,12 +15,12 @@ class AppleAppAttestTest : FreeSpec() {
                 env.name {
                     val receiptExchange = AppleAppAttest(
                         app = App("WURZELPFRO", "PF"),
-                        appleAppAttestEnvironment = env,
+                        appleAppAttestEnvironment = env
                     ).createReceiptExchange(
                         appleJwsGenerator = AppleJwsGeneratorImpl(
                             teamIdentifier = "WURZELPFRO",
                             keyIdentifier = "wurzelpfropf",
-                            privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM(),
+                            privateKeyPem = CertUtils.generateP256KeyPair().private.toPEM()
                         )
                     )
 
