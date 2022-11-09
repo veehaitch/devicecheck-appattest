@@ -7,7 +7,9 @@ import ch.veehait.devicecheck.appattest.attestation.AttestationSample
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import nl.jqno.equalsverifier.EqualsVerifier
+import java.util.UUID
 
 class AuthenticatorDataTest : FreeSpec() {
     init {
@@ -64,6 +66,20 @@ class AuthenticatorDataTest : FreeSpec() {
             }
 
             authenticatorDataWithExtensions.extensions.shouldNotBeNull()
+        }
+
+        "Creates correct development AAGUID (appattestdevelop)" {
+            val expected = UUID.fromString("61707061-7474-6573-7464-6576656c6f70")
+            val actual = AppleAppAttestEnvironment.DEVELOPMENT.aaguid
+
+            expected shouldBe actual
+        }
+
+        "Creates correct production AAGUID (appattest)" {
+            val expected = UUID.fromString("61707061-7474-6573-7400-000000000000")
+            val actual = AppleAppAttestEnvironment.PRODUCTION.aaguid
+
+            expected shouldBe actual
         }
     }
 }
