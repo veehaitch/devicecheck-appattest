@@ -28,7 +28,7 @@ java {
 
 allprojects {
     group = "ch.veehait.devicecheck"
-    val baseVersion = "0.9.4"
+    val baseVersion = "0.9.5"
 
     // Add the "-SNAPSHOT" suffix if the CI wasn't triggered by a new release
     version = when {
@@ -126,9 +126,8 @@ dependencies {
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Bouncy Castle
-    val bouncyCastleVersion = "1.70"
-    implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion")
-    implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
+    val bouncyCastleVersion = "1.73"
+    implementation("org.bouncycastle:bcpkix-jdk18on:$bouncyCastleVersion")
 
     // Kotest
     val kotestVersion = "5.4.2"
