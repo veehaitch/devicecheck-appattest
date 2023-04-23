@@ -241,7 +241,8 @@ class ReceiptValidatorTest : FreeSpec() {
                         generatorMutator = {
                             val keyPair = CertUtils.generateP256KeyPair()
                             val certBundle = CertUtils.createCertificate(
-                                certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert,
+                                certTemplate = ReceiptValidator
+                                    .APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert,
                             )
 
                             it.addSignerInfoGenerator(
