@@ -10,7 +10,7 @@ sealed class ReceiptException(message: String, cause: Throwable? = null) : Runti
 
 sealed class ReceiptExchangeException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause) {
     class ReceiptExpired(expiredAt: Instant) :
         ReceiptExchangeException("The passed receipt has expired on $expiredAt")

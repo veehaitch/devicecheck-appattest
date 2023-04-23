@@ -9,19 +9,19 @@ package ch.veehait.devicecheck.appattest.common
  */
 data class App(
     val teamIdentifier: String,
-    val bundleIdentifier: String
+    val bundleIdentifier: String,
 ) {
     companion object {
         const val APPLE_TEAM_IDENTIFIER_LENGTH = 10
     }
 
     init {
-        if (teamIdentifier.length != APPLE_TEAM_IDENTIFIER_LENGTH) {
-            throw IllegalArgumentException("The Apple team identifier must consist of exactly 10 digits")
+        require(teamIdentifier.length == APPLE_TEAM_IDENTIFIER_LENGTH) {
+            "The Apple team identifier must consist of exactly 10 digits"
         }
 
-        if (bundleIdentifier.isEmpty()) {
-            throw IllegalArgumentException("The Apple bundle identifier must not be empty")
+        require(bundleIdentifier.isNotEmpty()) {
+            "The Apple bundle identifier must not be empty"
         }
     }
 

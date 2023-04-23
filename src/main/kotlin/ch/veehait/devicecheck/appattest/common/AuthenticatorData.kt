@@ -28,14 +28,14 @@ internal typealias CredentialPublicKey = LinkedHashMap<Any, Any>
 data class AttestedCredentialData(
     val aaguid: UUID,
     val credentialId: ByteArray,
-    val credentialPublicKey: CredentialPublicKey
+    val credentialPublicKey: CredentialPublicKey,
 ) {
     companion object {
         @JvmStatic
         @Suppress("MagicNumber")
         fun parse(
             stream: ByteArrayInputStream,
-            cborObjectReader: ObjectReader
+            cborObjectReader: ObjectReader,
         ): Pair<AttestedCredentialData, AuthenticatorDataExtensions?> {
             val aaguid = stream.readNBytes(16)
             val credentialIdLength = stream.readNBytes(2).readAsUInt16()
@@ -53,9 +53,9 @@ data class AttestedCredentialData(
                 AttestedCredentialData(
                     aaguid = aaguid.toUUID(),
                     credentialId = credentialId,
-                    credentialPublicKey = credentialPublicKey
+                    credentialPublicKey = credentialPublicKey,
                 ),
-                extensions
+                extensions,
             )
         }
     }
@@ -95,7 +95,7 @@ enum class AuthenticatorDataFlag(val bitmask: Byte) {
     AT(0x40),
 
     /** Bit 7: Extension data included (ED) */
-    ED(-0x80);
+    ED(-0x80),
 }
 
 /**
@@ -114,7 +114,7 @@ data class AuthenticatorData(
     val flags: List<AuthenticatorDataFlag>,
     val signCount: Long,
     val attestedCredentialData: AttestedCredentialData?,
-    val extensions: LinkedHashMap<Any, Any>?
+    val extensions: LinkedHashMap<Any, Any>?,
 ) {
     companion object {
         const val FLAGS_INDEX: Int = 32
@@ -127,7 +127,7 @@ data class AuthenticatorData(
         @Suppress("MagicNumber")
         fun parse(
             data: ByteArray,
-            cborObjectReader: ObjectReader = AuthenticatorData.cborObjectReader
+            cborObjectReader: ObjectReader = AuthenticatorData.cborObjectReader,
         ): AuthenticatorData = data.inputStream().use { stream ->
             val rpIdHash = stream.readNBytes(32)
             val flagsByte = stream.readNBytes(1).first()
@@ -149,7 +149,7 @@ data class AuthenticatorData(
                 flags = flags,
                 signCount = signCount,
                 attestedCredentialData = attestedCredentialData,
-                extensions = extensions
+                extensions = extensions,
             )
         }
     }

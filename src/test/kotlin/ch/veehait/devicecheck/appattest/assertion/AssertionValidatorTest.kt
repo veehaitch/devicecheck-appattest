@@ -28,7 +28,7 @@ class AssertionValidatorTest : FreeSpec() {
             assertionObj: Assertion,
             clientData: ByteArray,
             attestationPublicKey: ECPublicKey,
-            challenge: ByteArray
+            challenge: ByteArray,
         ): Boolean {
             return true
         }
@@ -36,7 +36,7 @@ class AssertionValidatorTest : FreeSpec() {
 
     private fun AssertionSample.challengeAcceptingAssertionValidator() =
         this.defaultAppleAppAttest().createAssertionValidator(
-            assertionChallengeAlwaysAcceptedValidator
+            assertionChallengeAlwaysAcceptedValidator,
         )
 
     init {
@@ -61,7 +61,7 @@ class AssertionValidatorTest : FreeSpec() {
                             assertionObj: Assertion,
                             clientData: ByteArray,
                             attestationPublicKey: ECPublicKey,
-                            challenge: ByteArray
+                            challenge: ByteArray,
                         ): Boolean {
                             return Arrays.constantTimeAreEqual("wurzel".toByteArray(), challenge)
                         }
@@ -73,7 +73,7 @@ class AssertionValidatorTest : FreeSpec() {
                         clientData = sample.clientData,
                         attestationPublicKey = sample.publicKey,
                         lastCounter = sample.counter - 1,
-                        challenge = sample.challenge
+                        challenge = sample.challenge,
                     )
 
                     assertion.authenticatorData.rpIdHash shouldBe appleAppAttest.app.appIdentifier.toByteArray()
@@ -108,7 +108,7 @@ class AssertionValidatorTest : FreeSpec() {
                             assertionObj: Assertion,
                             clientData: ByteArray,
                             attestationPublicKey: ECPublicKey,
-                            challenge: ByteArray
+                            challenge: ByteArray,
                         ): Boolean {
                             return false
                         }
@@ -121,7 +121,7 @@ class AssertionValidatorTest : FreeSpec() {
                             clientData = sample.clientData,
                             attestationPublicKey = sample.publicKey,
                             lastCounter = sample.counter - 1,
-                            challenge = sample.challenge
+                            challenge = sample.challenge,
                         )
                     }
                 }
@@ -146,7 +146,7 @@ class AssertionValidatorTest : FreeSpec() {
 
                     val modifiedEnvelope = envelope.copy(
                         authenticatorData = envelope.authenticatorData.dropLast(1).toByteArray(),
-                        signature = signature.sign()
+                        signature = signature.sign(),
                     )
                     val modifiedAssertion = objectWriter.writeValueAsBytes(modifiedEnvelope)
 
@@ -156,7 +156,7 @@ class AssertionValidatorTest : FreeSpec() {
                             clientData = sample.clientData,
                             attestationPublicKey = keyPair.public as ECPublicKey,
                             lastCounter = sample.counter,
-                            challenge = sample.challenge
+                            challenge = sample.challenge,
                         )
                     }
                     exception shouldHaveMessage "Could not parse assertion authenticatorData"
@@ -169,7 +169,7 @@ class AssertionValidatorTest : FreeSpec() {
                 "${sample.id}" {
                     val assertionValidator = AppleAppAttest(
                         app = App(sample.teamIdentifier, sample.bundleIdentifier.reversed()),
-                        appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT
+                        appleAppAttestEnvironment = AppleAppAttestEnvironment.DEVELOPMENT,
                     ).createAssertionValidator(assertionChallengeAlwaysAcceptedValidator)
 
                     val exception = shouldThrow<AssertionException.InvalidAuthenticatorData> {
@@ -178,7 +178,7 @@ class AssertionValidatorTest : FreeSpec() {
                             clientData = sample.clientData,
                             attestationPublicKey = sample.publicKey,
                             lastCounter = sample.counter - 1,
-                            challenge = sample.challenge
+                            challenge = sample.challenge,
                         )
                     }
                     exception shouldHaveMessage "App ID hash does not match RP ID hash"
@@ -197,7 +197,7 @@ class AssertionValidatorTest : FreeSpec() {
                             clientData = sample.clientData,
                             attestationPublicKey = sample.publicKey,
                             lastCounter = sample.counter,
-                            challenge = sample.challenge
+                            challenge = sample.challenge,
                         )
                     }
                     exception shouldHaveMessage "Assertion counter is not greater than the counter saved counter"
@@ -217,7 +217,7 @@ class AssertionValidatorTest : FreeSpec() {
                             clientData = wrongClientData,
                             attestationPublicKey = sample.publicKey,
                             lastCounter = sample.counter - 1,
-                            challenge = sample.challenge
+                            challenge = sample.challenge,
                         )
                     }
                 }
@@ -236,7 +236,7 @@ class AssertionValidatorTest : FreeSpec() {
                     val assertionObjectTampered = assertionEnvelope.copy(
                         signature = ByteArray(assertionEnvelope.signature.size).apply {
                             SecureRandom().nextBytes(this)
-                        }
+                        },
                     )
                     val assertionTampered = objectWriter.writeValueAsBytes(assertionObjectTampered)
 
@@ -246,7 +246,7 @@ class AssertionValidatorTest : FreeSpec() {
                             clientData = sample.clientData,
                             attestationPublicKey = sample.publicKey,
                             lastCounter = sample.counter - 1,
-                            challenge = sample.challenge
+                            challenge = sample.challenge,
                         )
                     }
                 }

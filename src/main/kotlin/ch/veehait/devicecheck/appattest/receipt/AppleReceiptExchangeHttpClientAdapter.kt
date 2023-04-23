@@ -40,7 +40,7 @@ internal class SimpleAppleReceiptExchangeHttpClientAdapter : AppleReceiptExchang
     override fun post(
         uri: URI,
         authorizationHeader: Map<String, String>,
-        body: ByteArray
+        body: ByteArray,
     ): AppleReceiptExchangeHttpClientAdapter.Response {
         val request = HttpRequest.newBuilder()
             .uri(uri)
@@ -52,7 +52,7 @@ internal class SimpleAppleReceiptExchangeHttpClientAdapter : AppleReceiptExchang
         return AppleReceiptExchangeHttpClientAdapter.Response(
             statusCode = httpResponse.statusCode(),
             headers = httpResponse.headers(),
-            body = httpResponse.body()
+            body = httpResponse.body(),
         )
     }
 }

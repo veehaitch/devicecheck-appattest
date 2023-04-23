@@ -2,13 +2,13 @@ import java.net.URL
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm") version "1.7.10"
-    id("io.gitlab.arturbosch.detekt") version "1.21.0"
-    id("org.jmailen.kotlinter") version "3.12.0"
+    id("org.jetbrains.kotlin.jvm") version "1.8.20"
+    id("io.gitlab.arturbosch.detekt") version "1.22.0"
+    id("org.jmailen.kotlinter") version "3.14.0"
     id("jacoco")
-    id("com.github.ben-manes.versions") version "0.42.0"
-    id("org.jetbrains.dokka") version "1.7.10"
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("com.github.ben-manes.versions") version "0.46.0"
+    id("org.jetbrains.dokka") version "1.8.10"
+    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
@@ -28,7 +28,7 @@ java {
 
 allprojects {
     group = "ch.veehait.devicecheck"
-    val baseVersion = "0.9.4"
+    val baseVersion = "0.9.6"
 
     // Add the "-SNAPSHOT" suffix if the CI wasn't triggered by a new release
     version = when {
@@ -126,9 +126,8 @@ dependencies {
     testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Bouncy Castle
-    val bouncyCastleVersion = "1.70"
-    implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion")
-    implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion")
+    val bouncyCastleVersion = "1.73"
+    implementation("org.bouncycastle:bcpkix-jdk18on:$bouncyCastleVersion")
 
     // Kotest
     val kotestVersion = "5.4.2"
