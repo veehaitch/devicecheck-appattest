@@ -13,7 +13,7 @@ class ReceiptTest : FreeSpec() {
                     .withPrefabValues(
                         X509Certificate::class.java,
                         EqualsVerifierPrefabValues.X509Certificates.red,
-                        EqualsVerifierPrefabValues.X509Certificates.blue
+                        EqualsVerifierPrefabValues.X509Certificates.blue,
                     )
                     .verify()
             }
@@ -23,7 +23,7 @@ class ReceiptTest : FreeSpec() {
                     .withPrefabValues(
                         X509Certificate::class.java,
                         EqualsVerifierPrefabValues.X509Certificates.red,
-                        EqualsVerifierPrefabValues.X509Certificates.blue
+                        EqualsVerifierPrefabValues.X509Certificates.blue,
                     )
                     .verify()
             }

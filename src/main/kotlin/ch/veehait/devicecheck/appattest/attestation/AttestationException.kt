@@ -11,7 +11,7 @@ sealed class AttestationException(message: String, cause: Throwable?) : RuntimeE
 
     class InvalidReceipt(cause: Throwable) : AttestationException(
         "The attestation statement receipt did not pass validation",
-        cause
+        cause,
     )
 
     class InvalidAuthenticatorData(message: String) : AttestationException(message, null)

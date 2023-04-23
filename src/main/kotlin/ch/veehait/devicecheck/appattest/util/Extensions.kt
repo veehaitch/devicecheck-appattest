@@ -25,7 +25,7 @@ internal object Extensions {
 
     fun List<X509Certificate>.verifyChain(
         trustAnchor: TrustAnchor,
-        date: Date
+        date: Date,
     ) {
         val certFactory = CertificateFactory.getInstance("X509")
         val certPath = certFactory.generateCertPath(this)

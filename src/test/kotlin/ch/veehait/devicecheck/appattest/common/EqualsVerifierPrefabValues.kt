@@ -5,11 +5,11 @@ import java.security.cert.X509Certificate
 
 sealed class EqualsVerifierPrefabValues<T>(
     val red: T,
-    val blue: T
+    val blue: T,
 ) {
     object HttpHeaders : EqualsVerifierPrefabValues<java.net.http.HttpHeaders>(
         red = java.net.http.HttpHeaders.of(mapOf("Content-Type" to listOf("red"))) { _, _ -> true },
-        blue = java.net.http.HttpHeaders.of(mapOf("Content-Type" to listOf("blue"))) { _, _ -> true }
+        blue = java.net.http.HttpHeaders.of(mapOf("Content-Type" to listOf("blue"))) { _, _ -> true },
     )
 
     object X509Certificates : EqualsVerifierPrefabValues<X509Certificate>(
@@ -42,7 +42,7 @@ sealed class EqualsVerifierPrefabValues<T>(
                 2AncM7gxi0kibrXZQHTeSzG0SYBhkXqS64/uDPv73K7FzRvevae9tv3OjX0sCsTm
                 msRUBPdJ5wSyLDN51adVxNk+WeoXTYEyAnDZx2P3lreRahI4pahMZQ+qe0w=
                 -----END CERTIFICATE-----
-            """.trimIndent()
+            """.trimIndent(),
         ),
         blue = Utils.readPemX509Certificate(
             """
@@ -73,7 +73,7 @@ sealed class EqualsVerifierPrefabValues<T>(
                 XTdkr8pvD5cuqziRk84Jl0v2Ac3lxf2HzKWf9hWDU1B9OwP8qq1D4LCiADOwCeh6
                 6cknwJIB7bDU6Witj6sIKo4kuYld4+4=
                 -----END CERTIFICATE-----
-            """.trimIndent()
-        )
+            """.trimIndent(),
+        ),
     )
 }

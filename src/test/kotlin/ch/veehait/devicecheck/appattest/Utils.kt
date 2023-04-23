@@ -109,8 +109,8 @@ object TestExtensions {
         arrayOf(
             ASN1Integer(type.field.toLong()),
             ASN1Integer(version.toLong()),
-            DEROctetString(encodeValue())
-        )
+            DEROctetString(encodeValue()),
+        ),
     )
 
     fun Receipt.Payload.encode(): ByteArray = Receipt.Payload::class.memberProperties
@@ -164,7 +164,7 @@ object CertUtils {
     data class AttestationCertificateChain(
         val rootCa: X509Certificate,
         val intermediateCa: X509Certificate,
-        val credCert: X509Certificate
+        val credCert: X509Certificate,
     )
 
     private fun PublicKey.getEcCurveName(): String {
@@ -194,7 +194,7 @@ object CertUtils {
     fun PrivateKey.toPEM(): String = listOf(
         "-----BEGIN PRIVATE KEY-----",
         encoded.toBase64(),
-        "-----END PRIVATE KEY-----"
+        "-----END PRIVATE KEY-----",
     ).joinToString("\n")
 
     /**
@@ -212,7 +212,7 @@ object CertUtils {
 
     data class CertificateWithKeyPair(
         val certificate: X509Certificate,
-        val keyPair: KeyPair
+        val keyPair: KeyPair,
     )
 
     fun createCertificate(
@@ -220,7 +220,7 @@ object CertUtils {
         keyPair: KeyPair = generateEcKeyPair(certTemplate),
         mutator: BuilderMutator = { Unit },
         issuerKeyPair: KeyPair = generateEcKeyPair(certTemplate),
-        issuer: X500Name? = null
+        issuer: X500Name? = null,
     ): CertificateWithKeyPair {
         val holder = X509CertificateHolder(certTemplate.encoded)
 
@@ -230,7 +230,7 @@ object CertUtils {
             holder.notBefore,
             holder.notAfter,
             holder.subject,
-            SubjectPublicKeyInfo.getInstance(keyPair.public.encoded)
+            SubjectPublicKeyInfo.getInstance(keyPair.public.encoded),
         )
 
         holder.extensionOIDs.map {
@@ -255,7 +255,7 @@ object CertUtils {
         return AttestationCertificateChain(
             rootCa = AttestationValidator.APPLE_APP_ATTEST_ROOT_CA_BUILTIN_TRUST_ANCHOR.trustedCert,
             intermediateCa = Utils.readDerX509Certificate(x5c.last()),
-            credCert = Utils.readDerX509Certificate(x5c.first())
+            credCert = Utils.readDerX509Certificate(x5c.first()),
         )
     }
 
@@ -264,48 +264,48 @@ object CertUtils {
         credCertKeyPair: KeyPair,
         mutatorRootCa: BuilderMutator = { Unit },
         mutatorIntermediateCa: BuilderMutator = { Unit },
-        mutatorCredCert: BuilderMutator = { Unit }
+        mutatorCredCert: BuilderMutator = { Unit },
     ): AttestationCertificateChain {
         val x5cChain = buildAttestationCertificateChain(x5c)
 
         val (rootCa, rootCaKeyPair) = createCertificate(
             certTemplate = x5cChain.rootCa,
-            mutator = mutatorRootCa
+            mutator = mutatorRootCa,
         )
         val (intermediateCa, intermediateCaKeyPair) = createCertificate(
             certTemplate = x5cChain.intermediateCa,
             mutator = mutatorIntermediateCa,
             issuerKeyPair = rootCaKeyPair,
-            issuer = X509CertificateHolder(rootCa.encoded).subject
+            issuer = X509CertificateHolder(rootCa.encoded).subject,
         )
         val (credCert, _) = createCertificate(
             certTemplate = x5cChain.credCert,
             keyPair = credCertKeyPair,
             mutator = mutatorCredCert,
             issuerKeyPair = intermediateCaKeyPair,
-            issuer = X509CertificateHolder(intermediateCa.encoded).subject
+            issuer = X509CertificateHolder(intermediateCa.encoded).subject,
         )
 
         return AttestationCertificateChain(
             rootCa = rootCa,
             intermediateCa = intermediateCa,
-            credCert = credCert
+            credCert = credCert,
         )
     }
 
     data class ResignedReceiptResponse(
         val receipt: Receipt,
         val trustAnchor: TrustAnchor,
-        val leafCertificate: X509Certificate
+        val leafCertificate: X509Certificate,
     )
 
     fun resignReceipt(
         receipt: Receipt,
         rootCaBundle: CertificateWithKeyPair = createCertificate(
-            certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert
+            certTemplate = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR.trustedCert,
         ),
         payloadMutator: (Receipt.Payload) -> Receipt.Payload = { it },
-        generatorMutator: (CMSSignedDataGenerator) -> Unit = {}
+        generatorMutator: (CMSSignedDataGenerator) -> Unit = {},
     ): ResignedReceiptResponse {
         val certificateChain = receipt.p7.readAsSignedData().readCertificateChain().asReversed()
 
@@ -314,7 +314,7 @@ object CertUtils {
                 createCertificate(
                     certTemplate = template,
                     issuerKeyPair = issuerBundle.keyPair,
-                    issuer = X509CertificateHolder(issuerBundle.certificate.encoded).subject
+                    issuer = X509CertificateHolder(issuerBundle.certificate.encoded).subject,
                 )
             }.drop(1)
 
@@ -338,7 +338,7 @@ object CertUtils {
                 JcaSimpleSignerInfoGeneratorBuilder()
                     .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                     .setSignedAttributeGenerator(signedAttributeGenerator)
-                    .build("SHA256withECDSA", credCertBundle.keyPair.private, credCertBundle.certificate)
+                    .build("SHA256withECDSA", credCertBundle.keyPair.private, credCertBundle.certificate),
             )
             generatorMutator(this)
         }
@@ -346,9 +346,9 @@ object CertUtils {
         val payloadNewCert = receipt.payload.copy(
             attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                 receipt.payload.attestationCertificate.sequence.copy(
-                    value = credCertBundle.certificate.encoded
-                )
-            )
+                    value = credCertBundle.certificate.encoded,
+                ),
+            ),
         ).let(payloadMutator)
 
         val p7s = payloadNewCert.encode()
@@ -358,10 +358,10 @@ object CertUtils {
 
         return ResignedReceiptResponse(
             receipt = receipt.copy(
-                p7 = p7s
+                p7 = p7s,
             ),
             trustAnchor = TrustAnchor(rootCaBundle.certificate, null),
-            leafCertificate = credCertBundle.certificate
+            leafCertificate = credCertBundle.certificate,
         )
     }
 }

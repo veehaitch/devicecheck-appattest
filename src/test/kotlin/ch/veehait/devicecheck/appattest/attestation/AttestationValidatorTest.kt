@@ -43,7 +43,7 @@ class AttestationValidatorTest : FreeSpec() {
     private fun AttestationSample.defaultValidator(): AttestationValidator {
         val appleAppAttest = this.defaultAppleAppAttest()
         return appleAppAttest.createAttestationValidator(
-            clock = timestamp.fixedUtcClock()
+            clock = timestamp.fixedUtcClock(),
         )
     }
 
@@ -69,7 +69,7 @@ class AttestationValidatorTest : FreeSpec() {
                         attestationValidator.validate(
                             attestationObject = sample.attestation,
                             keyIdBase64 = sample.keyId.toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     response.certificate.publicKey shouldBe sample.publicKey
@@ -86,21 +86,21 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
 
                     val authDataFake = authData.copy(
                         attestedCredentialData = authData.attestedCredentialData?.copy(
-                            credentialId = credCertKeyPair.public.createAppleKeyId()
-                        )
+                            credentialId = credCertKeyPair.public.createAppleKeyId(),
+                        ),
                     ).encode()
                     val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
 
@@ -109,14 +109,14 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             val fakeNonceEncoded = DLSequence(
-                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake)),
                             ).encoded
                             builder.replaceExtension(
                                 ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
-                                fakeNonceEncoded
+                                fakeNonceEncoded,
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -125,19 +125,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -145,15 +145,15 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     attestationValidator.validate(
                         attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                         keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
                 }
             }
@@ -166,21 +166,21 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
 
                     val authDataFake = authData.copy(
                         attestedCredentialData = authData.attestedCredentialData?.copy(
-                            credentialId = credCertKeyPair.public.createAppleKeyId()
-                        )
+                            credentialId = credCertKeyPair.public.createAppleKeyId(),
+                        ),
                     ).encode()
                     val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
 
@@ -189,18 +189,18 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             val fakeNonceEncoded = DLSequence(
-                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake)),
                             ).encoded
                             builder.replaceExtension(
                                 ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
-                                fakeNonceEncoded
+                                fakeNonceEncoded,
                             )
                             // Validation should still succeed even if the iOS version cannot be parsed
                             builder.removeExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.OS_VERSION_OID)
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.OS_VERSION_OID),
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -209,19 +209,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -229,15 +229,15 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     val result = attestationValidator.validate(
                         attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                         keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
                     result.iOSVersion.shouldBeNull()
                 }
@@ -260,7 +260,7 @@ class AttestationValidatorTest : FreeSpec() {
                             override suspend fun validateReceiptAsync(
                                 receiptP7: ByteArray,
                                 publicKey: ECPublicKey,
-                                notAfter: Instant
+                                notAfter: Instant,
                             ): Receipt {
                                 throw ReceiptException.InvalidPayload("Always rejected")
                             }
@@ -268,18 +268,18 @@ class AttestationValidatorTest : FreeSpec() {
                             override fun validateReceipt(
                                 receiptP7: ByteArray,
                                 publicKey: ECPublicKey,
-                                notAfter: Instant
+                                notAfter: Instant,
                             ): Receipt {
                                 throw ReceiptException.InvalidPayload("Always rejected")
                             }
-                        }
+                        },
                     )
 
                     shouldThrow<AttestationException.InvalidReceipt> {
                         attestationValidator.validateAsync(
                             attestationObject = sample.attestation,
                             keyIdBase64 = sample.keyId.toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                 }
@@ -300,7 +300,7 @@ class AttestationValidatorTest : FreeSpec() {
                             attestationValidator.validate(
                                 attestationObject = attestationWrongFormat,
                                 keyIdBase64 = sample.keyId.toBase64(),
-                                serverChallenge = sample.clientData
+                                serverChallenge = sample.clientData,
                             )
                         }
                     }
@@ -313,16 +313,16 @@ class AttestationValidatorTest : FreeSpec() {
                 "${sample.id}" {
                     val attestationValidator = AppleAppAttest(
                         app = App("WURZELPFRO", "PF"),
-                        appleAppAttestEnvironment = sample.environment
+                        appleAppAttestEnvironment = sample.environment,
                     ).createAttestationValidator(
-                        clock = sample.timestamp.fixedUtcClock()
+                        clock = sample.timestamp.fixedUtcClock(),
                     )
 
                     val exception = shouldThrow<AttestationException.InvalidAuthenticatorData> {
                         attestationValidator.validate(
                             attestationObject = sample.attestation,
                             keyIdBase64 = sample.keyId.toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     exception.message.shouldBe("App ID does not match RP ID hash")
@@ -340,7 +340,7 @@ class AttestationValidatorTest : FreeSpec() {
                         attestationValidator.validate(
                             attestationObject = sample.attestation,
                             keyIdBase64 = wrongKeyId,
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                 }
@@ -357,7 +357,7 @@ class AttestationValidatorTest : FreeSpec() {
                         attestationValidator.validate(
                             attestationObject = sample.attestation,
                             keyIdBase64 = sample.keyId.toBase64(),
-                            serverChallenge = wrongChallenge
+                            serverChallenge = wrongChallenge,
                         )
                     }
                 }
@@ -371,21 +371,21 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
 
                     val authDataFake = authData.copy(
                         attestedCredentialData = authData.attestedCredentialData?.copy(
-                            credentialId = credCertKeyPair.public.createAppleKeyId()
-                        )
+                            credentialId = credCertKeyPair.public.createAppleKeyId(),
+                        ),
                     ).encode()
 
                     val attCertChain = CertUtils.createCustomAttestationCertificate(
@@ -393,9 +393,9 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             builder.removeExtension(
-                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID)
+                                ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -404,19 +404,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -424,16 +424,16 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     val exception = shouldThrow<AttestationException.InvalidNonce> {
                         attestationValidator.validate(
                             attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                             keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     exception.cause!!.shouldHaveCauseOfType<NullPointerException>()
@@ -449,13 +449,13 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
@@ -463,7 +463,7 @@ class AttestationValidatorTest : FreeSpec() {
                     // Omit attestedCredentialData for this test
                     val authDataFake = authData.copy(
                         attestedCredentialData = null,
-                        flags = authData.flags.filterNot { it == AuthenticatorDataFlag.AT }
+                        flags = authData.flags.filterNot { it == AuthenticatorDataFlag.AT },
                     ).encode()
                     val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
 
@@ -472,14 +472,14 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             val fakeNonceEncoded = DLSequence(
-                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake)),
                             ).encoded
                             builder.replaceExtension(
                                 ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
-                                fakeNonceEncoded
+                                fakeNonceEncoded,
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -488,19 +488,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -508,16 +508,16 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     val exception = shouldThrow<AttestationException.InvalidAuthenticatorData> {
                         attestationValidator.validate(
                             attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                             keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     exception.shouldHaveMessage("Does not contain attested credentials")
@@ -533,22 +533,22 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
 
                     val authDataFake = authData.copy(
                         attestedCredentialData = authData.attestedCredentialData?.copy(
-                            credentialId = credCertKeyPair.public.createAppleKeyId()
+                            credentialId = credCertKeyPair.public.createAppleKeyId(),
                         ),
-                        signCount = 1337L
+                        signCount = 1337L,
                     ).encode()
                     val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
 
@@ -557,14 +557,14 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             val fakeNonceEncoded = DLSequence(
-                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake)),
                             ).encoded
                             builder.replaceExtension(
                                 ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
-                                fakeNonceEncoded
+                                fakeNonceEncoded,
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -573,19 +573,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -593,16 +593,16 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     val exception = shouldThrow<AttestationException.InvalidAuthenticatorData> {
                         attestationValidator.validate(
                             attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                             keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     exception.shouldHaveMessage("Counter is not zero")
@@ -617,13 +617,13 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
@@ -631,8 +631,8 @@ class AttestationValidatorTest : FreeSpec() {
                     val authDataFake = authData.copy(
                         attestedCredentialData = authData.attestedCredentialData?.copy(
                             credentialId = credCertKeyPair.public.createAppleKeyId(),
-                            aaguid = UUID.randomUUID()
-                        )
+                            aaguid = UUID.randomUUID(),
+                        ),
                     ).encode()
                     val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
 
@@ -641,14 +641,14 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             val fakeNonceEncoded = DLSequence(
-                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake)),
                             ).encoded
                             builder.replaceExtension(
                                 ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
-                                fakeNonceEncoded
+                                fakeNonceEncoded,
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -657,19 +657,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -677,21 +677,21 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     val exception = shouldThrow<AttestationException.InvalidAuthenticatorData> {
                         attestationValidator.validate(
                             attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                             keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     exception.shouldHaveMessage(
                         "AAGUID does match neither ${AppleAppAttestEnvironment.DEVELOPMENT} " +
-                            "nor ${AppleAppAttestEnvironment.PRODUCTION}"
+                            "nor ${AppleAppAttestEnvironment.PRODUCTION}",
                     )
                 }
             }
@@ -704,21 +704,21 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationResponse = attestationValidatorOriginal.validate(
                         attestationObject = sample.attestation,
                         keyIdBase64 = sample.keyId.toBase64(),
-                        serverChallenge = sample.clientData
+                        serverChallenge = sample.clientData,
                     )
 
                     val attestationObject: AttestationObject = cborObjectMapper.readValue(sample.attestation)
                     val authData: AuthenticatorData = AuthenticatorData.parse(
                         attestationObject.authData,
-                        cborObjectMapper.readerForMapOf(Any::class.java)
+                        cborObjectMapper.readerForMapOf(Any::class.java),
                     )
 
                     val credCertKeyPair = CertUtils.generateP256KeyPair()
 
                     val authDataFake = authData.copy(
                         attestedCredentialData = authData.attestedCredentialData?.copy(
-                            credentialId = CertUtils.generateP256KeyPair().public.createAppleKeyId()
-                        )
+                            credentialId = CertUtils.generateP256KeyPair().public.createAppleKeyId(),
+                        ),
                     ).encode()
                     val nonceFake = authDataFake.plus(sample.clientData.sha256()).sha256()
 
@@ -727,14 +727,14 @@ class AttestationValidatorTest : FreeSpec() {
                         credCertKeyPair = credCertKeyPair,
                         mutatorCredCert = { builder ->
                             val fakeNonceEncoded = DLSequence(
-                                DLTaggedObject(true, 1, DEROctetString(nonceFake))
+                                DLTaggedObject(true, 1, DEROctetString(nonceFake)),
                             ).encoded
                             builder.replaceExtension(
                                 ASN1ObjectIdentifier(AttestationValidator.AppleCertificateExtensions.NONCE_OID),
                                 false,
-                                fakeNonceEncoded
+                                fakeNonceEncoded,
                             )
-                        }
+                        },
                     )
 
                     val resignedReceiptResponse = CertUtils.resignReceipt(
@@ -743,19 +743,19 @@ class AttestationValidatorTest : FreeSpec() {
                             it.copy(
                                 attestationCertificate = Receipt.ReceiptAttribute.X509Certificate(
                                     it.attestationCertificate.sequence.copy(
-                                        value = attCertChain.credCert.encoded
-                                    )
-                                )
+                                        value = attCertChain.credCert.encoded,
+                                    ),
+                                ),
                             )
-                        }
+                        },
                     )
 
                     val attestationObjectFake = attestationObject.copy(
                         attStmt = attestationObject.attStmt.copy(
                             x5c = listOf(attCertChain.credCert.encoded, attCertChain.intermediateCa.encoded),
-                            receipt = resignedReceiptResponse.receipt.p7
+                            receipt = resignedReceiptResponse.receipt.p7,
                         ),
-                        authData = authDataFake
+                        authData = authDataFake,
                     )
 
                     val appleAppAttest = sample.defaultAppleAppAttest()
@@ -763,16 +763,16 @@ class AttestationValidatorTest : FreeSpec() {
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
                             clock = sample.timestamp.fixedUtcClock(),
-                            trustAnchor = resignedReceiptResponse.trustAnchor
+                            trustAnchor = resignedReceiptResponse.trustAnchor,
                         ),
-                        trustAnchor = TrustAnchor(attCertChain.rootCa, null)
+                        trustAnchor = TrustAnchor(attCertChain.rootCa, null),
                     )
 
                     val exception = shouldThrow<AttestationException.InvalidAuthenticatorData> {
                         attestationValidator.validate(
                             attestationObject = cborObjectMapper.writeValueAsBytes(attestationObjectFake),
                             keyIdBase64 = attCertChain.credCert.createAppleKeyId().toBase64(),
-                            serverChallenge = sample.clientData
+                            serverChallenge = sample.clientData,
                         )
                     }
                     exception.shouldHaveMessage("Credentials ID is not equal to Key ID")
@@ -787,9 +787,9 @@ class AttestationValidatorTest : FreeSpec() {
                     val attestationValidator = appleAppAttest.createAttestationValidator(
                         clock = sample.timestamp.fixedUtcClock(),
                         receiptValidator = appleAppAttest.createReceiptValidator(
-                            clock = sample.timestamp.fixedUtcClock()
+                            clock = sample.timestamp.fixedUtcClock(),
                         ),
-                        trustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR
+                        trustAnchor = ReceiptValidator.APPLE_PUBLIC_ROOT_CA_G3_BUILTIN_TRUST_ANCHOR,
                     )
 
                     shouldThrow<AttestationException.InvalidCertificateChain> {
@@ -811,7 +811,7 @@ class AttestationValidatorTest : FreeSpec() {
                             attestationValidator.validate(
                                 attestationObject = sample.attestation,
                                 keyIdBase64 = sample.keyId.toBase64(),
-                                serverChallenge = sample.clientData
+                                serverChallenge = sample.clientData,
                             )
                         }
                     }

@@ -20,7 +20,8 @@ enum class AppleAppAttestEnvironment(private val identifier: String) {
      * The App Attest production environment. Keys you create in the production environment don’t work in the sandbox
      * environment.
      */
-    PRODUCTION("appattest");
+    PRODUCTION("appattest"),
+    ;
 
     /**
      * The AAGUID representing the environment.

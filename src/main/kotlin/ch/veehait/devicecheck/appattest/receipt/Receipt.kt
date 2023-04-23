@@ -13,7 +13,7 @@ import javax.annotation.processing.Generated
 
 data class Receipt(
     val payload: Payload,
-    val p7: ByteArray
+    val p7: ByteArray,
 ) {
     enum class Type {
         ATTEST, RECEIPT
@@ -33,7 +33,7 @@ data class Receipt(
     data class AttributeSequence(
         val type: BigInteger,
         val version: BigInteger,
-        val value: ByteArray
+        val value: ByteArray,
     ) {
         @Generated
         override fun equals(other: Any?): Boolean {
@@ -71,7 +71,8 @@ data class Receipt(
         CREATION_TIME(12),
         RISK_METRIC(17),
         NOT_BEFORE(19),
-        EXPIRATION_TIME(21);
+        EXPIRATION_TIME(21),
+        ;
 
         companion object {
             fun fromFieldValue(value: Int) = values().first { it.field == value }
@@ -92,7 +93,7 @@ data class Receipt(
         }
 
         class X509Certificate(
-            sequence: AttributeSequence
+            sequence: AttributeSequence,
         ) : ReceiptAttribute<java.security.cert.X509Certificate>(sequence) {
             override val value: java.security.cert.X509Certificate = Utils.readDerX509Certificate(rawValue)
         }
@@ -124,7 +125,7 @@ data class Receipt(
         val creationTime: ReceiptAttribute.Instant,
         val riskMetric: ReceiptAttribute.Int?,
         val notBefore: ReceiptAttribute.Instant?,
-        val expirationTime: ReceiptAttribute.Instant
+        val expirationTime: ReceiptAttribute.Instant,
     ) {
         companion object {
             @JvmStatic
@@ -137,7 +138,7 @@ data class Receipt(
                         AttributeSequence(
                             type = it.get<ASN1Integer>(0).positiveValue,
                             version = it.get<ASN1Integer>(1).positiveValue,
-                            value = it.get<DEROctetString>(2).octets
+                            value = it.get<DEROctetString>(2).octets,
                         )
                     }.associateBy { it.type.toInt() }
 
@@ -156,7 +157,7 @@ data class Receipt(
                 return Payload(
                     appId = ReceiptAttribute.String(objAt(AttributeType.APP_ID)),
                     attestationCertificate = ReceiptAttribute.X509Certificate(
-                        objAt(AttributeType.ATTESTED_PUBLIC_KEY)
+                        objAt(AttributeType.ATTESTED_PUBLIC_KEY),
                     ),
                     clientHash = ReceiptAttribute.ByteArray(objAt(AttributeType.CLIENT_HASH)),
                     token = ReceiptAttribute.String(objAt(AttributeType.TOKEN)),
@@ -165,13 +166,13 @@ data class Receipt(
                     creationTime = ReceiptAttribute.Instant(objAt(AttributeType.CREATION_TIME)),
                     riskMetric = objAtOptional(
                         AttributeType.RISK_METRIC,
-                        required = type.value == Type.RECEIPT
+                        required = type.value == Type.RECEIPT,
                     )?.let { ReceiptAttribute.Int(it) },
                     notBefore = objAtOptional(
                         AttributeType.NOT_BEFORE,
-                        required = type.value == Type.RECEIPT
+                        required = type.value == Type.RECEIPT,
                     )?.let { ReceiptAttribute.Instant(it) },
-                    expirationTime = ReceiptAttribute.Instant(objAt(AttributeType.EXPIRATION_TIME))
+                    expirationTime = ReceiptAttribute.Instant(objAt(AttributeType.EXPIRATION_TIME)),
                 )
             }
         }
