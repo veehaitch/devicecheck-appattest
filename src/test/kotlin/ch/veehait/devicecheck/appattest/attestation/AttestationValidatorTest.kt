@@ -260,7 +260,7 @@ class AttestationValidatorTest : FreeSpec() {
                             override suspend fun validateReceiptAsync(
                                 receiptP7: ByteArray,
                                 publicKey: ECPublicKey,
-                                notAfter: Instant,
+                                notBefore: Instant,
                             ): Receipt {
                                 throw ReceiptException.InvalidPayload("Always rejected")
                             }
@@ -268,7 +268,7 @@ class AttestationValidatorTest : FreeSpec() {
                             override fun validateReceipt(
                                 receiptP7: ByteArray,
                                 publicKey: ECPublicKey,
-                                notAfter: Instant,
+                                notBefore: Instant,
                             ): Receipt {
                                 throw ReceiptException.InvalidPayload("Always rejected")
                             }
