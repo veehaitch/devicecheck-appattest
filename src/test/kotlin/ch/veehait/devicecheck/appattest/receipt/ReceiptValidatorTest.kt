@@ -122,7 +122,10 @@ class ReceiptValidatorTest : FreeSpec() {
                                     )
                                 }
                                 val expectedTime = sample.properties.creationTime.plusNanos(nanosOffset)
-                                exception.shouldHaveMessage("Receipt's creation time is after $expectedTime")
+                                exception.shouldHaveMessage(
+                                    "Receipt's creation time is too far in the past. " +
+                                        "Expected a timestamp no older than $expectedTime",
+                                )
                             }
                         }
                     }

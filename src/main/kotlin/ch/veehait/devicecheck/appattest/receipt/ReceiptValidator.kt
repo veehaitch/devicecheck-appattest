@@ -73,7 +73,7 @@ interface ReceiptValidator {
     suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant = clock.instant().minus(maxAge),
+        notBefore: Instant = clock.instant().minus(maxAge),
     ): Receipt
 
     /**
@@ -82,16 +82,16 @@ interface ReceiptValidator {
      * @param receiptP7 A DER-encoded PKCS #7 object received as part of an attestation statement or in response to
      *   a remote call to Apple's servers which exchanges an existing receipt for a new receipt.
      * @param publicKey The P-256 public key of the attestation object which is used to validate the [receiptP7].
-     * @param notAfter An instant of time which marks the latest creation time for the passed [receiptP7] to be
+     * @param notBefore An instant of time which marks the earliest creation time for the passed [receiptP7] to be
      *   considered valid.
      * @return A validated [Receipt] which can be trusted.
      */
     fun validateReceipt(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant = clock.instant().minus(maxAge),
+        notBefore: Instant = clock.instant().minus(maxAge),
     ): Receipt = runBlocking {
-        validateReceiptAsync(receiptP7, publicKey, notAfter)
+        validateReceiptAsync(receiptP7, publicKey, notBefore)
     }
 }
 
@@ -116,7 +116,7 @@ internal class ReceiptValidatorImpl(
     override suspend fun validateReceiptAsync(
         receiptP7: ByteArray,
         publicKey: ECPublicKey,
-        notAfter: Instant,
+        notBefore: Instant,
     ): Receipt = coroutineScope {
         val signedData = receiptP7.readAsSignedData()
         val certs = signedData.readCertificateChain()
@@ -129,7 +129,7 @@ internal class ReceiptValidatorImpl(
         launch { verifyCertificateChain(certs) }
 
         Receipt(
-            payload = verifyPayload(signedData, publicKey, notAfter),
+            payload = verifyPayload(signedData, publicKey, notBefore),
             p7 = receiptP7,
         )
     }
@@ -159,7 +159,7 @@ internal class ReceiptValidatorImpl(
     }
 
     @Suppress("ThrowsCount")
-    private fun verifyPayload(signedData: CMSSignedData, publicKey: ECPublicKey, notAfter: Instant): Receipt.Payload {
+    private fun verifyPayload(signedData: CMSSignedData, publicKey: ECPublicKey, notBefore: Instant): Receipt.Payload {
         // 3. Parse the ASN.1 structure that makes up the payload.
         val receiptPayload = Receipt.Payload.parse(signedData)
 
@@ -171,8 +171,10 @@ internal class ReceiptValidatorImpl(
 
         // 5. Verify that the receipt’s creation time, given in field 12, is no more than five minutes old.
         //    This helps to thwart replay attacks.
-        if (notAfter.isAfter(receiptPayload.creationTime.value)) {
-            throw ReceiptException.InvalidPayload("Receipt's creation time is after $notAfter")
+        if (receiptPayload.creationTime.value.isBefore(notBefore)) {
+            throw ReceiptException.InvalidPayload(
+                "Receipt's creation time is too far in the past. Expected a timestamp no older than $notBefore",
+            )
         }
 
         // 6. Verify that the attested public key in field 3, encoded as a DER ASN.1 object,
